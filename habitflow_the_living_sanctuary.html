@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>HabitFlow — The Living Sanctuary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 42%, #131836 0%, #090c1c 48%, #04050c 100%);
+        }
+        #sanctuary-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            outline: none;
+            cursor: grab;
+        }
+        #sanctuary-canvas:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body>
+    <!-- Pure 3D Sanctuary Canvas (No UI, Text, Logos, or Watermarks) -->
+    <canvas id="sanctuary-canvas"></canvas>
+
+    <script>
+        (function () {
+            'use strict';
+
+            // ============================================================================
+            // 1. PROCEDURAL TEXTURE GENERATORS (Glows, Halos, & Sparkles)
+            // ============================================================================
+            function createRadialGlowTexture(innerColor, midColor, outerColor) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createRadialGradient(128, 128, 4, 128, 128, 128);
+                grad.addColorStop(0.0, innerColor);
+                grad.addColorStop(0.35, midColor);
+                grad.addColorStop(0.7, outerColor);
+                grad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 256, 256);
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                return texture;
+            }
+
+            function createAuraRingTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+
+                // Concentric mystical halo rings matching the reference artwork
+                const grad = ctx.createRadialGradient(256, 256, 20, 256, 256, 250);
+                grad.addColorStop(0.0, 'rgba(180, 145, 255, 0.45)');
+                grad.addColorStop(0.32, 'rgba(148, 110, 255, 0.28)');
+                grad.addColorStop(0.45, 'rgba(110, 80, 210, 0.08)');
+                grad.addColorStop(0.56, 'rgba(170, 135, 255, 0.30)');
+                grad.addColorStop(0.68, 'rgba(120, 90, 220, 0.06)');
+                grad.addColorStop(0.79, 'rgba(165, 130, 255, 0.18)');
+                grad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 512, 512);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.needsUpdate = true;
+                return texture;
+            }
+
+            // ============================================================================
+            // 2. SCENE, CAMERA & RENDERER SETUP
+            // ============================================================================
+            const canvas = document.getElementById('sanctuary-canvas');
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x060814, 0.018);
+
+            const camera = new THREE.PerspectiveCamera(
+                36,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                200
+            );
+
+            // Elevated three-quarter camera angle showing both top sanctuary and rocky underside
+            const baseCameraPos = new THREE.Vector3(0, 3.0, 19.5);
+            camera.position.copy(baseCameraPos);
+            camera.lookAt(0, -0.35, 0);
+
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: true,
+                powerPreference: 'high-performance'
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.15;
+
+            // ============================================================================
+            // 3. ORGANIZED SCENE HIERARCHY (EXPOSED FOR REACT / EXTERNAL API)
+            // ============================================================================
+            const SanctuaryRoot = new THREE.Group();
+            SanctuaryRoot.name = 'Sanctuary_Root';
+            scene.add(SanctuaryRoot);
+
+            const IslandPivot = new THREE.Group();
+            IslandPivot.name = 'Island_Pivot';
+            SanctuaryRoot.add(IslandPivot);
+
+            const groups = {
+                Island_Base: new THREE.Group(),
+                Monk: new THREE.Group(),
+                Crystal_Core: new THREE.Group(),
+                Trees: new THREE.Group(),
+                Glow_Paths: new THREE.Group(),
+                Ambient_Particles: new THREE.Group()
+            };
+
+            Object.keys(groups).forEach((key) => {
+                groups[key].name = key;
+                if (key === 'Ambient_Particles') {
+                    SanctuaryRoot.add(groups[key]);
+                } else {
+                    IslandPivot.add(groups[key]);
+                }
+            });
+
+            // ============================================================================
+            // 4. CINEMATIC LIGHTING
+            // ============================================================================
+            const ambientLight = new THREE.AmbientLight(0x283056, 1.35);
+            scene.add(ambientLight);
+
+            const hemiLight = new THREE.HemisphereLight(0x7c6aff, 0x0a1c2e, 0.85);
+            hemiLight.position.set(0, 15, 0);
+            scene.add(hemiLight);
+
+            // Main warm-lavender moonlight casting soft shadows across the sanctuary
+            const dirLight = new THREE.DirectionalLight(0xfff0dd, 1.35);
+            dirLight.position.set(6, 12, 8);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 2;
+            dirLight.shadow.camera.far = 30;
+            const d = 6.5;
+            dirLight.shadow.camera.left = -d;
+            dirLight.shadow.camera.right = d;
+            dirLight.shadow.camera.top = d;
+            dirLight.shadow.camera.bottom = -d;
+            dirLight.shadow.bias = -0.0008;
+            scene.add(dirLight);
+
+            // Crystal core point light (illuminates the monk's back & surrounding moss)
+            const crystalLight = new THREE.PointLight(0xa370ff, 3.2, 14, 1.6);
+            crystalLight.position.set(0, 2.2, -1.05);
+            crystalLight.castShadow = true;
+            crystalLight.shadow.bias = -0.001;
+            IslandPivot.add(crystalLight);
+
+            // Rim & under-glow cyan light for the jagged basalt underside
+            const underCyanLight = new THREE.PointLight(0x00e5ff, 1.8, 12, 1.8);
+            underCyanLight.position.set(0, -3.5, 1.8);
+            IslandPivot.add(underCyanLight);
+
+            // ============================================================================
+            // 5. GEOMETRY HELPERS & NOISE FUNCTIONS
+            // ============================================================================
+            function pseudoNoise3D(x, y, z) {
+                const n = Math.sin(x * 1.7 + y * 2.3) * Math.cos(y * 1.9 + z * 2.1) +
+                          0.5 * Math.sin(x * 4.1 - z * 3.7 + y * 1.3) +
+                          0.25 * Math.cos(x * 7.3 + y * 5.9 - z * 6.1);
+                return n / 1.75;
+            }
+
+            // ============================================================================
+            // 6. BUILD `Island_Base` (Craggy Basalt Underside, Soil Clearing, Moss & Sub-rocks)
+            // ============================================================================
+            const floatingSubRocks = [];
+
+            (function buildIslandBase() {
+                // 6.1 Main Rocky Basalt Island Body
+                const radius = 4.55;
+                const height = 4.6;
+                const radialSegs = 44;
+                const heightSegs = 22;
+
+                const coneGeo = new THREE.ConeGeometry(radius, height, radialSegs, heightSegs, false);
+                // Flip cone so flat disk is on top (y = 0) and tip points down (y = -height)
+                coneGeo.rotateX(Math.PI);
+                coneGeo.translate(0, -height / 2, 0);
+
+                const pos = coneGeo.attributes.position;
+                const v = new THREE.Vector3();
+
+                for (let i = 0; i < pos.count; i++) {
+                    v.fromBufferAttribute(pos, i);
+                    const dist2D = Math.sqrt(v.x * v.x + v.z * v.z);
+                    const angle = Math.atan2(v.z, v.x);
+
+                    if (v.y > -0.08) {
+                        // Upper platform surface: gentle bowl clearing in center, organic rim
+                        const rimWave = 1.0 +
+                            0.10 * Math.sin(angle * 5 + 0.6) +
+                            0.07 * Math.cos(angle * 8 - 0.4) +
+                            0.05 * Math.sin(angle * 3);
+                        v.x *= rimWave;
+                        v.z *= rimWave;
+                        const normR = Math.min(1, dist2D / radius);
+                        v.y = 0.12 * Math.sin(normR * Math.PI) + 0.04 * pseudoNoise3D(v.x, 0, v.z);
+                    } else {
+                        // Jagged dark basalt rock cliff underside
+                        const depthRatio = Math.min(1, Math.abs(v.y) / height);
+                        // Widen mid-belly slightly like a chunk of floating earth, then taper sharply to bottom crag
+                        const profileScale = Math.pow(1 - depthRatio, 0.68) * (1.08 + 0.18 * Math.sin(depthRatio * Math.PI));
+
+                        const cragMacro =
+                            0.18 * Math.sin(angle * 6 + v.y * 1.4) +
+                            0.14 * Math.cos(angle * 9 - v.y * 2.1) +
+                            0.10 * Math.sin(angle * 4 + 1.2);
+                        const cragMicro = 0.22 * pseudoNoise3D(v.x * 0.9, v.y * 1.1, v.z * 0.9);
+
+                        const radialFactor = profileScale + (cragMacro + cragMicro) * (1 - depthRatio * 0.45);
+                        const origR = Math.max(0.001, dist2D);
+                        const targetR = radius * Math.max(0.03, radialFactor);
+
+                        if (origR > 0.01) {
+                            v.x = (v.x / origR) * targetR;
+                            v.z = (v.z / origR) * targetR;
+                        }
+                        // Stepped cliff ledges
+                        v.y += 0.16 * Math.sin(angle * 7 + v.y * 3.0) * (1 - depthRatio * 0.5);
+                    }
+
+                    pos.setXYZ(i, v.x, v.y, v.z);
+                }
+
+                const nonIndexedRockGeo = coneGeo.toNonIndexed();
+                nonIndexedRockGeo.computeVertexNormals();
+
+                const rockMat = new THREE.MeshStandardMaterial({
+                    color: 0x161926,
+                    roughness: 0.84,
+                    metalness: 0.18,
+                    flatShading: true
+                });
+
+                const mainRockMesh = new THREE.Mesh(nonIndexedRockGeo, rockMat);
+                mainRockMesh.castShadow = true;
+                mainRockMesh.receiveShadow = true;
+                groups.Island_Base.add(mainRockMesh);
+
+                // 6.2 Perimeter Sharp Basalt Cliff Chunks (adds dramatic silhouette depth like the reference)
+                const perimeterChunkGeo = new THREE.DodecahedronGeometry(1, 1);
+                for (let i = 0; i < 16; i++) {
+                    const angle = (i / 16) * Math.PI * 2 + (i % 2) * 0.12;
+                    const dist = 3.75 + (i % 3) * 0.28;
+                    const chunk = perimeterChunkGeo.clone();
+                    const cPos = chunk.attributes.position;
+                    for (let j = 0; j < cPos.count; j++) {
+                        const px = cPos.getX(j);
+                        const py = cPos.getY(j);
+                        const pz = cPos.getZ(j);
+                        cPos.setXYZ(
+                            j,
+                            px * (0.85 + 0.25 * Math.sin(j + i)),
+                            py * (1.15 + 0.2 * Math.cos(j)),
+                            pz * (0.85 + 0.25 * Math.cos(j * 1.7))
+                        );
+                    }
+                    const flatChunk = chunk.toNonIndexed();
+                    flatChunk.computeVertexNormals();
+                    const chunkMesh = new THREE.Mesh(flatChunk, rockMat);
+                    chunkMesh.position.set(
+                        Math.cos(angle) * dist,
+                        -0.65 - (i % 3) * 0.28,
+                        Math.sin(angle) * dist
+                    );
+                    chunkMesh.rotation.set(
+                        0.3 * Math.sin(i),
+                        angle + 0.5,
+                        0.25 * Math.cos(i)
+                    );
+                    chunkMesh.scale.set(0.95, 1.15, 0.85);
+                    chunkMesh.castShadow = true;
+                    chunkMesh.receiveShadow = true;
+                    groups.Island_Base.add(chunkMesh);
+                }
+
+                // 6.3 Central Warm Earth / Soil Meditation Clearing
+                const soilGeo = new THREE.CylinderGeometry(3.7, 3.85, 0.28, 36, 4);
+                const sPos = soilGeo.attributes.position;
+                for (let i = 0; i < sPos.count; i++) {
+                    const vx = sPos.getX(i);
+                    const vy = sPos.getY(i);
+                    const vz = sPos.getZ(i);
+                    const r = Math.sqrt(vx * vx + vz * vz);
+                    const ang = Math.atan2(vz, vx);
+                    const wave = 1 + 0.08 * Math.sin(ang * 6) + 0.05 * Math.cos(ang * 9);
+                    const topRipple = vy > 0 ? 0.045 * pseudoNoise3D(vx * 1.4, 0, vz * 1.4) - 0.02 * Math.max(0, r - 2.2) : 0;
+                    sPos.setXYZ(i, vx * wave, vy + topRipple, vz * wave);
+                }
+                const flatSoilGeo = soilGeo.toNonIndexed();
+                flatSoilGeo.computeVertexNormals();
+                const soilMat = new THREE.MeshStandardMaterial({
+                    color: 0x6b5039,
+                    roughness: 0.92,
+                    metalness: 0.04,
+                    flatShading: true
+                });
+                const soilMesh = new THREE.Mesh(flatSoilGeo, soilMat);
+                soilMesh.position.y = 0.02;
+                soilMesh.receiveShadow = true;
+                groups.Island_Base.add(soilMesh);
+
+                // Subtle central worn dirt path rings
+                const innerPathGeo = new THREE.CylinderGeometry(1.75, 1.9, 0.08, 28);
+                const innerPathG = innerPathGeo.toNonIndexed();
+                innerPathG.computeVertexNormals();
+                const innerSoilMat = new THREE.MeshStandardMaterial({
+                    color: 0x7d5e44,
+                    roughness: 0.95,
+                    metalness: 0.02,
+                    flatShading: true
+                });
+                const innerSoilMesh = new THREE.Mesh(innerPathG, innerSoilMat);
+                innerSoilMesh.position.set(0, 0.14, 0.35);
+                innerSoilMesh.scale.set(1.15, 1, 0.95);
+                innerSoilMesh.receiveShadow = true;
+                groups.Island_Base.add(innerSoilMesh);
+
+                // 6.4 Lush Mossy Pads Around the Perimeter & Under Trees
+                const mossColors = [0x3b6928, 0x487a31, 0x2f5921, 0x528538];
+                const mossConfigs = [
+                    // Left hill under the main bonsai tree
+                    { x: -2.1, y: 0.25, z: -0.65, sx: 1.85, sy: 0.48, sz: 1.55, col: 0 },
+                    { x: -2.85, y: 0.14, z: 0.65, sx: 1.55, sy: 0.36, sz: 1.35, col: 1 },
+                    { x: -1.65, y: 0.12, z: 1.95, sx: 1.45, sy: 0.32, sz: 1.15, col: 2 },
+                    { x: -0.45, y: 0.08, z: 2.85, sx: 1.15, sy: 0.25, sz: 0.85, col: 0 },
+                    // Right side mossy mounds
+                    { x: 2.15, y: 0.20, z: -0.75, sx: 1.75, sy: 0.42, sz: 1.45, col: 1 },
+                    { x: 2.75, y: 0.14, z: 0.65, sx: 1.55, sy: 0.35, sz: 1.30, col: 0 },
+                    { x: 1.65, y: 0.12, z: 1.85, sx: 1.45, sy: 0.32, sz: 1.15, col: 3 },
+                    // Back flanks around crystal
+                    { x: -1.6, y: 0.22, z: -2.15, sx: 1.35, sy: 0.38, sz: 1.15, col: 2 },
+                    { x: 1.6, y: 0.22, z: -2.15, sx: 1.35, sy: 0.38, sz: 1.15, col: 0 },
+                    // Outer cascading moss clumps on the rim
+                    { x: -3.65, y: -0.02, z: 1.45, sx: 0.95, sy: 0.36, sz: 0.85, col: 1 },
+                    { x: -3.85, y: 0.02, z: -0.25, sx: 1.05, sy: 0.38, sz: 0.95, col: 2 },
+                    { x: 3.65, y: -0.02, z: 1.35, sx: 0.95, sy: 0.36, sz: 0.85, col: 2 },
+                    { x: 3.80, y: 0.02, z: -0.20, sx: 1.00, sy: 0.35, sz: 0.90, col: 0 },
+                    { x: 2.55, y: -0.04, z: 2.75, sx: 0.95, sy: 0.34, sz: 0.80, col: 1 },
+                    { x: -2.45, y: -0.04, z: 2.85, sx: 0.95, sy: 0.34, sz: 0.80, col: 3 }
+                ];
+
+                const baseMossGeo = new THREE.IcosahedronGeometry(1, 2);
+                mossConfigs.forEach((cfg, idx) => {
+                    const g = baseMossGeo.clone();
+                    const p = g.attributes.position;
+                    for (let i = 0; i < p.count; i++) {
+                        let vx = p.getX(i);
+                        let vy = p.getY(i);
+                        let vz = p.getZ(i);
+                        if (vy < 0) vy *= 0.35; // flatten bottom
+                        const n = 1 + 0.18 * pseudoNoise3D(vx * 2 + idx, vy * 2, vz * 2 + idx);
+                        p.setXYZ(i, vx * n, vy * n, vz * n);
+                    }
+                    const flatMoss = g.toNonIndexed();
+                    flatMoss.computeVertexNormals();
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: mossColors[cfg.col],
+                        roughness: 0.88,
+                        metalness: 0.03,
+                        flatShading: true
+                    });
+                    const mesh = new THREE.Mesh(flatMoss, mat);
+                    mesh.position.set(cfg.x, cfg.y, cfg.z);
+                    mesh.scale.set(cfg.sx, cfg.sy, cfg.sz);
+                    mesh.rotation.y = idx * 0.7;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    groups.Island_Base.add(mesh);
+                });
+
+                // 6.5 Small Surface Stones & Boulders on the Island Top
+                const stoneMat = new THREE.MeshStandardMaterial({
+                    color: 0x2a2f42,
+                    roughness: 0.8,
+                    metalness: 0.15,
+                    flatShading: true
+                });
+                const stonePlacements = [
+                    { x: -1.45, y: 0.38, z: -0.55, sx: 0.55, sy: 0.42, sz: 0.48 },
+                    { x: -1.85, y: 0.32, z: -0.25, sx: 0.35, sy: 0.28, sz: 0.32 },
+                    { x: 1.55, y: 0.28, z: -0.95, sx: 0.42, sy: 0.30, sz: 0.38 },
+                    { x: 2.15, y: 0.26, z: 0.35, sx: 0.30, sy: 0.22, sz: 0.28 },
+                    { x: -2.25, y: 0.25, z: 1.25, sx: 0.28, sy: 0.20, sz: 0.25 }
+                ];
+                stonePlacements.forEach((st, i) => {
+                    const sg = new THREE.DodecahedronGeometry(1, 0);
+                    sg.computeVertexNormals();
+                    const sm = new THREE.Mesh(sg, stoneMat);
+                    sm.position.set(st.x, st.y, st.z);
+                    sm.scale.set(st.sx, st.sy, st.sz);
+                    sm.rotation.set(i * 0.5, i * 1.1, i * 0.3);
+                    sm.castShadow = true;
+                    sm.receiveShadow = true;
+                    groups.Island_Base.add(sm);
+                });
+
+                // 6.6 Detached Floating Sub-Rocks Hovering Beneath the Island
+                const subRockCount = 26;
+                for (let i = 0; i < subRockCount; i++) {
+                    const sGeo = new THREE.DodecahedronGeometry(0.14 + (i % 4) * 0.07, 0);
+                    const sp = sGeo.attributes.position;
+                    for (let j = 0; j < sp.count; j++) {
+                        sp.setXYZ(
+                            j,
+                            sp.getX(j) * (0.8 + 0.4 * ((i + j) % 2)),
+                            sp.getY(j) * (0.7 + 0.5 * (j % 3 === 0 ? 1 : 0.8)),
+                            sp.getZ(j) * (0.85 + 0.3 * ((i * j) % 2))
+                        );
+                    }
+                    sGeo.computeVertexNormals();
+                    const sMesh = new THREE.Mesh(sGeo, rockMat);
+
+                    const angle = (i / subRockCount) * Math.PI * 2 + (i % 3) * 0.4;
+                    const radiusSpread = 0.4 + ((i * 7) % 10) * 0.36;
+                    const baseY = -2.4 - (1 - radiusSpread / 4.2) * 2.2 - (i % 5) * 0.28;
+
+                    sMesh.position.set(
+                        Math.cos(angle) * radiusSpread,
+                        baseY,
+                        Math.sin(angle) * radiusSpread
+                    );
+                    sMesh.rotation.set(i * 0.8, i * 1.3, i * 0.5);
+                    sMesh.castShadow = true;
+                    groups.Island_Base.add(sMesh);
+
+                    floatingSubRocks.push({
+                        mesh: sMesh,
+                        baseY: baseY,
+                        speed: 1.1 + (i % 5) * 0.25,
+                        amp: 0.06 + (i % 4) * 0.03,
+                        phase: i * 0.9,
+                        rotSpeed: (i % 2 === 0 ? 1 : -1) * (0.15 + (i % 3) * 0.08)
+                    });
+                }
+            })();
+
+            // ============================================================================
+            // 7. BUILD `Monk` (Peaceful Meditating Monk at Center of the Sanctuary)
+            // ============================================================================
+            let monkBreathGroup = null;
+
+            (function buildMonk() {
+                const monkRoot = new THREE.Group();
+                monkRoot.position.set(0, 0.18, 0.42);
+                groups.Monk.add(monkRoot);
+
+                // Materials matching the reference: warm peach skin, saffron-orange kasaya, burgundy inner robe
+                const skinMat = new THREE.MeshStandardMaterial({
+                    color: 0xf2aa7e,
+                    roughness: 0.62,
+                    metalness: 0.04
+                });
+                const saffronMat = new THREE.MeshStandardMaterial({
+                    color: 0xe87a24,
+                    roughness: 0.75,
+                    metalness: 0.05
+                });
+                const burgundyMat = new THREE.MeshStandardMaterial({
+                    color: 0x6e283b,
+                    roughness: 0.80,
+                    metalness: 0.05
+                });
+                const wrapMat = new THREE.MeshStandardMaterial({
+                    color: 0xd8c3a5,
+                    roughness: 0.85,
+                    metalness: 0.02
+                });
+                const featureMat = new THREE.MeshStandardMaterial({
+                    color: 0x4a2518,
+                    roughness: 0.7
+                });
+
+                // 7.1 Crossed Legs Base (Lotus / Meditation Pose)
+                const hipBaseGeo = new THREE.CylinderGeometry(0.46, 0.54, 0.22, 24);
+                const hipBase = new THREE.Mesh(hipBaseGeo, burgundyMat);
+                hipBase.position.set(0, 0.11, 0);
+                hipBase.scale.set(1.25, 1, 0.92);
+                hipBase.castShadow = true;
+                hipBase.receiveShadow = true;
+                monkRoot.add(hipBase);
+
+                // Left & Right Bent Knees / Thighs
+                const legGeo = new THREE.CylinderGeometry(0.15, 0.17, 0.62, 16);
+                legGeo.rotateZ(Math.PI / 2);
+
+                const leftThigh = new THREE.Mesh(legGeo, burgundyMat);
+                leftThigh.position.set(-0.28, 0.14, 0.12);
+                leftThigh.rotation.y = 0.42;
+                leftThigh.rotation.z = -0.08;
+                leftThigh.castShadow = true;
+                leftThigh.receiveShadow = true;
+                monkRoot.add(leftThigh);
+
+                const rightThigh = new THREE.Mesh(legGeo, burgundyMat);
+                rightThigh.position.set(0.28, 0.14, 0.12);
+                rightThigh.rotation.y = -0.42;
+                rightThigh.rotation.z = 0.08;
+                rightThigh.castShadow = true;
+                rightThigh.receiveShadow = true;
+                monkRoot.add(rightThigh);
+
+                // Rounded Knee Caps
+                const kneeGeo = new THREE.SphereGeometry(0.165, 16, 16);
+                const leftKnee = new THREE.Mesh(kneeGeo, burgundyMat);
+                leftKnee.position.set(-0.54, 0.14, 0.24);
+                leftKnee.castShadow = true;
+                monkRoot.add(leftKnee);
+
+                const rightKnee = new THREE.Mesh(kneeGeo, burgundyMat);
+                rightKnee.position.set(0.54, 0.14, 0.24);
+                rightKnee.castShadow = true;
+                monkRoot.add(rightKnee);
+
+                // Crossed Shins & Cloth Foot Wraps in Front
+                const shinWrapGeo = new THREE.CylinderGeometry(0.10, 0.11, 0.34, 14);
+                shinWrapGeo.rotateZ(Math.PI / 2);
+                const leftShin = new THREE.Mesh(shinWrapGeo, wrapMat);
+                leftShin.position.set(-0.18, 0.11, 0.35);
+                leftShin.rotation.y = -0.25;
+                leftShin.castShadow = true;
+                monkRoot.add(leftShin);
+
+                const rightShin = new THREE.Mesh(shinWrapGeo, wrapMat);
+                rightShin.position.set(0.18, 0.11, 0.35);
+                rightShin.rotation.y = 0.25;
+                rightShin.castShadow = true;
+                monkRoot.add(rightShin);
+
+                // Feet tucked neatly
+                const footGeo = new THREE.SphereGeometry(0.095, 12, 12);
+                const leftFoot = new THREE.Mesh(footGeo, skinMat);
+                leftFoot.position.set(0.05, 0.09, 0.41);
+                leftFoot.scale.set(1.2, 0.7, 0.9);
+                monkRoot.add(leftFoot);
+
+                const rightFoot = new THREE.Mesh(footGeo, skinMat);
+                rightFoot.position.set(-0.05, 0.09, 0.41);
+                rightFoot.scale.set(1.2, 0.7, 0.9);
+                monkRoot.add(rightFoot);
+
+                // 7.2 Breathing Upper Body Group (Torso, Arms, Head)
+                monkBreathGroup = new THREE.Group();
+                monkBreathGroup.position.set(0, 0.22, 0);
+                monkRoot.add(monkBreathGroup);
+
+                // Inner Burgundy Tunic Torso
+                const torsoGeo = new THREE.CylinderGeometry(0.24, 0.33, 0.56, 20);
+                const torso = new THREE.Mesh(torsoGeo, burgundyMat);
+                torso.position.set(0, 0.26, 0);
+                torso.scale.set(1.05, 1, 0.82);
+                torso.castShadow = true;
+                torso.receiveShadow = true;
+                monkBreathGroup.add(torso);
+
+                // Bare Right Shoulder & Chest Peek (Traditional Kasaya style)
+                const chestSkinGeo = new THREE.SphereGeometry(0.23, 16, 16);
+                const chestSkin = new THREE.Mesh(chestSkinGeo, skinMat);
+                chestSkin.position.set(0.06, 0.43, 0.02);
+                chestSkin.scale.set(1.1, 0.78, 0.78);
+                chestSkin.castShadow = true;
+                monkBreathGroup.add(chestSkin);
+
+                // Saffron-Orange Kasaya Outer Drape (Diagonal across chest and over left shoulder)
+                const kasayaGeo = new THREE.CylinderGeometry(0.255, 0.345, 0.54, 20);
+                const kasaya = new THREE.Mesh(kasayaGeo, saffronMat);
+                kasaya.position.set(-0.02, 0.26, 0.01);
+                kasaya.scale.set(1.06, 1, 0.85);
+                kasaya.rotation.z = -0.14;
+                kasaya.castShadow = true;
+                kasaya.receiveShadow = true;
+                monkBreathGroup.add(kasaya);
+
+                // Diagonal Saffron Sash Fold Across Chest
+                const sashGeo = new THREE.TorusGeometry(0.24, 0.065, 12, 24);
+                const sash = new THREE.Mesh(sashGeo, saffronMat);
+                sash.position.set(-0.02, 0.36, 0.03);
+                sash.rotation.set(0.85, 0.48, -0.55);
+                sash.scale.set(1.05, 1.15, 0.85);
+                sash.castShadow = true;
+                monkBreathGroup.add(sash);
+
+                // Left Shoulder Covered in Saffron Robe + Right Arm in Burgundy Sleeve
+                const upperArmGeo = new THREE.CylinderGeometry(0.095, 0.085, 0.36, 14);
+
+                const leftUpperArm = new THREE.Mesh(upperArmGeo, saffronMat);
+                leftUpperArm.position.set(-0.31, 0.34, 0.04);
+                leftUpperArm.rotation.z = -0.38;
+                leftUpperArm.rotation.x = 0.25;
+                leftUpperArm.castShadow = true;
+                monkBreathGroup.add(leftUpperArm);
+
+                const rightUpperArm = new THREE.Mesh(upperArmGeo, burgundyMat);
+                rightUpperArm.position.set(0.31, 0.34, 0.04);
+                rightUpperArm.rotation.z = 0.38;
+                rightUpperArm.rotation.x = 0.25;
+                rightUpperArm.castShadow = true;
+                monkBreathGroup.add(rightUpperArm);
+
+                // Forearms Angling Inward to Lap
+                const forearmGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.34, 14);
+
+                const leftForearm = new THREE.Mesh(forearmGeo, burgundyMat);
+                leftForearm.position.set(-0.22, 0.14, 0.20);
+                leftForearm.rotation.set(1.15, 0.55, -0.65);
+                leftForearm.castShadow = true;
+                monkBreathGroup.add(leftForearm);
+
+                const rightForearm = new THREE.Mesh(forearmGeo, burgundyMat);
+                rightForearm.position.set(0.22, 0.14, 0.20);
+                rightForearm.rotation.set(1.15, -0.55, 0.65);
+                rightForearm.castShadow = true;
+                monkBreathGroup.add(rightForearm);
+
+                // Meditating Hands in Dhyana Mudra Resting in Lap
+                const handGeo = new THREE.SphereGeometry(0.075, 14, 14);
+                const leftHand = new THREE.Mesh(handGeo, skinMat);
+                leftHand.position.set(-0.05, 0.06, 0.30);
+                leftHand.scale.set(1.25, 0.55, 0.85);
+                monkBreathGroup.add(leftHand);
+
+                const rightHand = new THREE.Mesh(handGeo, skinMat);
+                rightHand.position.set(0.05, 0.07, 0.30);
+                rightHand.scale.set(1.25, 0.55, 0.85);
+                monkBreathGroup.add(rightHand);
+
+                // 7.3 Neck & Peaceful Bald Head
+                const neckGeo = new THREE.CylinderGeometry(0.09, 0.105, 0.14, 14);
+                const neck = new THREE.Mesh(neckGeo, skinMat);
+                neck.position.set(0, 0.56, 0.02);
+                monkBreathGroup.add(neck);
+
+                const headGroup = new THREE.Group();
+                headGroup.position.set(0, 0.84, 0.04);
+                headGroup.rotation.x = 0.06; // Serene slight downward tilt
+                monkBreathGroup.add(headGroup);
+
+                const headGeo = new THREE.SphereGeometry(0.285, 28, 28);
+                const headMesh = new THREE.Mesh(headGeo, skinMat);
+                headMesh.scale.set(0.96, 1.05, 0.98);
+                headMesh.castShadow = true;
+                headMesh.receiveShadow = true;
+                headGroup.add(headMesh);
+
+                // Ears
+                const earGeo = new THREE.SphereGeometry(0.07, 12, 12);
+                const leftEar = new THREE.Mesh(earGeo, skinMat);
+                leftEar.position.set(-0.275, -0.02, 0.0);
+                leftEar.scale.set(0.45, 1.15, 0.75);
+                headGroup.add(leftEar);
+
+                const rightEar = new THREE.Mesh(earGeo, skinMat);
+                rightEar.position.set(0.275, -0.02, 0.0);
+                rightEar.scale.set(0.45, 1.15, 0.75);
+                headGroup.add(rightEar);
+
+                // Calm Closed Eyelids (Curved arcs)
+                const eyeArcGeo = new THREE.TorusGeometry(0.042, 0.009, 8, 16, Math.PI);
+                const leftEye = new THREE.Mesh(eyeArcGeo, featureMat);
+                leftEye.position.set(-0.095, -0.01, 0.268);
+                leftEye.rotation.set(0.15, -0.18, Math.PI);
+                headGroup.add(leftEye);
+
+                const rightEye = new THREE.Mesh(eyeArcGeo, featureMat);
+                rightEye.position.set(0.095, -0.01, 0.268);
+                rightEye.rotation.set(0.15, 0.18, Math.PI);
+                headGroup.add(rightEye);
+
+                // Soft Eyebrows
+                const browGeo = new THREE.TorusGeometry(0.048, 0.008, 8, 16, Math.PI * 0.85);
+                const leftBrow = new THREE.Mesh(browGeo, featureMat);
+                leftBrow.position.set(-0.098, 0.035, 0.265);
+                leftBrow.rotation.set(-0.1, -0.18, 0.12);
+                headGroup.add(leftBrow);
+
+                const rightBrow = new THREE.Mesh(browGeo, featureMat);
+                rightBrow.position.set(0.098, 0.035, 0.265);
+                rightBrow.rotation.set(-0.1, 0.18, 0.05);
+                headGroup.add(rightBrow);
+
+                // Small Button Nose
+                const noseGeo = new THREE.SphereGeometry(0.028, 12, 12);
+                const nose = new THREE.Mesh(noseGeo, skinMat);
+                nose.position.set(0, -0.045, 0.282);
+                nose.scale.set(1.1, 0.85, 0.9);
+                headGroup.add(nose);
+
+                // Subtle Bindi / Mindfulness Dot on Forehead
+                const dotGeo = new THREE.SphereGeometry(0.011, 8, 8);
+                const dot = new THREE.Mesh(dotGeo, featureMat);
+                dot.position.set(0, 0.095, 0.273);
+                headGroup.add(dot);
+
+                // Gentle Serene Smile
+                const smileGeo = new THREE.TorusGeometry(0.032, 0.007, 8, 14, Math.PI * 0.85);
+                const smile = new THREE.Mesh(smileGeo, featureMat);
+                smile.position.set(0, -0.095, 0.266);
+                smile.rotation.set(0.2, 0, Math.PI + 0.22);
+                headGroup.add(smile);
+            })();
+
+            // ============================================================================
+            // 8. BUILD `Crystal_Core` (Translucent Faceted Violet Crystal Cluster & Halos)
+            // ============================================================================
+            const crystalMaterials = [];
+            const crystalInnerCores = [];
+            const auraSprites = [];
+
+            function createFacetedCrystalGeometry(radius, height, sides) {
+                const geo = new THREE.CylinderGeometry(radius * 0.58, radius, height * 0.68, sides, 1, false);
+                geo.translate(0, height * 0.34, 0);
+
+                const tipGeo = new THREE.ConeGeometry(radius * 0.58, height * 0.32, sides, 1, false);
+                tipGeo.translate(0, height * 0.68 + height * 0.16, 0);
+
+                // Merge cylinder body + sharp faceted pyramid tip manually into one BufferGeometry
+                const g1 = geo.toNonIndexed();
+                const g2 = tipGeo.toNonIndexed();
+                const pos1 = g1.attributes.position.array;
+                const pos2 = g2.attributes.position.array;
+                const combined = new Float32Array(pos1.length + pos2.length);
+                combined.set(pos1, 0);
+                combined.set(pos2, pos1.length);
+
+                const merged = new THREE.BufferGeometry();
+                merged.setAttribute('position', new THREE.BufferAttribute(combined, 3));
+                merged.computeVertexNormals();
+                return merged;
+            }
+
+            (function buildCrystalCore() {
+                const mainCrystalCluster = new THREE.Group();
+                mainCrystalCluster.position.set(0, 0.05, -1.25);
+                groups.Crystal_Core.add(mainCrystalCluster);
+
+                // Shared outer translucent faceted crystal material
+                const outerCrystalMat = new THREE.MeshPhysicalMaterial({
+                    color: 0x9b72ff,
+                    emissive: 0x5c2be0,
+                    emissiveIntensity: 0.55,
+                    roughness: 0.14,
+                    metalness: 0.08,
+                    transmission: 0.72,
+                    transparent: true,
+                    opacity: 0.90,
+                    reflectivity: 0.9,
+                    flatShading: true
+                });
+                crystalMaterials.push(outerCrystalMat);
+
+                // Inner luminous core material for internal glow illusion
+                const innerCoreMat = new THREE.MeshBasicMaterial({
+                    color: 0xdcc2ff,
+                    transparent: true,
+                    opacity: 0.58,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                crystalInnerCores.push(innerCoreMat);
+
+                // Central Spire + Flanking Crystal Shards (matching the reference silhouette)
+                const spireSpecs = [
+                    { x: 0.0, y: 0.0, z: 0.0, r: 0.78, h: 3.35, sides: 7, rx: 0.02, ry: 0.35, rz: 0.0 },
+                    { x: -0.68, y: -0.05, z: 0.12, r: 0.42, h: 1.95, sides: 6, rx: 0.08, ry: 0.9, rz: 0.34 },
+                    { x: 0.68, y: -0.05, z: 0.10, r: 0.45, h: 2.10, sides: 6, rx: 0.06, ry: -0.6, rz: -0.30 },
+                    { x: -0.38, y: -0.1, z: -0.35, r: 0.32, h: 1.45, sides: 6, rx: -0.18, ry: 0.2, rz: 0.22 },
+                    { x: 0.42, y: -0.1, z: -0.32, r: 0.30, h: 1.38, sides: 6, rx: -0.16, ry: -0.4, rz: -0.20 }
+                ];
+
+                spireSpecs.forEach((sp) => {
+                    const cGeo = createFacetedCrystalGeometry(sp.r, sp.h, sp.sides);
+                    const cMesh = new THREE.Mesh(cGeo, outerCrystalMat);
+                    cMesh.position.set(sp.x, sp.y, sp.z);
+                    cMesh.rotation.set(sp.rx, sp.ry, sp.rz);
+                    cMesh.castShadow = true;
+                    cMesh.receiveShadow = true;
+                    mainCrystalCluster.add(cMesh);
+
+                    // Internal glowing core spire
+                    const innerGeo = createFacetedCrystalGeometry(sp.r * 0.52, sp.h * 0.86, sp.sides);
+                    const innerMesh = new THREE.Mesh(innerGeo, innerCoreMat);
+                    innerMesh.position.set(sp.x, sp.y + 0.08, sp.z);
+                    innerMesh.rotation.set(sp.rx, sp.ry, sp.rz);
+                    mainCrystalCluster.add(innerMesh);
+                });
+
+                // Perimeter Small Violet Crystal Clusters on Left & Right Edges of Island
+                const perimeterCrystals = [
+                    // Left edge cluster
+                    { x: -3.55, y: 0.06, z: 1.05, r: 0.22, h: 0.78, rx: 0.15, ry: 0.4, rz: 0.28 },
+                    { x: -3.72, y: 0.04, z: 1.22, r: 0.15, h: 0.52, rx: 0.28, ry: 1.1, rz: 0.48 },
+                    { x: -3.38, y: 0.05, z: 1.25, r: 0.14, h: 0.45, rx: 0.10, ry: -0.5, rz: 0.15 },
+                    // Right edge cluster
+                    { x: 3.48, y: 0.06, z: 0.95, r: 0.23, h: 0.80, rx: 0.12, ry: -0.5, rz: -0.26 },
+                    { x: 3.68, y: 0.04, z: 1.12, r: 0.16, h: 0.54, rx: 0.25, ry: 0.8, rz: -0.46 },
+                    { x: 3.32, y: 0.05, z: 1.15, r: 0.13, h: 0.44, rx: 0.18, ry: 0.2, rz: -0.14 }
+                ];
+
+                perimeterCrystals.forEach((pc) => {
+                    const pGeo = createFacetedCrystalGeometry(pc.r, pc.h, 6);
+                    const pMesh = new THREE.Mesh(pGeo, outerCrystalMat);
+                    pMesh.position.set(pc.x, pc.y, pc.z);
+                    pMesh.rotation.set(pc.rx, pc.ry, pc.rz);
+                    pMesh.castShadow = true;
+                    groups.Crystal_Core.add(pMesh);
+
+                    const pInnerGeo = createFacetedCrystalGeometry(pc.r * 0.5, pc.h * 0.82, 6);
+                    const pInnerMesh = new THREE.Mesh(pInnerGeo, innerCoreMat);
+                    pInnerMesh.position.set(pc.x, pc.y + 0.02, pc.z);
+                    pInnerMesh.rotation.set(pc.rx, pc.ry, pc.rz);
+                    groups.Crystal_Core.add(pInnerMesh);
+                });
+
+                // Concentric Mystical Aura Halos Behind the Main Crystal
+                const auraTex = createAuraRingTexture();
+                const softGlowTex = createRadialGlowTexture(
+                    'rgba(195, 155, 255, 0.65)',
+                    'rgba(135, 90, 245, 0.28)',
+                    'rgba(75, 40, 170, 0.0)'
+                );
+
+                const backGlowMat = new THREE.SpriteMaterial({
+                    map: softGlowTex,
+                    color: 0xb388ff,
+                    transparent: true,
+                    opacity: 0.75,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const backGlowSprite = new THREE.Sprite(backGlowMat);
+                backGlowSprite.position.set(0, 2.0, -1.65);
+                backGlowSprite.scale.set(6.2, 6.2, 1);
+                groups.Crystal_Core.add(backGlowSprite);
+                auraSprites.push({ sprite: backGlowSprite, baseScale: 6.2, baseOpacity: 0.75, speed: 1.4, phase: 0 });
+
+                const haloRingMat1 = new THREE.SpriteMaterial({
+                    map: auraTex,
+                    color: 0xc5a3ff,
+                    transparent: true,
+                    opacity: 0.65,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const haloSprite1 = new THREE.Sprite(haloRingMat1);
+                haloSprite1.position.set(0, 2.25, -1.75);
+                haloSprite1.scale.set(4.8, 4.8, 1);
+                groups.Crystal_Core.add(haloSprite1);
+                auraSprites.push({ sprite: haloSprite1, baseScale: 4.8, baseOpacity: 0.65, speed: 1.9, phase: 1.2 });
+
+                const haloRingMat2 = new THREE.SpriteMaterial({
+                    map: auraTex,
+                    color: 0x9d75ff,
+                    transparent: true,
+                    opacity: 0.45,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const haloSprite2 = new THREE.Sprite(haloRingMat2);
+                haloSprite2.position.set(0, 2.35, -1.85);
+                haloSprite2.scale.set(6.0, 6.0, 1);
+                groups.Crystal_Core.add(haloSprite2);
+                auraSprites.push({ sprite: haloSprite2, baseScale: 6.0, baseOpacity: 0.45, speed: 1.2, phase: 2.6 });
+            })();
+
+            // ============================================================================
+            // 9. BUILD `Trees` (Stylized Bonsai Trees, Saplings & Glowing Violet Flowers)
+            // ============================================================================
+            const swayObjects = [];
+            const growthItems = []; // Scales smoothly based on HabitFlow progress percentage
+
+            (function buildTreesAndFlora() {
+                const trunkMat = new THREE.MeshStandardMaterial({
+                    color: 0x4b3626,
+                    roughness: 0.9,
+                    metalness: 0.04,
+                    flatShading: true
+                });
+
+                const leafMatDark = new THREE.MeshStandardMaterial({
+                    color: 0x264e2c,
+                    roughness: 0.82,
+                    metalness: 0.04,
+                    flatShading: true
+                });
+                const leafMatMid = new THREE.MeshStandardMaterial({
+                    color: 0x366938,
+                    roughness: 0.80,
+                    metalness: 0.04,
+                    flatShading: true
+                });
+                const leafMatLight = new THREE.MeshStandardMaterial({
+                    color: 0x4a8244,
+                    roughness: 0.78,
+                    metalness: 0.04,
+                    flatShading: true
+                });
+
+                function createCanopyPad(radius, heightScale, mat, seed) {
+                    const geo = new THREE.IcosahedronGeometry(radius, 2);
+                    const p = geo.attributes.position;
+                    for (let i = 0; i < p.count; i++) {
+                        let vx = p.getX(i);
+                        let vy = p.getY(i);
+                        let vz = p.getZ(i);
+                        const n = 1 + 0.22 * pseudoNoise3D(vx * 2.2 + seed, vy * 2.2, vz * 2.2 + seed);
+                        p.setXYZ(i, vx * n, vy * heightScale * n, vz * n);
+                    }
+                    const flatGeo = geo.toNonIndexed();
+                    flatGeo.computeVertexNormals();
+                    const mesh = new THREE.Mesh(flatGeo, mat);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+                    return mesh;
+                }
+
+                function createBonsaiTree(curvePoints, trunkRadius, canopyPads, minProgressThreshold) {
+                    const treeGroup = new THREE.Group();
+                    const curve = new THREE.CatmullRomCurve3(curvePoints);
+                    const tubeGeo = new THREE.TubeGeometry(curve, 16, trunkRadius, 8, false);
+
+                    // Taper the trunk from base to tip
+                    const pos = tubeGeo.attributes.position;
+                    const v = new THREE.Vector3();
+                    for (let i = 0; i < pos.count; i++) {
+                        v.fromBufferAttribute(pos, i);
+                        const heightProgress = Math.max(0, Math.min(1, (v.y - curvePoints[0].y) / 2.2));
+                        const taper = 1 - heightProgress * 0.55;
+                        const center = curve.getPointAt(Math.min(1, Math.max(0, heightProgress)));
+                        v.x = center.x + (v.x - center.x) * taper;
+                        v.z = center.z + (v.z - center.z) * taper;
+                        pos.setXYZ(i, v.x, v.y, v.z);
+                    }
+                    const flatTrunk = tubeGeo.toNonIndexed();
+                    flatTrunk.computeVertexNormals();
+                    const trunkMesh = new THREE.Mesh(flatTrunk, trunkMat);
+                    trunkMesh.castShadow = true;
+                    trunkMesh.receiveShadow = true;
+                    treeGroup.add(trunkMesh);
+
+                    const crownGroup = new THREE.Group();
+                    canopyPads.forEach((pad, idx) => {
+                        const mat = idx % 3 === 0 ? leafMatMid : (idx % 3 === 1 ? leafMatLight : leafMatDark);
+                        const padMesh = createCanopyPad(pad.r, 0.52, mat, idx * 3.1);
+                        padMesh.position.set(pad.x, pad.y, pad.z);
+                        crownGroup.add(padMesh);
+                    });
+                    treeGroup.add(crownGroup);
+
+                    groups.Trees.add(treeGroup);
+                    swayObjects.push({
+                        obj: crownGroup,
+                        speed: 1.3 + Math.random() * 0.5,
+                        amp: 0.028,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                    growthItems.push({
+                        obj: treeGroup,
+                        baseScale: 1.0,
+                        minThreshold: minProgressThreshold
+                    });
+                }
+
+                // 9.1 Main Hero Twisted Bonsai Tree (Left Hill - always present, flourishes with progress)
+                createBonsaiTree(
+                    [
+                        new THREE.Vector3(-1.85, 0.32, -0.65),
+                        new THREE.Vector3(-2.15, 0.95, -0.70),
+                        new THREE.Vector3(-2.55, 1.55, -0.55),
+                        new THREE.Vector3(-2.30, 2.25, -0.45),
+                        new THREE.Vector3(-2.50, 2.65, -0.40)
+                    ],
+                    0.18,
+                    [
+                        { x: -2.45, y: 2.75, z: -0.42, r: 0.85 },
+                        { x: -1.95, y: 2.40, z: -0.35, r: 0.68 },
+                        { x: -2.85, y: 2.25, z: -0.55, r: 0.72 },
+                        { x: -2.35, y: 1.95, z: -0.15, r: 0.62 },
+                        { x: -2.65, y: 2.55, z: -0.75, r: 0.65 }
+                    ],
+                    0.0 // Core tree visible even at low progress
+                );
+
+                // 9.2 Secondary Left Outer Sweeping Tree
+                createBonsaiTree(
+                    [
+                        new THREE.Vector3(-3.05, 0.18, 0.45),
+                        new THREE.Vector3(-3.45, 0.62, 0.52),
+                        new THREE.Vector3(-3.82, 1.15, 0.45),
+                        new THREE.Vector3(-3.65, 1.58, 0.38)
+                    ],
+                    0.13,
+                    [
+                        { x: -3.72, y: 1.65, z: 0.38, r: 0.62 },
+                        { x: -4.05, y: 1.38, z: 0.50, r: 0.52 },
+                        { x: -3.40, y: 1.42, z: 0.25, r: 0.48 }
+                    ],
+                    0.18
+                );
+
+                // 9.3 Right Back Stylized Bonsai Tree
+                createBonsaiTree(
+                    [
+                        new THREE.Vector3(1.85, 0.28, -1.05),
+                        new THREE.Vector3(2.05, 0.85, -1.10),
+                        new THREE.Vector3(2.25, 1.45, -0.98),
+                        new THREE.Vector3(2.12, 1.92, -0.92)
+                    ],
+                    0.12,
+                    [
+                        { x: 2.15, y: 2.02, z: -0.92, r: 0.58 },
+                        { x: 2.45, y: 1.75, z: -0.85, r: 0.48 },
+                        { x: 1.85, y: 1.78, z: -1.05, r: 0.44 }
+                    ],
+                    0.25
+                );
+
+                // 9.4 Delicate Saplings (Right Foreground & Right Midground, matching reference)
+                function createSapling(x, y, z, height, threshold) {
+                    const saplingGroup = new THREE.Group();
+                    saplingGroup.position.set(x, y, z);
+
+                    const stemCurve = new THREE.CatmullRomCurve3([
+                        new THREE.Vector3(0, 0, 0),
+                        new THREE.Vector3(0.05, height * 0.5, 0.02),
+                        new THREE.Vector3(-0.02, height, 0)
+                    ]);
+                    const stemGeo = new THREE.TubeGeometry(stemCurve, 10, 0.028, 6, false);
+                    const stemMesh = new THREE.Mesh(stemGeo, trunkMat);
+                    stemMesh.castShadow = true;
+                    saplingGroup.add(stemMesh);
+
+                    const leafGeo = new THREE.SphereGeometry(0.12, 10, 8);
+                    leafGeo.scale(1.6, 0.32, 0.75);
+
+                    const leafPositions = [
+                        { y: height * 0.55, ry: 0.3, rz: 0.35 },
+                        { y: height * 0.68, ry: 2.4, rz: 0.35 },
+                        { y: height * 0.82, ry: -1.2, rz: 0.3 },
+                        { y: height * 0.98, ry: 0.8, rz: 0.2 },
+                        { y: height * 1.02, ry: 3.8, rz: 0.25 }
+                    ];
+
+                    leafPositions.forEach((lp) => {
+                        const leaf = new THREE.Mesh(leafGeo, leafMatLight);
+                        leaf.position.set(0, lp.y, 0);
+                        leaf.rotation.set(0, lp.ry, lp.rz);
+                        leaf.castShadow = true;
+                        saplingGroup.add(leaf);
+                    });
+
+                    groups.Trees.add(saplingGroup);
+                    swayObjects.push({
+                        obj: saplingGroup,
+                        speed: 1.8 + Math.random() * 0.6,
+                        amp: 0.045,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                    growthItems.push({
+                        obj: saplingGroup,
+                        baseScale: 1.0,
+                        minThreshold: threshold
+                    });
+                }
+
+                createSapling(1.95, 0.18, 1.38, 1.08, 0.15);
+                createSapling(2.92, 0.16, 0.18, 0.95, 0.38);
+                createSapling(-1.18, 0.22, 1.82, 0.65, 0.52);
+
+                // 9.5 Luminous Violet / Lavender Sanctuary Flowers
+                const flowerPetalMat = new THREE.MeshStandardMaterial({
+                    color: 0xd9a7ff,
+                    emissive: 0x9b4dff,
+                    emissiveIntensity: 0.85,
+                    roughness: 0.35
+                });
+                const flowerCoreMat = new THREE.MeshBasicMaterial({
+                    color: 0xfff2b2
+                });
+
+                function createGlowingFlower(x, y, z, scale, threshold) {
+                    const fGroup = new THREE.Group();
+                    fGroup.position.set(x, y, z);
+
+                    const stemGeo = new THREE.CylinderGeometry(0.014, 0.018, 0.28 * scale, 6);
+                    stemGeo.translate(0, 0.14 * scale, 0);
+                    const stem = new THREE.Mesh(stemGeo, leafMatMid);
+                    fGroup.add(stem);
+
+                    const blossom = new THREE.Group();
+                    blossom.position.y = 0.28 * scale;
+
+                    const petalGeo = new THREE.ConeGeometry(0.045 * scale, 0.12 * scale, 5);
+                    petalGeo.rotateX(Math.PI * 0.38);
+                    petalGeo.translate(0, 0.02 * scale, 0.045 * scale);
+
+                    for (let i = 0; i < 5; i++) {
+                        const p = new THREE.Mesh(petalGeo, flowerPetalMat);
+                        p.rotation.y = (i / 5) * Math.PI * 2;
+                        blossom.add(p);
+                    }
+
+                    const center = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.025 * scale, 8, 8),
+                        flowerCoreMat
+                    );
+                    blossom.add(center);
+
+                    fGroup.add(blossom);
+                    groups.Trees.add(fGroup);
+
+                    swayObjects.push({
+                        obj: fGroup,
+                        speed: 2.1 + Math.random() * 0.6,
+                        amp: 0.05,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                    growthItems.push({
+                        obj: fGroup,
+                        baseScale: 1.0,
+                        minThreshold: threshold
+                    });
+                }
+
+                const flowerSpots = [
+                    { x: -1.85, y: 0.22, z: 0.92, s: 1.35, t: 0.10 },
+                    { x: -1.25, y: 0.25, z: -0.35, s: 1.25, t: 0.20 },
+                    { x: -1.15, y: 0.16, z: 1.55, s: 1.15, t: 0.30 },
+                    { x: -2.45, y: 0.18, z: 1.42, s: 1.00, t: 0.45 },
+                    { x: -2.75, y: 0.18, z: 0.95, s: 0.95, t: 0.55 },
+                    { x: 1.45, y: 0.20, z: -0.25, s: 1.10, t: 0.25 },
+                    { x: 1.85, y: 0.16, z: 1.55, s: 1.15, t: 0.35 },
+                    { x: 2.35, y: 0.16, z: 1.25, s: 0.95, t: 0.50 },
+                    { x: 2.75, y: 0.16, z: 0.85, s: 1.05, t: 0.65 },
+                    { x: -0.85, y: 0.14, z: 2.25, s: 0.90, t: 0.70 }
+                ];
+
+                flowerSpots.forEach((fl) => {
+                    createGlowingFlower(fl.x, fl.y, fl.z, fl.s, fl.t);
+                });
+            })();
+
+            // ============================================================================
+            // 10. BUILD `Glow_Paths` (Luminous Cyan Rock Cracks & Winding Energy Veins)
+            // ============================================================================
+            const glowVeinMaterials = [];
+
+            (function buildGlowPaths() {
+                // Shared luminous cyan material for rocky underside fissures
+                const rockCrackMat = new THREE.MeshBasicMaterial({
+                    color: 0x29f2ff,
+                    transparent: true,
+                    opacity: 0.92
+                });
+                glowVeinMaterials.push({ mat: rockCrackMat, baseOpacity: 0.92 });
+
+                // Outer soft cyan bloom sheath around the rock fissures
+                const rockCrackHaloMat = new THREE.MeshBasicMaterial({
+                    color: 0x00c8ff,
+                    transparent: true,
+                    opacity: 0.32,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                glowVeinMaterials.push({ mat: rockCrackHaloMat, baseOpacity: 0.32 });
+
+                // Upper terrain subtle cyan energy streams
+                const surfaceStreamMat = new THREE.MeshBasicMaterial({
+                    color: 0x3ef6ff,
+                    transparent: true,
+                    opacity: 0.65,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                glowVeinMaterials.push({ mat: surfaceStreamMat, baseOpacity: 0.65 });
+
+                function addEnergyVein(points, radius, isUnderside) {
+                    const curve = new THREE.CatmullRomCurve3(points);
+                    const coreGeo = new THREE.TubeGeometry(curve, 24, radius, 6, false);
+                    const coreMesh = new THREE.Mesh(
+                        coreGeo,
+                        isUnderside ? rockCrackMat : surfaceStreamMat
+                    );
+                    groups.Glow_Paths.add(coreMesh);
+
+                    const haloGeo = new THREE.TubeGeometry(curve, 24, radius * 2.6, 6, false);
+                    const haloMesh = new THREE.Mesh(haloGeo, rockCrackHaloMat);
+                    groups.Glow_Paths.add(haloMesh);
+                }
+
+                // 10.1 Left Underside Branching Cyan Fissures (matching reference image)
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(-2.45, -0.45, 2.95),
+                        new THREE.Vector3(-2.10, -0.95, 3.05),
+                        new THREE.Vector3(-1.68, -1.32, 2.85),
+                        new THREE.Vector3(-1.32, -1.78, 2.55)
+                    ],
+                    0.028,
+                    true
+                );
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(-2.10, -0.95, 3.05),
+                        new THREE.Vector3(-2.52, -1.38, 2.75),
+                        new THREE.Vector3(-2.85, -1.75, 2.35)
+                    ],
+                    0.022,
+                    true
+                );
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(-1.68, -1.32, 2.85),
+                        new THREE.Vector3(-1.55, -0.82, 3.15)
+                    ],
+                    0.018,
+                    true
+                );
+
+                // 10.2 Right Underside Prominent Branching Cyan Fissures (matching reference image)
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(2.38, -0.32, 2.88),
+                        new THREE.Vector3(1.88, -0.95, 2.98),
+                        new THREE.Vector3(1.25, -1.55, 2.75),
+                        new THREE.Vector3(0.68, -2.25, 2.25)
+                    ],
+                    0.032,
+                    true
+                );
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(1.88, -0.95, 2.98),
+                        new THREE.Vector3(2.35, -1.32, 2.68),
+                        new THREE.Vector3(2.75, -1.68, 2.22)
+                    ],
+                    0.024,
+                    true
+                );
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(1.25, -1.55, 2.75),
+                        new THREE.Vector3(1.58, -2.05, 2.32)
+                    ],
+                    0.020,
+                    true
+                );
+
+                // 10.3 Upper Terrain Winding Luminous Cyan Pathways (From Crystal Core around the Monk)
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(-0.35, 0.16, -0.85),
+                        new THREE.Vector3(-0.95, 0.16, -0.15),
+                        new THREE.Vector3(-1.15, 0.16, 0.85),
+                        new THREE.Vector3(-1.75, 0.14, 1.85),
+                        new THREE.Vector3(-2.45, -0.45, 2.95)
+                    ],
+                    0.018,
+                    false
+                );
+                addEnergyVein(
+                    [
+                        new THREE.Vector3(0.35, 0.16, -0.85),
+                        new THREE.Vector3(0.95, 0.16, -0.10),
+                        new THREE.Vector3(1.18, 0.16, 0.90),
+                        new THREE.Vector3(1.78, 0.14, 1.82),
+                        new THREE.Vector3(2.38, -0.32, 2.88)
+                    ],
+                    0.018,
+                    false
+                );
+            })();
+
+            // ============================================================================
+            // 11. BUILD `Ambient_Particles` (Stars, Golden Fireflies, Stardust & Burst Effects)
+            // ============================================================================
+            const fireflies = [];
+            const activeRipples = [];
+            const activeBurstParticles = [];
+
+            const goldFireflyTex = createRadialGlowTexture(
+                'rgba(255, 250, 210, 1.0)',
+                'rgba(255, 200, 95, 0.55)',
+                'rgba(255, 140, 20, 0.0)'
+            );
+            const cyanParticleTex = createRadialGlowTexture(
+                'rgba(210, 255, 255, 1.0)',
+                'rgba(50, 225, 255, 0.55)',
+                'rgba(0, 140, 255, 0.0)'
+            );
+            const violetParticleTex = createRadialGlowTexture(
+                'rgba(240, 210, 255, 1.0)',
+                'rgba(175, 105, 255, 0.55)',
+                'rgba(95, 30, 210, 0.0)'
+            );
+
+            let risingDustSystem = null;
+            let risingDustData = [];
+
+            (function buildAmbientParticles() {
+                // 11.1 Deep Cosmic Starfield Background
+                const starCount = 340;
+                const starPositions = new Float32Array(starCount * 3);
+                const starColors = new Float32Array(starCount * 3);
+
+                for (let i = 0; i < starCount; i++) {
+                    const r = 24 + Math.random() * 45;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+
+                    starPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                    starPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.75;
+                    starPositions[i * 3 + 2] = -Math.abs(r * Math.cos(phi)) - 8;
+
+                    const tint = Math.random();
+                    if (tint < 0.35) {
+                        starColors[i * 3] = 0.75;
+                        starColors[i * 3 + 1] = 0.85;
+                        starColors[i * 3 + 2] = 1.0;
+                    } else if (tint < 0.7) {
+                        starColors[i * 3] = 0.88;
+                        starColors[i * 3 + 1] = 0.78;
+                        starColors[i * 3 + 2] = 1.0;
+                    } else {
+                        starColors[i * 3] = 0.65;
+                        starColors[i * 3 + 1] = 0.95;
+                        starColors[i * 3 + 2] = 1.0;
+                    }
+                }
+
+                const starGeo = new THREE.BufferGeometry();
+                starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+                starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+                const starMat = new THREE.PointsMaterial({
+                    size: 0.22,
+                    map: cyanParticleTex,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.72,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const starField = new THREE.Points(starGeo, starMat);
+                groups.Ambient_Particles.add(starField);
+
+                // 11.2 Drifting Golden & Cyan Sanctuary Fireflies
+                const fireflyCount = 34;
+                for (let i = 0; i < fireflyCount; i++) {
+                    const isGold = i % 3 !== 0;
+                    const fMat = new THREE.SpriteMaterial({
+                        map: isGold ? goldFireflyTex : cyanParticleTex,
+                        color: isGold ? 0xffe596 : 0x75f6ff,
+                        transparent: true,
+                        opacity: 0.85,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+                    const sprite = new THREE.Sprite(fMat);
+
+                    const angle = (i / fireflyCount) * Math.PI * 2 + Math.random() * 0.5;
+                    const radius = 2.2 + Math.random() * 4.8;
+                    const baseY = -2.2 + Math.random() * 5.6;
+
+                    sprite.position.set(
+                        Math.cos(angle) * radius,
+                        baseY,
+                        Math.sin(angle) * radius
+                    );
+                    const baseScale = 0.18 + Math.random() * 0.22;
+                    sprite.scale.set(baseScale, baseScale, 1);
+                    groups.Ambient_Particles.add(sprite);
+
+                    fireflies.push({
+                        sprite: sprite,
+                        baseAngle: angle,
+                        radius: radius,
+                        baseY: baseY,
+                        orbitSpeed: (0.06 + Math.random() * 0.10) * (i % 2 === 0 ? 1 : -1),
+                        bobSpeed: 0.9 + Math.random() * 1.1,
+                        bobAmp: 0.25 + Math.random() * 0.35,
+                        phase: Math.random() * Math.PI * 2,
+                        baseScale: baseScale,
+                        threshold: (i / fireflyCount) * 0.85
+                    });
+                }
+
+                // 11.3 Gently Rising Violet Stardust Around the Island
+                const dustCount = 70;
+                const dustPos = new Float32Array(dustCount * 3);
+                for (let i = 0; i < dustCount; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const rad = 1.0 + Math.random() * 4.8;
+                    const y = -3.8 + Math.random() * 7.5;
+                    dustPos[i * 3] = Math.cos(a) * rad;
+                    dustPos[i * 3 + 1] = y;
+                    dustPos[i * 3 + 2] = Math.sin(a) * rad;
+                    risingDustData.push({
+                        angle: a,
+                        radius: rad,
+                        speedY: 0.25 + Math.random() * 0.45,
+                        driftPhase: Math.random() * Math.PI * 2
+                    });
+                }
+                const dustGeo = new THREE.BufferGeometry();
+                dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+                const dustMat = new THREE.PointsMaterial({
+                    size: 0.20,
+                    map: violetParticleTex,
+                    transparent: true,
+                    opacity: 0.65,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                risingDustSystem = new THREE.Points(dustGeo, dustMat);
+                groups.Ambient_Particles.add(risingDustSystem);
+            })();
+
+            // ============================================================================
+            // 12. HABIT-COMPLETION STATE & BURST EFFECTS ENGINE
+            // ============================================================================
+            let targetProgress = 78;   // Default rich sanctuary state (0..100)
+            let currentProgress = 78;
+            let habitBurstIntensity = 0;
+
+            function spawnCompletionEffects() {
+                habitBurstIntensity = 1.0;
+
+                // 1. Expanding Cyan 3D Energy Ripple Ring Around the Island
+                const ringGeo = new THREE.TorusGeometry(1.1, 0.045, 16, 64);
+                ringGeo.rotateX(Math.PI / 2);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: 0x38f6ff,
+                    transparent: true,
+                    opacity: 0.95,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+                ringMesh.position.set(0, 0.35, 0);
+                IslandPivot.add(ringMesh);
+                activeRipples.push({ mesh: ringMesh, age: 0, maxAge: 1.85, startScale: 1.0, endScale: 5.4 });
+
+                // Secondary Violet Aura Wave
+                const waveGeo = new THREE.TorusGeometry(0.85, 0.035, 14, 56);
+                waveGeo.rotateX(Math.PI / 2);
+                const waveMat = new THREE.MeshBasicMaterial({
+                    color: 0xc288ff,
+                    transparent: true,
+                    opacity: 0.85,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const waveMesh = new THREE.Mesh(waveGeo, waveMat);
+                waveMesh.position.set(0, 1.35, -1.1);
+                IslandPivot.add(waveMesh);
+                activeRipples.push({ mesh: waveMesh, age: 0, maxAge: 1.45, startScale: 0.8, endScale: 4.5 });
+
+                // 2. Sparkle Burst Particles Radiating From the Crystal & Sanctuary
+                const sparkleCount = 28;
+                for (let i = 0; i < sparkleCount; i++) {
+                    const isCyan = i % 2 === 0;
+                    const sMat = new THREE.SpriteMaterial({
+                        map: isCyan ? cyanParticleTex : goldFireflyTex,
+                        color: isCyan ? 0x60f8ff : 0xe4b8ff,
+                        transparent: true,
+                        opacity: 1.0,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+                    const sp = new THREE.Sprite(sMat);
+                    sp.position.set(
+                        (Math.random() - 0.5) * 1.2,
+                        1.2 + Math.random() * 1.4,
+                        -1.1 + (Math.random() - 0.5) * 0.8
+                    );
+                    const sc = 0.22 + Math.random() * 0.26;
+                    sp.scale.set(sc, sc, 1);
+                    IslandPivot.add(sp);
+
+                    const theta = Math.random() * Math.PI * 2;
+                    const speed = 1.8 + Math.random() * 2.8;
+                    activeBurstParticles.push({
+                        sprite: sp,
+                        vel: new THREE.Vector3(
+                            Math.cos(theta) * speed,
+                            0.8 + Math.random() * 2.2,
+                            Math.sin(theta) * speed
+                        ),
+                        age: 0,
+                        maxAge: 1.1 + Math.random() * 0.5,
+                        baseScale: sc
+                    });
+                }
+            }
+
+            // ============================================================================
+            // 13. MOUSE / POINTER PARALLAX & RAYCAST INTERACTION
+            // ============================================================================
+            const pointerTarget = new THREE.Vector2(0, 0);
+            const pointerSmoothed = new THREE.Vector2(0, 0);
+            let isPointerInside = false;
+            let pointerDownPos = new THREE.Vector2();
+            const raycaster = new THREE.Raycaster();
+
+            function updatePointerCoords(clientX, clientY) {
+                pointerTarget.x = (clientX / window.innerWidth) * 2 - 1;
+                pointerTarget.y = -(clientY / window.innerHeight) * 2 + 1;
+                isPointerInside = true;
+            }
+
+            window.addEventListener('pointermove', (e) => {
+                updatePointerCoords(e.clientX, e.clientY);
+            });
+
+            window.addEventListener('pointerleave', () => {
+                isPointerInside = false;
+                pointerTarget.set(0, 0);
+            });
+
+            window.addEventListener('mouseout', (e) => {
+                if (!e.relatedTarget) {
+                    isPointerInside = false;
+                    pointerTarget.set(0, 0);
+                }
+            });
+
+            canvas.addEventListener('pointerdown', (e) => {
+                updatePointerCoords(e.clientX, e.clientY);
+                pointerDownPos.set(e.clientX, e.clientY);
+            });
+
+            canvas.addEventListener('pointerup', (e) => {
+                const moveDist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+                if (moveDist < 12) {
+                    // Check if the user clicked on the island or crystal
+                    const ndc = new THREE.Vector2(
+                        (e.clientX / window.innerWidth) * 2 - 1,
+                        -(e.clientY / window.innerHeight) * 2 + 1
+                    );
+                    raycaster.setFromCamera(ndc, camera);
+                    const hits = raycaster.intersectObjects(IslandPivot.children, true);
+                    if (hits.length > 0) {
+                        // Advance progress smoothly and trigger the completion energy burst
+                        const nextProgress = targetProgress >= 98 ? 35 : Math.min(100, targetProgress + 20);
+                        window.HabitFlowSanctuary.setProgress(nextProgress);
+                        window.HabitFlowSanctuary.completeHabit();
+                    }
+                }
+            });
+
+            // Silent keyboard shortcuts for testing Low / Medium / High states & Habit Completion
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '1') window.HabitFlowSanctuary.setProgress(15);
+                else if (e.key === '2') window.HabitFlowSanctuary.setProgress(58);
+                else if (e.key === '3') window.HabitFlowSanctuary.setProgress(100);
+                else if (e.code === 'Space') {
+                    e.preventDefault();
+                    window.HabitFlowSanctuary.completeHabit();
+                }
+            });
+
+            // PostMessage integration for parent React iframe or host app
+            window.addEventListener('message', (e) => {
+                if (!e.data || typeof e.data !== 'object') return;
+                if (e.data.type === 'HABITFLOW_SET_PROGRESS' && typeof e.data.progress === 'number') {
+                    window.HabitFlowSanctuary.setProgress(e.data.progress);
+                } else if (e.data.type === 'HABITFLOW_COMPLETE_HABIT') {
+                    window.HabitFlowSanctuary.completeHabit();
+                }
+            });
+
+            // Expose clean global API for React / Website integration
+            window.HabitFlowSanctuary = {
+                groups: groups,
+                scene: scene,
+                camera: camera,
+                renderer: renderer,
+                setProgress: function (percentage) {
+                    targetProgress = Math.max(0, Math.min(100, Number(percentage) || 0));
+                },
+                getProgress: function () {
+                    return targetProgress;
+                },
+                completeHabit: function () {
+                    spawnCompletionEffects();
+                }
+            };
+
+            // ============================================================================
+            // 14. RESPONSIVE LAYOUT & ASPECT RATIO HANDLING
+            // ============================================================================
+            function handleResize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+
+                // Ensure the full floating island remains uncropped on narrower mobile screens
+                const aspect = width / height;
+                if (aspect < 1.0) {
+                    baseCameraPos.z = 19.5 + (1.0 - aspect) * 11.5;
+                    baseCameraPos.y = 3.0 + (1.0 - aspect) * 1.2;
+                } else {
+                    baseCameraPos.z = 19.5;
+                    baseCameraPos.y = 3.0;
+                }
+            }
+
+            window.addEventListener('resize', handleResize);
+            handleResize();
+
+            // ============================================================================
+            // 15. MAIN ANIMATION LOOP (Seamless Floating, Breathing & Progress Transitions)
+            // ============================================================================
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const dt = Math.min(clock.getDelta(), 0.1);
+                const elapsed = clock.getElapsedTime();
+
+                // 1. Smoothly interpolate progress & burst decay
+                currentProgress += (targetProgress - currentProgress) * Math.min(1, dt * 3.2);
+                const normProgress = currentProgress / 100; // 0.0 to 1.0
+
+                if (habitBurstIntensity > 0.001) {
+                    habitBurstIntensity = Math.max(0, habitBurstIntensity - dt * 1.15);
+                }
+
+                // 2. Smooth pointer damping for 3D tilt & camera parallax
+                pointerSmoothed.x += (pointerTarget.x - pointerSmoothed.x) * Math.min(1, dt * 4.5);
+                pointerSmoothed.y += (pointerTarget.y - pointerSmoothed.y) * Math.min(1, dt * 4.5);
+
+                // Pointer proximity to center boosts crystal response subtly
+                const pointerDistFromCenter = Math.hypot(pointerSmoothed.x, pointerSmoothed.y);
+                const proximityBoost = isPointerInside
+                    ? Math.max(0, 1 - pointerDistFromCenter * 0.85) * 0.35
+                    : 0;
+
+                // 3. Weightless Floating Island Idle Motion + 3D Perspective Tilt
+                const floatY = Math.sin(elapsed * 1.15) * 0.24;
+                const idleYaw = Math.sin(elapsed * 0.35) * 0.06;
+
+                IslandPivot.position.y = floatY;
+                IslandPivot.rotation.y = idleYaw + pointerSmoothed.x * 0.24;
+                IslandPivot.rotation.x = -pointerSmoothed.y * 0.14;
+                IslandPivot.rotation.z = -pointerSmoothed.x * 0.06;
+
+                // Subtle Camera Parallax Shift
+                camera.position.x = baseCameraPos.x + pointerSmoothed.x * 0.85;
+                camera.position.y = baseCameraPos.y + pointerSmoothed.y * 0.55;
+                camera.position.z = baseCameraPos.z;
+                camera.lookAt(0, -0.35 + floatY * 0.2, 0);
+
+                // 4. Meditating Monk Calm Breathing Motion
+                if (monkBreathGroup) {
+                    const breath = Math.sin(elapsed * 1.8) * 0.5 + 0.5;
+                    monkBreathGroup.position.y = 0.22 + breath * 0.012;
+                    monkBreathGroup.scale.set(
+                        1 + breath * 0.012,
+                        1 + breath * 0.015,
+                        1 + breath * 0.012
+                    );
+                }
+
+                // 5. Crystal Core Illumination, Breathing & Progress State
+                const crystalPulse = Math.sin(elapsed * 2.1) * 0.12 + 0.88;
+                const progressLightScale = 0.38 + normProgress * 0.92;
+                const burstBoost = habitBurstIntensity * 2.6;
+
+                crystalLight.intensity = (2.8 * progressLightScale * crystalPulse) + proximityBoost * 1.4 + burstBoost * 2.4;
+                underCyanLight.intensity = (1.4 * (0.35 + normProgress * 0.85) * crystalPulse) + burstBoost * 1.8;
+
+                crystalMaterials.forEach((mat) => {
+                    mat.emissiveIntensity = (0.28 + normProgress * 0.52) * crystalPulse + proximityBoost * 0.25 + burstBoost * 0.95;
+                });
+
+                crystalInnerCores.forEach((mat) => {
+                    mat.opacity = Math.min(1, (0.30 + normProgress * 0.45) * crystalPulse + burstBoost * 0.45);
+                });
+
+                auraSprites.forEach((aura) => {
+                    const wave = Math.sin(elapsed * aura.speed + aura.phase) * 0.06 + 1.0;
+                    const scaleFactor = (0.68 + normProgress * 0.42 + habitBurstIntensity * 0.38) * wave;
+                    aura.sprite.scale.set(
+                        aura.baseScale * scaleFactor,
+                        aura.baseScale * scaleFactor,
+                        1
+                    );
+                    aura.sprite.material.opacity = Math.min(
+                        1,
+                        aura.baseOpacity * (0.32 + normProgress * 0.85) * wave + habitBurstIntensity * 0.35
+                    );
+                });
+
+                // 6. Luminous Cyan Pathways & Rock Cracks Pulsing
+                const veinPulse = Math.sin(elapsed * 2.4) * 0.15 + 0.85;
+                glowVeinMaterials.forEach((item) => {
+                    item.mat.opacity = Math.min(
+                        1,
+                        item.baseOpacity * (0.25 + normProgress * 0.88) * veinPulse + habitBurstIntensity * 0.45
+                    );
+                });
+
+                // 7. Vegetation Growth Scaling (Low / Medium / High Progress) & Breeze Sway
+                growthItems.forEach((item) => {
+                    let targetScale = 1.0;
+                    if (item.minThreshold === 0) {
+                        // Main tree stays visible at Low progress and becomes fuller at High progress
+                        targetScale = 0.78 + normProgress * 0.26;
+                    } else {
+                        const localP = Math.max(0, Math.min(1, (normProgress - item.minThreshold) / 0.28));
+                        // Smooth cubic easing for organic sprouting
+                        const eased = localP * localP * (3 - 2 * localP);
+                        targetScale = 0.001 + eased * item.baseScale;
+                    }
+                    const currentS = item.obj.scale.x;
+                    const nextS = currentS + (targetScale - currentS) * Math.min(1, dt * 5.0);
+                    item.obj.scale.setScalar(nextS);
+                });
+
+                swayObjects.forEach((sw) => {
+                    sw.obj.rotation.z = Math.sin(elapsed * sw.speed + sw.phase) * sw.amp;
+                    sw.obj.rotation.x = Math.cos(elapsed * (sw.speed * 0.8) + sw.phase) * (sw.amp * 0.7);
+                });
+
+                // 8. Independent Floating Sub-Rocks Beneath Island
+                floatingSubRocks.forEach((sr) => {
+                    sr.mesh.position.y = sr.baseY + Math.sin(elapsed * sr.speed + sr.phase) * sr.amp;
+                    sr.mesh.rotation.y += dt * sr.rotSpeed;
+                });
+
+                // 9. Fireflies & Rising Stardust Particles
+                fireflies.forEach((ff) => {
+                    const currentAngle = ff.baseAngle + elapsed * ff.orbitSpeed;
+                    ff.sprite.position.x = Math.cos(currentAngle) * ff.radius + pointerSmoothed.x * 0.35;
+                    ff.sprite.position.z = Math.sin(currentAngle) * ff.radius;
+                    ff.sprite.position.y = ff.baseY + Math.sin(elapsed * ff.bobSpeed + ff.phase) * ff.bobAmp;
+
+                    const visibleFactor = normProgress >= ff.threshold
+                        ? Math.min(1, (normProgress - ff.threshold) / 0.2)
+                        : 0.18;
+                    const twinkle = 0.65 + 0.35 * Math.sin(elapsed * 3.2 + ff.phase);
+                    ff.sprite.material.opacity = visibleFactor * twinkle * 0.9;
+                    const s = ff.baseScale * (0.7 + 0.3 * twinkle);
+                    ff.sprite.scale.set(s, s, 1);
+                });
+
+                if (risingDustSystem) {
+                    const posAttr = risingDustSystem.geometry.attributes.position;
+                    for (let i = 0; i < risingDustData.length; i++) {
+                        const d = risingDustData[i];
+                        let py = posAttr.getY(i) + d.speedY * dt * (0.55 + normProgress * 0.75);
+                        if (py > 4.2) py = -3.8;
+                        const swayX = Math.cos(d.angle + elapsed * 0.15) * d.radius + Math.sin(elapsed + d.driftPhase) * 0.08;
+                        const swayZ = Math.sin(d.angle + elapsed * 0.15) * d.radius + Math.cos(elapsed + d.driftPhase) * 0.08;
+                        posAttr.setXYZ(i, swayX, py, swayZ);
+                    }
+                    posAttr.needsUpdate = true;
+                    risingDustSystem.material.opacity = 0.28 + normProgress * 0.52 + habitBurstIntensity * 0.3;
+                }
+
+                // 10. Update Active Habit-Completion Ripples & Sparkle Bursts
+                for (let i = activeRipples.length - 1; i >= 0; i--) {
+                    const rp = activeRipples[i];
+                    rp.age += dt;
+                    const t = rp.age / rp.maxAge;
+                    if (t >= 1) {
+                        IslandPivot.remove(rp.mesh);
+                        rp.mesh.geometry.dispose();
+                        rp.mesh.material.dispose();
+                        activeRipples.splice(i, 1);
+                    } else {
+                        const easeOut = 1 - Math.pow(1 - t, 3);
+                        const s = rp.startScale + (rp.endScale - rp.startScale) * easeOut;
+                        rp.mesh.scale.set(s, s, s);
+                        rp.mesh.material.opacity = (1 - t) * 0.9;
+                    }
+                }
+
+                for (let i = activeBurstParticles.length - 1; i >= 0; i--) {
+                    const bp = activeBurstParticles[i];
+                    bp.age += dt;
+                    const t = bp.age / bp.maxAge;
+                    if (t >= 1) {
+                        IslandPivot.remove(bp.sprite);
+                        bp.sprite.material.dispose();
+                        activeBurstParticles.splice(i, 1);
+                    } else {
+                        bp.sprite.position.addScaledVector(bp.vel, dt);
+                        bp.vel.multiplyScalar(0.95);
+                        bp.sprite.material.opacity = 1 - t;
+                        const sc = bp.baseScale * (1 - t * 0.5);
+                        bp.sprite.scale.set(sc, sc, 1);
+                    }
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            window.onload = function () {
+                animate();
+            };
+        })();
+    </script>
+</body>
+</html>

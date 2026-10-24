@@ -8,12 +8,13 @@ import {
   BookOpen, 
   Moon, 
   Flame, 
-  Trash2,
-  Clock,
-  Plus
+  Trash2, 
+  Clock, 
+  Plus 
 } from 'lucide-react';
 import type { Habit, TimeOfDay } from '../types/habit';
 import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface HabitListProps {
   habits: Habit[];
@@ -66,7 +67,7 @@ export const HabitList: React.FC<HabitListProps> = ({
     if (habit && !habit.completed) {
       // Trigger subtle celebratory micro-confetti on checking off
       confetti({
-        particleCount: 30,
+        particleCount: 32,
         spread: 60,
         origin: { y: 0.8 },
         colors: ['#8b5cf6', '#06b6d4', '#c084fc', '#38bdf8'],
@@ -92,8 +93,8 @@ export const HabitList: React.FC<HabitListProps> = ({
             </p>
           </div>
 
-          {/* Large Visible Percentage Meter */}
-          <div className="flex items-center gap-3 bg-[#0a0c16] px-4 py-2.5 rounded-xl border border-white/5 self-start sm:self-auto">
+          {/* Large Visible Percentage Meter with animated SVG path */}
+          <div className="flex items-center gap-3 bg-[#0a0c16] px-4 py-2.5 rounded-xl border border-white/5 self-start sm:self-auto shadow-inner">
             <div className="relative w-10 h-10 flex items-center justify-center">
               <svg className="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
                 <path
@@ -104,7 +105,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-violet-500 transition-all duration-500 ease-out"
+                  className="text-violet-500 transition-all duration-700 ease-out"
                   strokeDasharray={`${completionRate}, 100`}
                   strokeWidth="3.5"
                   strokeLinecap="round"
@@ -126,7 +127,7 @@ export const HabitList: React.FC<HabitListProps> = ({
           </div>
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter Pills with smooth motion */}
         <div className="flex items-center gap-1.5 pt-4 overflow-x-auto no-scrollbar">
           {(
             [
@@ -137,25 +138,33 @@ export const HabitList: React.FC<HabitListProps> = ({
               { id: 'completed', label: 'Completed' },
             ] as const
           ).map((item) => (
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               key={item.id}
               onClick={() => setFilter(item.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 filter === item.id
                   ? 'bg-violet-600 text-white shadow-md shadow-violet-600/30 border border-violet-400/40'
                   : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
             >
               {item.label}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
 
-      {/* Habit Checklist Cards */}
-      <div className="space-y-2.5">
+      {/* Staggered Habit Checklist Cards */}
+      <motion.div
+        layout
+        className="space-y-2.5"
+      >
         {filteredHabits.length === 0 ? (
-          <div className="p-8 text-center rounded-2xl bg-[#0f111e]/40 border border-dashed border-white/10">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="p-8 text-center rounded-2xl bg-[#0f111e]/40 border border-dashed border-white/10"
+          >
             <Sparkles className="w-8 h-8 text-violet-400 mx-auto mb-2 opacity-50" />
             <h4 className="text-sm font-semibold text-slate-300">No habits in this category</h4>
             <p className="text-xs text-slate-500 mt-1">
@@ -163,18 +172,23 @@ export const HabitList: React.FC<HabitListProps> = ({
             </p>
             <button
               onClick={onOpenAddModal}
-              className="mt-4 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-500/40 text-xs font-semibold hover:bg-violet-600/50 transition-all"
+              className="mt-4 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-500/40 text-xs font-semibold hover:bg-violet-600/50 transition-all cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               Create Habit
             </button>
-          </div>
+          </motion.div>
         ) : (
-          filteredHabits.map((habit) => {
+          filteredHabits.map((habit, idx) => {
             const isDone = habit.completed;
             return (
-              <div
+              <motion.div
+                layout
                 key={habit.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.25, delay: idx * 0.04 }}
                 className={`group relative flex items-center justify-between p-4 rounded-xl border transition-all duration-200 ${
                   isDone
                     ? 'bg-[#0f121e]/60 border-violet-500/30 shadow-md'
@@ -183,18 +197,31 @@ export const HabitList: React.FC<HabitListProps> = ({
               >
                 {/* Left: Completion Control & Details */}
                 <div className="flex items-center gap-3.5 min-w-0">
-                  {/* Custom Glowing Checkbox */}
-                  <button
+                  {/* Custom Glowing Animated Checkbox */}
+                  <motion.button
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.88 }}
                     onClick={() => handleToggle(habit.id)}
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer relative overflow-hidden ${
                       isDone
-                        ? 'bg-gradient-to-tr from-violet-600 to-cyan-500 text-white shadow-lg shadow-violet-600/40 scale-105'
+                        ? 'bg-gradient-to-tr from-violet-600 to-cyan-500 text-white shadow-lg shadow-violet-600/40'
                         : 'border-2 border-slate-600 hover:border-violet-400 bg-slate-900/60'
                     }`}
                     aria-label={`Toggle habit: ${habit.title}`}
                   >
-                    {isDone && <Check className="w-4 h-4 stroke-[3]" />}
-                  </button>
+                    <AnimatePresence>
+                      {isDone && (
+                        <motion.div
+                          initial={{ scale: 0, rotate: -45 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0 }}
+                          transition={{ type: 'spring', damping: 15, stiffness: 400 }}
+                        >
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.button>
 
                   {/* Habit Category Icon & Info */}
                   <div className="min-w-0">
@@ -220,7 +247,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                       {habit.description}
                     </p>
 
-                    {/* Meta tags: time of day & category */}
+                    {/* Meta tags */}
                     <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
                       <span className="flex items-center gap-1 capitalize text-slate-400">
                         <Clock className="w-3 h-3 text-slate-500" />
@@ -251,21 +278,23 @@ export const HabitList: React.FC<HabitListProps> = ({
                     <span>{habit.streak}d</span>
                   </div>
 
-                  {/* Delete button (with confirm on hover) */}
-                  <button
+                  {/* Delete button */}
+                  <motion.button
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => onDeleteHabit(habit.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                     title="Remove habit"
                     aria-label="Remove habit"
                   >
                     <Trash2 className="w-4 h-4" />
-                  </button>
+                  </motion.button>
                 </div>
-              </div>
+              </motion.div>
             );
           })
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

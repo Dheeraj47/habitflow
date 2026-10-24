@@ -15,6 +15,7 @@ import {
   Palette
 } from 'lucide-react';
 import type { ActiveTab } from '../../types/habit';
+import { motion } from 'motion/react';
 
 interface SectionViewProps {
   tab: ActiveTab;
@@ -29,7 +30,12 @@ export const SectionView: React.FC<SectionViewProps> = ({
 }) => {
   if (tab === 'calendar') {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="space-y-6"
+      >
         <div className="p-6 rounded-2xl bg-[#0f111e]/90 border border-violet-500/20 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -58,9 +64,10 @@ export const SectionView: React.FC<SectionViewProps> = ({
               const isToday = dayNum === 24;
               const hasHighRate = dayNum <= 24 && dayNum % 3 !== 0;
               return (
-                <div
+                <motion.div
                   key={dayNum}
-                  className={`p-3 rounded-xl border text-center transition-all ${
+                  whileHover={{ scale: 1.05 }}
+                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                     isToday
                       ? 'bg-violet-600/40 border-violet-400 text-white font-bold shadow-lg shadow-violet-500/30 ring-1 ring-cyan-400'
                       : hasHighRate
@@ -72,30 +79,35 @@ export const SectionView: React.FC<SectionViewProps> = ({
                   {hasHighRate && (
                     <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mx-auto mt-1" />
                   )}
-                </div>
+                </motion.div>
               );
             })}
           </div>
 
-          <div className="mt-6 p-4 rounded-xl bg-violet-950/30 border border-violet-500/20 flex items-center justify-between">
+          <div className="mt-6 p-4 rounded-xl bg-violet-950/30 border border-violet-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
             <span className="text-xs text-violet-300">
               ⚡ Multi-month calendar syncing will be activated with Supabase authentication in Phase 2.
             </span>
             <button
               onClick={onGoToDashboard}
-              className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold hover:bg-violet-500 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-500 transition-colors cursor-pointer"
             >
               Return to Dashboard
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (tab === 'insights') {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="space-y-6"
+      >
         <div className="p-6 rounded-2xl bg-[#0f111e]/90 border border-violet-500/20 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -107,40 +119,65 @@ export const SectionView: React.FC<SectionViewProps> = ({
                 <p className="text-xs text-slate-400">Deep performance analysis and adherence curves</p>
               </div>
             </div>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={onOpenCoachModal}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-500/40 text-xs font-semibold hover:bg-violet-600/50 transition-colors cursor-pointer"
             >
               <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
               <span>Ask Aura to Analyze</span>
-            </button>
+            </motion.button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-              <span className="text-xs text-slate-400 font-semibold">Peak Energy Window</span>
-              <div className="text-xl font-bold text-violet-300 mt-1">7:00 AM – 10:30 AM</div>
-              <p className="text-[11px] text-slate-500 mt-1">94% ritual completion rate in mornings</p>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-              <span className="text-xs text-slate-400 font-semibold">Strongest Habit Keystone</span>
-              <div className="text-xl font-bold text-cyan-400 mt-1">Hydration (2.5L)</div>
-              <p className="text-[11px] text-slate-500 mt-1">21 days unbroken chain</p>
-            </div>
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-white/5">
-              <span className="text-xs text-slate-400 font-semibold">Weekly Adherence Score</span>
-              <div className="text-xl font-bold text-emerald-400 mt-1">92 / 100</div>
-              <p className="text-[11px] text-slate-500 mt-1">+8 points over previous week</p>
-            </div>
+            {[
+              {
+                title: 'Peak Energy Window',
+                val: '7:00 AM – 10:30 AM',
+                desc: '94% ritual completion rate in mornings',
+                color: 'text-violet-300',
+              },
+              {
+                title: 'Strongest Habit Keystone',
+                val: 'Hydration (2.5L)',
+                desc: '21 days unbroken chain',
+                color: 'text-cyan-400',
+              },
+              {
+                title: 'Weekly Adherence Score',
+                val: '92 / 100',
+                desc: '+8 points over previous week',
+                color: 'text-emerald-400',
+              },
+            ].map((insight, idx) => (
+              <motion.div
+                key={insight.title}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.08 }}
+                whileHover={{ y: -2 }}
+                className="p-4 rounded-xl bg-slate-900/60 border border-white/5 transition-colors hover:border-violet-500/30"
+              >
+                <span className="text-xs text-slate-400 font-semibold">{insight.title}</span>
+                <div className={`text-xl font-bold mt-1 ${insight.color}`}>{insight.val}</div>
+                <p className="text-[11px] text-slate-500 mt-1">{insight.desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (tab === 'friends') {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="space-y-6"
+      >
         <div className="p-6 rounded-2xl bg-[#0f111e]/90 border border-violet-500/20 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -152,13 +189,15 @@ export const SectionView: React.FC<SectionViewProps> = ({
                 <p className="text-xs text-slate-400">Collaborative habit circles with live leaderboards</p>
               </div>
             </div>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => alert('Friend invitations will connect through Supabase in Phase 2!')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-500/40 text-xs font-semibold hover:bg-violet-600/50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-500/40 text-xs font-semibold hover:bg-violet-600/50 transition-colors cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Invite Friend</span>
-            </button>
+            </motion.button>
           </div>
 
           {/* Friend Leaderboard Preview */}
@@ -169,17 +208,20 @@ export const SectionView: React.FC<SectionViewProps> = ({
               { name: 'David Chen', level: 12, streak: 11, score: 88, avatar: 'DC', isUser: false },
               { name: 'Elena Rostova', level: 15, streak: 15, score: 90, avatar: 'ER', isUser: false },
             ].map((f, idx) => (
-              <div
+              <motion.div
                 key={f.name}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: idx * 0.05 }}
                 className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
                   f.isUser
-                    ? 'bg-violet-950/40 border-violet-500/40'
+                    ? 'bg-violet-950/40 border-violet-500/40 shadow-md'
                     : 'bg-slate-900/50 border-white/5'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-bold text-slate-500 w-4">#{idx + 1}</span>
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-cyan-500 flex items-center justify-center text-xs font-bold text-white">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-violet-600 to-cyan-500 flex items-center justify-center text-xs font-bold text-white shadow-md">
                     {f.avatar}
                   </div>
                   <div>
@@ -197,17 +239,22 @@ export const SectionView: React.FC<SectionViewProps> = ({
                     {f.score}% Adherence
                   </span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (tab === 'achievements') {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="space-y-6"
+      >
         <div className="p-6 rounded-2xl bg-[#0f111e]/90 border border-violet-500/20 shadow-xl">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
@@ -227,12 +274,16 @@ export const SectionView: React.FC<SectionViewProps> = ({
               { title: 'Iron Will', desc: 'Achieve a 30-day unbroken streak', unlocked: false, icon: ShieldCheck, color: '#64748b' },
               { title: 'Sanctuary Expansion', desc: 'Unlock the floating sky garden', unlocked: false, icon: Sparkles, color: '#64748b' },
               { title: 'Community Vanguard', desc: 'Complete 3 group quests with friends', unlocked: false, icon: Users, color: '#64748b' },
-            ].map((badge) => (
-              <div
+            ].map((badge, idx) => (
+              <motion.div
                 key={badge.title}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: idx * 0.05 }}
+                whileHover={{ scale: 1.02 }}
                 className={`p-4 rounded-xl border flex items-start gap-3 transition-all ${
                   badge.unlocked
-                    ? 'bg-slate-900/80 border-violet-500/30'
+                    ? 'bg-slate-900/80 border-violet-500/30 shadow-md'
                     : 'bg-slate-950/40 border-white/5 opacity-60'
                 }`}
               >
@@ -249,17 +300,22 @@ export const SectionView: React.FC<SectionViewProps> = ({
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">{badge.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (tab === 'settings') {
     return (
-      <div className="space-y-6">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="space-y-6"
+      >
         <div className="p-6 rounded-2xl bg-[#0f111e]/90 border border-violet-500/20 shadow-xl max-w-2xl">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2.5 rounded-xl bg-slate-800 text-slate-300 border border-white/10">
@@ -293,7 +349,7 @@ export const SectionView: React.FC<SectionViewProps> = ({
                   <div className="text-[11px] text-slate-400">Gentle sound & notification chimes</div>
                 </div>
               </div>
-              <input type="checkbox" defaultChecked className="accent-violet-500 w-4 h-4" />
+              <input type="checkbox" defaultChecked className="accent-violet-500 w-4 h-4 cursor-pointer" />
             </div>
 
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-white/5">
@@ -308,7 +364,7 @@ export const SectionView: React.FC<SectionViewProps> = ({
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 

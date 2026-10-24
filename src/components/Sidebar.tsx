@@ -13,12 +13,15 @@ import {
   ChevronRight
 } from 'lucide-react';
 import type { ActiveTab } from '../types/habit';
+import { motion } from 'motion/react';
 
 interface SidebarProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
+  userXP?: number;
+  topStreak?: number;
 }
 
 interface NavItemConfig {
@@ -34,7 +37,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   isOpenMobile,
   onCloseMobile,
+  userXP = 1450,
+  topStreak = 14,
 }) => {
+  const currentLevel = Math.floor(userXP / 100);
+  const xpIntoCurrentLevel = userXP % 100;
+
   const navItems: NavItemConfig[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', label: 'My Habits', icon: CheckSquare, badge: '6' },
@@ -91,13 +99,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <button
+              <motion.button
                 key={item.id}
+                whileTap={{ scale: 0.98 }}
+                whileHover={{ x: 3 }}
                 onClick={() => {
                   onSelectTab(item.id);
                   onCloseMobile();
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group ${
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group cursor-pointer ${
                   isActive
                     ? 'bg-gradient-to-r from-violet-600/25 to-indigo-600/10 text-white border border-violet-500/40 shadow-lg shadow-violet-600/10'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
@@ -135,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
                   {isActive && <ChevronRight className="w-4 h-4 text-violet-400" />}
                 </div>
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -149,26 +159,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Flame className="w-4 h-4 fill-amber-400 text-amber-400" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-200">14 Day Streak</div>
-                <div className="text-[10px] text-amber-300/80">Top 5% among friends</div>
+                <div className="text-xs font-bold text-slate-200">{topStreak} Day Streak</div>
+                <div className="text-[10px] text-amber-300/80">Active habit momentum</div>
               </div>
             </div>
             <span className="text-xs font-bold text-amber-400">🔥</span>
           </div>
 
-          {/* Profile snippet */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-cyan-400 p-[1.5px]">
-                <div className="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center font-bold text-xs text-white">
-                  AR
+          {/* Profile snippet with live XP bar */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-violet-600 to-cyan-400 p-[1.5px]">
+                  <div className="w-full h-full bg-slate-900 rounded-xl flex items-center justify-center font-bold text-xs text-white">
+                    AR
+                  </div>
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#0c0e18] rounded-full" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold text-slate-200 truncate">Alex Rivera</div>
+                <div className="text-[10px] text-slate-400 truncate">
+                  Level {currentLevel} Habit Architect
                 </div>
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#0c0e18] rounded-full" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-bold text-slate-200 truncate">Alex Rivera</div>
-              <div className="text-[10px] text-slate-400 truncate">Habit Architect • Lvl 14</div>
+
+            {/* Level XP Progress Bar */}
+            <div className="pt-1">
+              <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                <span className="text-violet-300 font-semibold">{userXP} Total XP</span>
+                <span className="text-slate-500">{xpIntoCurrentLevel}/100 XP</span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full"
+                  animate={{ width: `${xpIntoCurrentLevel}%` }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                />
+              </div>
             </div>
           </div>
         </div>

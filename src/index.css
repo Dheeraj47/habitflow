@@ -10,7 +10,7 @@
     font-family: var(--font-sans);
     background-color: #08090e;
     color: #e2e8f0;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   #root {
@@ -93,3 +93,14 @@
 .animate-orb-float {
   animation: orb-float 3s ease-in-out infinite;
 }
+
+/* Accessibility: Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+

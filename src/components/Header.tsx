@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar as CalendarIcon, Plus, Menu, Flame, Sparkles } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface HeaderProps {
   onOpenAddModal: () => void;
@@ -16,26 +17,29 @@ export const Header: React.FC<HeaderProps> = ({
   completedCount,
   totalCount,
 }) => {
-  // Format current date: e.g. Friday, October 24, 2026
-  const formattedDate = new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date());
+  // Format current date purely once on component mount
+  const [formattedDate] = React.useState(() =>
+    new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(new Date())
+  );
 
   return (
     <header className="sticky top-0 z-30 bg-[#08090e]/85 backdrop-blur-xl border-b border-white/5 px-4 sm:px-8 py-4 transition-all">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Left: Mobile Menu & Welcome Message */}
         <div className="flex items-center gap-3">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={onOpenMobileSidebar}
-            className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white lg:hidden"
+            className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white lg:hidden cursor-pointer"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5" />
-          </button>
+          </motion.button>
 
           <div>
             <div className="flex items-center gap-2">
@@ -62,22 +66,24 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="w-16 h-2 bg-slate-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-500 rounded-full"
+                className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-700 rounded-full"
                 style={{ width: `${completionRate}%` }}
               />
             </div>
             <span className="text-xs font-bold text-violet-300">{completionRate}%</span>
           </div>
 
-          {/* Add Habit Primary Action Button */}
-          <button
+          {/* Add Habit Primary Action Button with spring micro-interaction */}
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={onOpenAddModal}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-violet-600/30 hover:shadow-violet-600/50 transition-all active:scale-[0.98] border border-violet-400/30 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-violet-600/30 hover:shadow-violet-600/50 transition-all border border-violet-400/30 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Habit</span>
             <Sparkles className="w-3.5 h-3.5 text-violet-200 hidden sm:inline" />
-          </button>
+          </motion.button>
         </div>
       </div>
     </header>

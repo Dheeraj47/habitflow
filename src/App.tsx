@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { HabitIslandCanvas } from './components/Island3D/HabitIslandCanvas';
@@ -8,11 +8,16 @@ import { AICoachCard } from './components/AICoachCard';
 import { AICoachModal } from './components/AICoachModal';
 import { AddHabitModal } from './components/AddHabitModal';
 import { SectionView } from './components/Views/SectionView';
+import { CinematicHero } from './components/Hero/CinematicHero';
+import { ToastContainer } from './components/Toast/ToastContainer';
+import type { ToastItem } from './components/Toast/ToastContainer';
 import type { Habit, ActiveTab } from './types/habit';
 import { INITIAL_HABITS, PAST_WEEK_ACTIVITY, generateHeatmapData } from './data/initialData';
 import { Database, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const STORAGE_KEY = 'habitflow_habits_v1';
+const XP_STORAGE_KEY = 'habitflow_user_xp_v1';
 
 export function App() {
   // Load initial habits from localStorage or default
@@ -28,15 +33,29 @@ export function App() {
     return INITIAL_HABITS;
   });
 
+  // User XP state persisted in localStorage
+  const [userXP, setUserXP] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(XP_STORAGE_KEY);
+      if (saved) return Number(saved);
+    } catch {
+      // Fallback default
+    }
+    return 1450;
+  });
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [pulseTrigger, setPulseTrigger] = useState<number>(0);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const toastCounterRef = useRef<number>(1);
 
   // Heatmap dataset
   const [heatmapData] = useState(() => generateHeatmapData());
 
-  // Save to localStorage whenever habits change
+  // Save habits to localStorage whenever changed
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
@@ -45,23 +64,60 @@ export function App() {
     }
   }, [habits]);
 
+  // Save XP to localStorage whenever changed
+  useEffect(() => {
+    try {
+      localStorage.setItem(XP_STORAGE_KEY, String(userXP));
+    } catch {
+      // Ignored
+    }
+  }, [userXP]);
+
+  // Toast Helper
+  const addToast = (toast: Omit<ToastItem, 'id'>) => {
+    toastCounterRef.current += 1;
+    const id = `toast-${toastCounterRef.current}`;
+    setToasts((prev) => [...prev, { ...toast, id }]);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   // Derived metrics
   const totalHabits = habits.length;
   const completedHabits = habits.filter((h) => h.completed).length;
   const completionRate = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
-  const currentStreak = 14; // Base streak
+  const highestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.streak), 0) : 0;
 
-  // Toggle habit completion
+  // Scroll directly to Today's Rituals (Habit Checklist) from the Hero CTA
+  const handleScrollToRituals = () => {
+    if (activeTab !== 'dashboard' && activeTab !== 'habits') {
+      setActiveTab('dashboard');
+    }
+    setTimeout(() => {
+      const el = document.getElementById('todays-rituals');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  };
+
+  // Toggle habit completion with 3D shockwave trigger and Undo Toast
   const handleToggleHabit = (id: string) => {
+    const target = habits.find((h) => h.id === id);
+    if (!target) return;
+
+    const willBeCompleted = !target.completed;
+
     setHabits((prev) =>
       prev.map((habit) => {
         if (habit.id === id) {
-          const nextCompleted = !habit.completed;
           return {
             ...habit,
-            completed: nextCompleted,
-            streak: nextCompleted ? habit.streak + 1 : Math.max(0, habit.streak - 1),
-            completedThisWeek: nextCompleted
+            completed: willBeCompleted,
+            streak: willBeCompleted ? habit.streak + 1 : Math.max(0, habit.streak - 1),
+            completedThisWeek: willBeCompleted
               ? habit.completedThisWeek + 1
               : Math.max(0, habit.completedThisWeek - 1),
           };
@@ -69,25 +125,68 @@ export function App() {
         return habit;
       })
     );
+
+    if (willBeCompleted) {
+      setPulseTrigger((prev) => prev + 1);
+      setUserXP((prev) => prev + 50);
+      addToast({
+        type: 'success',
+        message: `Marked "${target.title}" done!`,
+        subtext: '+50 XP earned • Island crystal charged',
+        actionLabel: 'Undo',
+        onAction: () => handleToggleHabit(id),
+      });
+    } else {
+      setUserXP((prev) => Math.max(0, prev - 50));
+      addToast({
+        type: 'undo',
+        message: `Reopened "${target.title}"`,
+        subtext: 'Habit marked incomplete',
+      });
+    }
   };
 
-  // Delete habit
+  // Delete habit with Undo Toast
   const handleDeleteHabit = (id: string) => {
+    const habitToDelete = habits.find((h) => h.id === id);
+    if (!habitToDelete) return;
+
     setHabits((prev) => prev.filter((h) => h.id !== id));
+
+    addToast({
+      type: 'undo',
+      message: `Removed "${habitToDelete.title}"`,
+      subtext: 'Ritual removed from island',
+      actionLabel: 'Undo',
+      onAction: () => {
+        setHabits((prev) => [habitToDelete, ...prev]);
+        addToast({
+          type: 'success',
+          message: `Restored "${habitToDelete.title}"`,
+        });
+      },
+    });
   };
 
   // Add new habit
   const handleAddHabit = (
     newHabitData: Omit<Habit, 'id' | 'completed' | 'streak' | 'completedThisWeek'>
   ) => {
+    toastCounterRef.current += 1;
     const newHabit: Habit = {
       ...newHabitData,
-      id: `habit-${Date.now()}`,
+      id: `habit-${toastCounterRef.current}`,
       completed: false,
       streak: 0,
       completedThisWeek: 0,
     };
     setHabits((prev) => [newHabit, ...prev]);
+
+    addToast({
+      type: 'info',
+      message: `Planted "${newHabit.title}" in sanctuary!`,
+      subtext: `Target: ${newHabit.targetPerWeek} days/week`,
+    });
   };
 
   return (
@@ -104,6 +203,8 @@ export function App() {
         }}
         isOpenMobile={isMobileSidebarOpen}
         onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        userXP={userXP}
+        topStreak={highestStreak}
       />
 
       {/* Main Content Area */}
@@ -130,54 +231,96 @@ export function App() {
           </div>
         </div>
 
-        {/* Dynamic Page Views */}
+        {/* Dynamic Page Views with Smooth Transition */}
         <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-8">
-          {activeTab === 'dashboard' || activeTab === 'habits' ? (
-            <>
-              {/* 1. Visually Prominent 3D Living Habit Island */}
-              <section aria-label="3D Habit Island">
-                <HabitIslandCanvas
-                  completionRate={completionRate}
-                  completedCount={completedHabits}
-                  totalCount={totalHabits}
-                />
-              </section>
+          <AnimatePresence mode="wait">
+            {activeTab === 'dashboard' || activeTab === 'habits' ? (
+              <motion.div
+                key="dashboard-view"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-8"
+              >
+                {/* 0. Cinematic Motivational Hero (Phase 1) */}
+                <motion.section
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  aria-label="Motivational Introduction"
+                >
+                  <CinematicHero onStartRituals={handleScrollToRituals} />
+                </motion.section>
 
-              {/* 2. AI Companion Panel (Aura) */}
-              <section aria-label="AI Habit Companion">
-                <AICoachCard
+                {/* 1. Sanctuary & Daily Rituals Section (Responsive Two-Column with Sticky 3D Sanctuary) */}
+                <section
+                  id="todays-rituals"
+                  className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
+                  aria-label="Sanctuary and Today's Rituals"
+                >
+                  {/* Left Column: Sticky 3D Monk's Living Sanctuary (Approx 42% / 5 cols) */}
+                  <div className="lg:col-span-5 lg:sticky lg:top-[88px] z-20">
+                    <HabitIslandCanvas
+                      completionRate={completionRate}
+                      completedCount={completedHabits}
+                      totalCount={totalHabits}
+                      pulseTrigger={pulseTrigger}
+                      userXP={userXP}
+                      topStreak={highestStreak}
+                    />
+                  </div>
+
+                  {/* Right Column: AI Companion Panel & Habit Checklist (Approx 58% / 7 cols) */}
+                  <div className="lg:col-span-7 space-y-6">
+                    <AICoachCard
+                      onOpenCoachModal={() => setIsCoachModalOpen(true)}
+                      completionRate={completionRate}
+                    />
+
+                    <HabitList
+                      habits={habits}
+                      onToggleHabit={handleToggleHabit}
+                      onDeleteHabit={handleDeleteHabit}
+                      onOpenAddModal={() => setIsAddModalOpen(true)}
+                      completionRate={completionRate}
+                    />
+                  </div>
+                </section>
+
+                {/* 4. Streaks, 7-Day Velocity Chart, and Activity Heatmap */}
+                <motion.section
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-20px' }}
+                  transition={{ duration: 0.45, delay: 0.15 }}
+                  aria-label="Habit Analytics & Heatmap"
+                >
+                  <StatsAndCharts
+                    pastWeek={PAST_WEEK_ACTIVITY}
+                    heatmapData={heatmapData}
+                    completedTodayCount={completedHabits}
+                    totalHabitsCount={totalHabits}
+                    bestActiveStreak={highestStreak}
+                  />
+                </motion.section>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={`tab-${activeTab}`}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+              >
+                <SectionView
+                  tab={activeTab}
                   onOpenCoachModal={() => setIsCoachModalOpen(true)}
-                  completionRate={completionRate}
+                  onGoToDashboard={() => setActiveTab('dashboard')}
                 />
-              </section>
-
-              {/* 3. Today's Habit Checklist */}
-              <section aria-label="Today's Habit Checklist">
-                <HabitList
-                  habits={habits}
-                  onToggleHabit={handleToggleHabit}
-                  onDeleteHabit={handleDeleteHabit}
-                  onOpenAddModal={() => setIsAddModalOpen(true)}
-                  completionRate={completionRate}
-                />
-              </section>
-
-              {/* 4. Streaks, 7-Day Velocity Chart, and Activity Heatmap */}
-              <section aria-label="Habit Analytics & Heatmap">
-                <StatsAndCharts
-                  pastWeek={PAST_WEEK_ACTIVITY}
-                  heatmapData={heatmapData}
-                  currentStreak={currentStreak}
-                />
-              </section>
-            </>
-          ) : (
-            <SectionView
-              tab={activeTab}
-              onOpenCoachModal={() => setIsCoachModalOpen(true)}
-              onGoToDashboard={() => setActiveTab('dashboard')}
-            />
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </main>
 
         {/* Footer */}
@@ -195,7 +338,7 @@ export function App() {
         </footer>
       </div>
 
-      {/* Modals */}
+      {/* Modals with Spring Transitions & Accessibility */}
       <AddHabitModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -206,8 +349,11 @@ export function App() {
         isOpen={isCoachModalOpen}
         onClose={() => setIsCoachModalOpen(false)}
         completionRate={completionRate}
-        streakCount={currentStreak}
+        streakCount={highestStreak}
       />
+
+      {/* Toast Notification Container */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }
