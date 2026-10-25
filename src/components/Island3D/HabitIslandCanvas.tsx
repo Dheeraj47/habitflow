@@ -10,6 +10,10 @@ interface HabitIslandCanvasProps {
   pulseTrigger?: number;
   userXP?: number;
   topStreak?: number;
+  lifetimeGrowth?: number;
+  sanctuaryTier?: number;
+  sanctuaryTierName?: string;
+  lifetimeCompletions?: number;
 }
 
 function checkWebGLSupport(): boolean {
@@ -103,11 +107,15 @@ function createFacetedCrystalGeometry(radius: number, height: number, sides: num
 }
 
 export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
-  completionRate = 50,
-  completedCount = 3,
+  completionRate = 0,
+  completedCount = 0,
   totalCount = 6,
   pulseTrigger = 0,
   userXP = 1450,
+  lifetimeGrowth = 0.10,
+  sanctuaryTier = 1,
+  sanctuaryTierName = 'Seedling Altar',
+  lifetimeCompletions = 0,
 }) => {
   const [hasWebGL] = useState(() => checkWebGLSupport());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,6 +124,7 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
   // References to communicate real-time reactive state into the RAF render loop
   const completionRateRef = useRef(completionRate);
   const userXPRef = useRef(userXP);
+  const lifetimeGrowthRef = useRef(lifetimeGrowth);
   const spawnBurstRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -125,6 +134,10 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
   useEffect(() => {
     userXPRef.current = userXP;
   }, [userXP]);
+
+  useEffect(() => {
+    lifetimeGrowthRef.current = lifetimeGrowth;
+  }, [lifetimeGrowth]);
 
   // Trigger habit completion shockwave ripple and sparkle bursts
   useEffect(() => {
@@ -140,9 +153,6 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
     }
     return false;
   });
-
-  // Calculate Sanctuary Stage from userXP (Stage 1 to 5)
-  const sanctuaryStage = Math.max(1, Math.min(5, Math.floor(userXP / 400) + 1));
 
   // Initialize and mount the genuine 3D Three.js Island Scene
   useEffect(() => {
@@ -1278,6 +1288,7 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
     const clock = new THREE.Clock();
     let animId = 0;
     let currentNormProgress = completionRateRef.current / 100;
+    let currentLifetimeProgress = lifetimeGrowthRef.current;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -1286,12 +1297,13 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
       const elapsed = clock.getElapsedTime();
       const motionFactor = prefersReducedMotion ? 0.25 : 1.0;
 
-      // Real habit completion percentage interpolation
+      // Real daily habit completion percentage interpolation (crystal lumens & fissures)
       const targetNorm = Math.max(0, Math.min(100, completionRateRef.current)) / 100;
       currentNormProgress += (targetNorm - currentNormProgress) * Math.min(1, dt * 3.2);
 
-      // Lifetime Island Maturity scaling (based on userXP - does NOT reset when daily habits are 0)
-      const lifetimeFactor = Math.min(1, Math.max(0.65, userXPRef.current / 1800));
+      // Genuine Lifetime Sanctuary Maturity interpolation (vegetation & flora evolution)
+      const targetLifetime = Math.max(0.1, Math.min(1.0, lifetimeGrowthRef.current));
+      currentLifetimeProgress += (targetLifetime - currentLifetimeProgress) * Math.min(1, dt * 2.8);
 
       if (habitBurstIntensity > 0.001) {
         habitBurstIntensity = Math.max(0, habitBurstIntensity - dt * 1.15);
@@ -1330,7 +1342,7 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
         1 + breath * 0.012 * motionFactor
       );
 
-      // Crystal Illumination tied to real daily completionRate
+      // Crystal Illumination strictly tied to real daily completionRate
       const crystalPulse = Math.sin(elapsed * 2.1) * 0.12 + 0.88;
       const progressLightScale = 0.38 + currentNormProgress * 0.92;
       const burstBoost = habitBurstIntensity * 2.6;
@@ -1376,15 +1388,20 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
         );
       });
 
-      // Tree Growth: Governed by lifetimeProgress so trees do not disappear on new days!
+      // Tree & Flora Growth: Governed strictly by genuine lifetimeProgress
       growthItems.forEach((item) => {
         let targetScale = item.baseScale;
         if (item.minThreshold > 0) {
-          const localP = Math.max(0, Math.min(1, (lifetimeFactor - item.minThreshold) / 0.28));
-          targetScale = Math.max(0.7, localP) * item.baseScale;
+          // Secondary bonsai trees and flowers awaken progressively
+          const localP = Math.max(0, Math.min(1, (currentLifetimeProgress - item.minThreshold) / 0.3));
+          targetScale = Math.max(0.001, localP) * item.baseScale;
+        } else {
+          // Primary central bonsai trunk: emerges at 0.55 as seedling, matures to 1.0
+          const baseFactor = 0.55 + currentLifetimeProgress * 0.45;
+          targetScale = item.baseScale * baseFactor;
         }
         const currentS = item.obj.scale.x;
-        const nextS = currentS + (targetScale - currentS) * Math.min(1, dt * 5.0);
+        const nextS = currentS + (targetScale - currentS) * Math.min(1, dt * 4.0);
         item.obj.scale.setScalar(nextS);
       });
 
@@ -1527,12 +1544,14 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
             Monk&apos;s Living Sanctuary
           </span>
           <span className="text-[10px] uppercase font-bold text-violet-300 bg-violet-950/90 px-1.5 py-0.5 rounded border border-violet-500/30">
-            Stage {sanctuaryStage}
+            Tier {sanctuaryTier} • {sanctuaryTierName}
           </span>
         </div>
         <p className="text-[11px] text-slate-400 pl-1 flex items-center gap-1.5">
           <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-          <span>{completedCount} of {totalCount} rituals completed today</span>
+          <span>{completedCount} of {totalCount} today</span>
+          <span className="text-slate-600">•</span>
+          <span className="text-emerald-400 font-medium">{lifetimeCompletions} lifetime</span>
         </p>
       </div>
 

@@ -11,7 +11,16 @@ import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
 import { ToastContainer } from './components/Toast/ToastContainer';
 import type { ToastItem } from './components/Toast/ToastContainer';
-import type { Habit, ActiveTab } from './types/habit';
+import type { Habit, ActiveTab, SanctuaryLifetimeStats } from './types/habit';
+import {
+  loadSanctuaryStats,
+  saveSanctuaryStats,
+  calculateSanctuaryGrowth,
+  recordHabitToggleInStats,
+  getTodayDateString,
+  generateUniqueHabitId,
+  migrateCollidingHabitsAndSanctuary,
+} from './utils/sanctuaryGrowth';
 import { INITIAL_HABITS, PAST_WEEK_ACTIVITY, generateHeatmapData } from './data/initialData';
 import { Database, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,19 +28,58 @@ import { motion, AnimatePresence } from 'motion/react';
 const STORAGE_KEY = 'habitflow_habits_v1';
 const XP_STORAGE_KEY = 'habitflow_user_xp_v1';
 
-export function App() {
-  // Load initial habits from localStorage or default
-  const [habits, setHabits] = useState<Habit[]>(() => {
+// Synchronously load, repair collisions, and handle date rollover for initial state
+function loadInitialHabitsAndSanctuary() {
+  const todayStr = getTodayDateString();
+  let initialHabits: Habit[] = INITIAL_HABITS;
+
+  if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          initialHabits = parsed;
+        }
       }
     } catch (e) {
       console.warn('Failed to parse saved habits from localStorage', e);
     }
-    return INITIAL_HABITS;
-  });
+  }
+
+  let initialStats = loadSanctuaryStats();
+
+  // Run safe, idempotent collision repair if duplicate IDs exist
+  const migration = migrateCollidingHabitsAndSanctuary(initialHabits, initialStats);
+  if (migration.wasMigrated) {
+    initialHabits = migration.habits;
+    initialStats = migration.sanctuaryStats;
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialHabits));
+        saveSanctuaryStats(initialStats);
+      } catch (e) {
+        console.warn('Failed to save repaired data to localStorage', e);
+      }
+    }
+  }
+
+  // Handle midnight date rollover
+  if (initialStats.lastActiveDate && initialStats.lastActiveDate !== todayStr) {
+    initialHabits = initialHabits.map((h) => ({ ...h, completed: false }));
+    initialStats = { ...initialStats, lastActiveDate: todayStr };
+    if (typeof window !== 'undefined' && window.localStorage) {
+      saveSanctuaryStats(initialStats);
+    }
+  }
+
+  return { habits: initialHabits, sanctuaryStats: initialStats };
+}
+
+export function App() {
+  // Synchronously load and migrate initial habits and sanctuary stats
+  const [initialData] = useState(() => loadInitialHabitsAndSanctuary());
+  const [habits, setHabits] = useState<Habit[]>(initialData.habits);
 
   // User XP state persisted in localStorage
   const [userXP, setUserXP] = useState<number>(() => {
@@ -43,6 +91,11 @@ export function App() {
     }
     return 1450;
   });
+
+  // Genuine Lifetime Sanctuary History persisted in localStorage
+  const [sanctuaryStats, setSanctuaryStats] = useState<SanctuaryLifetimeStats>(
+    initialData.sanctuaryStats
+  );
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -73,6 +126,34 @@ export function App() {
     }
   }, [userXP]);
 
+  // Save sanctuary lifetime stats to localStorage whenever changed
+  useEffect(() => {
+    saveSanctuaryStats(sanctuaryStats);
+  }, [sanctuaryStats]);
+
+  // Handle midnight date rollover if the browser tab remains open overnight
+  useEffect(() => {
+    const handleDateRollOver = () => {
+      const todayStr = getTodayDateString();
+      setSanctuaryStats((prev) => {
+        if (prev.lastActiveDate && prev.lastActiveDate !== todayStr) {
+          setHabits((currentHabits) =>
+            currentHabits.map((h) => ({ ...h, completed: false }))
+          );
+          return { ...prev, lastActiveDate: todayStr };
+        }
+        return prev;
+      });
+    };
+
+    const intervalId = setInterval(handleDateRollOver, 60000);
+    window.addEventListener('focus', handleDateRollOver);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('focus', handleDateRollOver);
+    };
+  }, []);
+
   // Toast Helper
   const addToast = (toast: Omit<ToastItem, 'id'>) => {
     toastCounterRef.current += 1;
@@ -90,6 +171,9 @@ export function App() {
   const completionRate = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
   const highestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.streak), 0) : 0;
 
+  // Genuine Sanctuary Evolution metrics calculated from verified historical completions
+  const growthInfo = calculateSanctuaryGrowth(sanctuaryStats.totalCompletionsCount);
+
   // Scroll directly to Today's Rituals (Habit Checklist) from the Hero CTA
   const handleScrollToRituals = () => {
     if (activeTab !== 'dashboard' && activeTab !== 'habits') {
@@ -103,12 +187,13 @@ export function App() {
     }, 60);
   };
 
-  // Toggle habit completion with 3D shockwave trigger and Undo Toast
+  // Toggle habit completion with 3D shockwave trigger, Undo Toast, and lifetime history tracking
   const handleToggleHabit = (id: string) => {
     const target = habits.find((h) => h.id === id);
     if (!target) return;
 
     const willBeCompleted = !target.completed;
+    const todayStr = getTodayDateString();
 
     setHabits((prev) =>
       prev.map((habit) => {
@@ -124,6 +209,11 @@ export function App() {
         }
         return habit;
       })
+    );
+
+    // Idempotently update genuine lifetime sanctuary history (safe undo only affects today)
+    setSanctuaryStats((prev) =>
+      recordHabitToggleInStats(prev, id, willBeCompleted, todayStr)
     );
 
     if (willBeCompleted) {
@@ -168,14 +258,13 @@ export function App() {
     });
   };
 
-  // Add new habit
+  // Add new habit with collision-resistant unique ID
   const handleAddHabit = (
     newHabitData: Omit<Habit, 'id' | 'completed' | 'streak' | 'completedThisWeek'>
   ) => {
-    toastCounterRef.current += 1;
     const newHabit: Habit = {
       ...newHabitData,
-      id: `habit-${toastCounterRef.current}`,
+      id: generateUniqueHabitId(),
       completed: false,
       streak: 0,
       completedThisWeek: 0,
@@ -268,6 +357,10 @@ export function App() {
                       pulseTrigger={pulseTrigger}
                       userXP={userXP}
                       topStreak={highestStreak}
+                      lifetimeGrowth={growthInfo.growthFactor}
+                      sanctuaryTier={growthInfo.tier}
+                      sanctuaryTierName={growthInfo.tierName}
+                      lifetimeCompletions={growthInfo.totalCompletions}
                     />
                   </div>
 

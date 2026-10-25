@@ -46,3 +46,24 @@ export type ActiveTab =
   | 'friends'
   | 'achievements'
   | 'settings';
+
+export interface DailyCompletionRecord {
+  completedHabitIds: string[];
+  count: number;
+}
+
+export interface SanctuaryLifetimeStats {
+  historyByDate: Record<string, DailyCompletionRecord>;
+  totalCompletionsCount: number;
+  lastActiveDate: string;
+  schemaVersion: number;
+}
+
+export interface SanctuaryTierInfo {
+  tier: number;
+  tierName: string;
+  growthFactor: number;
+  totalCompletions: number;
+  nextTierThreshold: number;
+  isMaxTier: boolean;
+}
