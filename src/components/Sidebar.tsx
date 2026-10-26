@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { 
   LayoutDashboard, 
   CheckSquare, 
@@ -10,7 +10,8 @@ import {
   Settings, 
   Sparkles,
   Flame,
-  ChevronRight
+  ChevronRight,
+  X,
 } from 'lucide-react';
 import type { ActiveTab } from '../types/habit';
 import { motion } from 'motion/react';
@@ -18,8 +19,10 @@ import { motion } from 'motion/react';
 interface SidebarProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
-  isOpenMobile: boolean;
-  onCloseMobile: () => void;
+  isOpenMobile?: boolean;
+  onCloseMobile?: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   userXP?: number;
   topStreak?: number;
 }
@@ -37,9 +40,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   isOpenMobile,
   onCloseMobile,
+  isOpen,
+  onClose,
   userXP = 1450,
   topStreak = 14,
 }) => {
+  const isVisible = isOpen ?? isOpenMobile ?? false;
+  const handleClose = useCallback(() => {
+    if (onClose) onClose();
+    else if (onCloseMobile) onCloseMobile();
+  }, [onClose, onCloseMobile]);
+
+  // Close sidebar on Escape key press
+  useEffect(() => {
+    if (!isVisible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isVisible, handleClose]);
+
   const currentLevel = Math.floor(userXP / 100);
   const xpIntoCurrentLevel = userXP % 100;
 
@@ -56,38 +79,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Backdrop */}
-      {isOpenMobile && (
+      {/* Backdrop for mobile & desktop drawer mode */}
+      {isVisible && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 lg:hidden"
-          onClick={onCloseMobile}
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={handleClose}
+          aria-label="Close navigation overlay"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-[#0c0e18]/95 backdrop-blur-xl border-r border-violet-500/15 flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          isOpenMobile ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-[#0c0e18]/95 backdrop-blur-2xl border-r border-violet-500/20 flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${
+          isVisible ? 'translate-x-0 shadow-violet-950/50' : '-translate-x-full'
         }`}
       >
         {/* Brand Logo & Header */}
-        <div className="h-20 flex items-center gap-3 px-6 border-b border-white/5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-500 to-cyan-400 p-[1px] shadow-lg shadow-violet-600/30 flex items-center justify-center">
-            <div className="w-full h-full bg-[#0c0e18] rounded-xl flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-cyan-400" />
+        <div className="h-20 flex items-center justify-between px-5 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-500 to-cyan-400 p-[1px] shadow-lg shadow-violet-600/30 flex items-center justify-center">
+              <div className="w-full h-full bg-[#0c0e18] rounded-xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-cyan-400" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-violet-300 bg-clip-text text-transparent">
+                  HabitFlow
+                </h1>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">
+                  3D AI
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">Living Habit Ecosystem</p>
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-violet-300 bg-clip-text text-transparent">
-                HabitFlow
-              </h1>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                3D AI
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400">Living Habit Ecosystem</p>
-          </div>
+
+          {/* Close Sidebar Button */}
+          <button
+            type="button"
+            onClick={handleClose}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Close navigation sidebar"
+            title="Close menu (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation Items */}
@@ -105,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 whileHover={{ x: 3 }}
                 onClick={() => {
                   onSelectTab(item.id);
-                  onCloseMobile();
+                  handleClose();
                 }}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group cursor-pointer ${
                   isActive

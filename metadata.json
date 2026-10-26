@@ -1,0 +1,6 @@
+{
+  "name": "HabitFlow — The Living Sanctuary",
+  "description": "An interactive 3D WebGL sanctuary nurtured through habit tracking, discipline, and daily mindfulness.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

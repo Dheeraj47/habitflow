@@ -1,10 +1,11 @@
-import React from 'react';
-import { Calendar as CalendarIcon, Plus, Menu, Flame, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, Plus, Menu, Flame, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HeaderProps {
   onOpenAddModal: () => void;
   onOpenMobileSidebar: () => void;
+  onToggleSidebar?: () => void;
   completionRate: number;
   completedCount: number;
   totalCount: number;
@@ -13,6 +14,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   onOpenAddModal,
   onOpenMobileSidebar,
+  onToggleSidebar,
   completionRate,
   completedCount,
   totalCount,
@@ -27,18 +29,40 @@ export const Header: React.FC<HeaderProps> = ({
     }).format(new Date())
   );
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  };
+
+  const handleMenuClick = onToggleSidebar || onOpenMobileSidebar;
+
   return (
     <header className="sticky top-0 z-30 bg-[#08090e]/85 backdrop-blur-xl border-b border-white/5 px-4 sm:px-8 py-4 transition-all">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        {/* Left: Mobile Menu & Welcome Message */}
+        {/* Left: Three Lines Menu Button & Welcome Message */}
         <div className="flex items-center gap-3">
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={onOpenMobileSidebar}
-            className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white lg:hidden cursor-pointer"
-            aria-label="Open navigation menu"
+            whileHover={{ scale: 1.05 }}
+            onClick={handleMenuClick}
+            className="p-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-violet-500/20 text-slate-300 hover:text-white transition-all cursor-pointer shadow-lg flex items-center justify-center group"
+            aria-label="Toggle navigation menu"
+            title="Menu (Toggle Navigation Sidebar)"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5 text-violet-400 group-hover:text-cyan-400 transition-colors" />
           </motion.button>
 
           <div>
@@ -56,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: Quick Stats & Add Habit Action */}
+        {/* Right: Quick Stats, Fullscreen Toggle & Add Habit Action */}
         <div className="flex items-center gap-3 self-end md:self-auto">
           {/* Quick Progress Indicator */}
           <div className="hidden sm:flex items-center gap-3 px-3.5 py-2 rounded-xl bg-[#111322] border border-violet-500/20 shadow-md">
@@ -72,6 +96,22 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <span className="text-xs font-bold text-violet-300">{completionRate}%</span>
           </div>
+
+          {/* Fullscreen Toggle Action */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleToggleFullscreen}
+            className="p-2.5 rounded-xl bg-[#111322] hover:bg-slate-800 border border-violet-500/20 text-slate-300 hover:text-white transition-all cursor-pointer shadow-md flex items-center justify-center"
+            title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="w-4 h-4 text-violet-300" />
+            ) : (
+              <Maximize2 className="w-4 h-4 text-violet-300" />
+            )}
+          </motion.button>
 
           {/* Add Habit Primary Action Button with spring micro-interaction */}
           <motion.button

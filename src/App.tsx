@@ -100,7 +100,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [pulseTrigger, setPulseTrigger] = useState<number>(0);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastCounterRef = useRef<number>(1);
@@ -280,7 +280,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#08090e] text-slate-100 flex">
-      {/* Left Navigation Sidebar */}
+      {/* Left Navigation Sidebar (Hidden by default, toggled via three-lines menu button) */}
       <Sidebar
         activeTab={activeTab}
         onSelectTab={(tab) => {
@@ -290,18 +290,19 @@ export function App() {
             setActiveTab(tab);
           }
         }}
-        isOpenMobile={isMobileSidebarOpen}
-        onCloseMobile={() => setIsMobileSidebarOpen(false)}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
         userXP={userXP}
         topStreak={highestStreak}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 lg:pl-72 flex flex-col min-h-screen min-w-0">
+      {/* Main Content Area - Full screen width without permanent sidebar margin */}
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300">
         {/* Sticky Header */}
         <Header
           onOpenAddModal={() => setIsAddModalOpen(true)}
-          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          onOpenMobileSidebar={() => setIsSidebarOpen((prev) => !prev)}
+          onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           completionRate={completionRate}
           completedCount={completedHabits}
           totalCount={totalHabits}
