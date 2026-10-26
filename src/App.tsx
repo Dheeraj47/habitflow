@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
-import { HabitIslandCanvas } from './components/Island3D/HabitIslandCanvas';
+import { DailyFocusCard } from './components/Dashboard/DailyFocusCard';
 import { HabitList } from './components/HabitList';
 import { StatsAndCharts } from './components/StatsAndCharts';
 import { AICoachCard } from './components/AICoachCard';
@@ -9,27 +9,28 @@ import { AICoachModal } from './components/AICoachModal';
 import { AddHabitModal } from './components/AddHabitModal';
 import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
+import { ScrollHUD } from './components/Navigation/ScrollHUD';
 import { ToastContainer } from './components/Toast/ToastContainer';
+import { CustomCursor } from './components/UI/CustomCursor';
 import type { ToastItem } from './components/Toast/ToastContainer';
 import type { Habit, ActiveTab, SanctuaryLifetimeStats } from './types/habit';
 import {
   loadSanctuaryStats,
   saveSanctuaryStats,
-  calculateSanctuaryGrowth,
   recordHabitToggleInStats,
   getTodayDateString,
   generateUniqueHabitId,
   migrateCollidingHabitsAndSanctuary,
 } from './utils/sanctuaryGrowth';
 import { INITIAL_HABITS, PAST_WEEK_ACTIVITY, generateHeatmapData } from './data/initialData';
-import { Database, Sparkles } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Database, Compass } from 'lucide-react';
+import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 
 const STORAGE_KEY = 'habitflow_habits_v1';
 const XP_STORAGE_KEY = 'habitflow_user_xp_v1';
 
 // Synchronously load, repair collisions, and handle date rollover for initial state
-function loadInitialHabitsAndSanctuary() {
+function loadInitialHabitsAndStats() {
   const todayStr = getTodayDateString();
   let initialHabits: Habit[] = INITIAL_HABITS;
 
@@ -73,12 +74,11 @@ function loadInitialHabitsAndSanctuary() {
     }
   }
 
-  return { habits: initialHabits, sanctuaryStats: initialStats };
+  return { habits: initialHabits, stats: initialStats };
 }
 
 export function App() {
-  // Synchronously load and migrate initial habits and sanctuary stats
-  const [initialData] = useState(() => loadInitialHabitsAndSanctuary());
+  const [initialData] = useState(() => loadInitialHabitsAndStats());
   const [habits, setHabits] = useState<Habit[]>(initialData.habits);
 
   // User XP state persisted in localStorage
@@ -92,18 +92,26 @@ export function App() {
     return 1450;
   });
 
-  // Genuine Lifetime Sanctuary History persisted in localStorage
-  const [sanctuaryStats, setSanctuaryStats] = useState<SanctuaryLifetimeStats>(
-    initialData.sanctuaryStats
+  // History stats persisted in localStorage
+  const [lifetimeStats, setLifetimeStats] = useState<SanctuaryLifetimeStats>(
+    initialData.stats
   );
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
+  const [coachPrompt, setCoachPrompt] = useState<string | undefined>(undefined);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [pulseTrigger, setPulseTrigger] = useState<number>(0);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastCounterRef = useRef<number>(1);
+
+  // Scroll Progress Bar calculation with spring damping
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 30,
+    restDelta: 0.001,
+  });
 
   // Heatmap dataset
   const [heatmapData] = useState(() => generateHeatmapData());
@@ -126,16 +134,16 @@ export function App() {
     }
   }, [userXP]);
 
-  // Save sanctuary lifetime stats to localStorage whenever changed
+  // Save lifetime stats to localStorage whenever changed
   useEffect(() => {
-    saveSanctuaryStats(sanctuaryStats);
-  }, [sanctuaryStats]);
+    saveSanctuaryStats(lifetimeStats);
+  }, [lifetimeStats]);
 
   // Handle midnight date rollover if the browser tab remains open overnight
   useEffect(() => {
     const handleDateRollOver = () => {
       const todayStr = getTodayDateString();
-      setSanctuaryStats((prev) => {
+      setLifetimeStats((prev) => {
         if (prev.lastActiveDate && prev.lastActiveDate !== todayStr) {
           setHabits((currentHabits) =>
             currentHabits.map((h) => ({ ...h, completed: false }))
@@ -171,9 +179,6 @@ export function App() {
   const completionRate = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
   const highestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.streak), 0) : 0;
 
-  // Genuine Sanctuary Evolution metrics calculated from verified historical completions
-  const growthInfo = calculateSanctuaryGrowth(sanctuaryStats.totalCompletionsCount);
-
   // Scroll directly to Today's Rituals (Habit Checklist) from the Hero CTA
   const handleScrollToRituals = () => {
     if (activeTab !== 'dashboard' && activeTab !== 'habits') {
@@ -187,7 +192,7 @@ export function App() {
     }, 60);
   };
 
-  // Toggle habit completion with 3D shockwave trigger, Undo Toast, and lifetime history tracking
+  // Toggle habit completion with Undo Toast and streak tracking
   const handleToggleHabit = (id: string) => {
     const target = habits.find((h) => h.id === id);
     if (!target) return;
@@ -211,18 +216,17 @@ export function App() {
       })
     );
 
-    // Idempotently update genuine lifetime sanctuary history (safe undo only affects today)
-    setSanctuaryStats((prev) =>
+    // Update lifetime completion tracking
+    setLifetimeStats((prev) =>
       recordHabitToggleInStats(prev, id, willBeCompleted, todayStr)
     );
 
     if (willBeCompleted) {
-      setPulseTrigger((prev) => prev + 1);
       setUserXP((prev) => prev + 50);
       addToast({
         type: 'success',
         message: `Marked "${target.title}" done!`,
-        subtext: '+50 XP earned • Island crystal charged',
+        subtext: '+50 XP earned • Momentum streak extended',
         actionLabel: 'Undo',
         onAction: () => handleToggleHabit(id),
       });
@@ -246,7 +250,7 @@ export function App() {
     addToast({
       type: 'undo',
       message: `Removed "${habitToDelete.title}"`,
-      subtext: 'Ritual removed from island',
+      subtext: 'Ritual removed from your routine',
       actionLabel: 'Undo',
       onAction: () => {
         setHabits((prev) => [habitToDelete, ...prev]);
@@ -273,19 +277,37 @@ export function App() {
 
     addToast({
       type: 'info',
-      message: `Planted "${newHabit.title}" in sanctuary!`,
+      message: `Added "${newHabit.title}" to your routine!`,
       subtext: `Target: ${newHabit.targetPerWeek} days/week`,
     });
   };
 
+  const handleOpenCoach = (prompt?: string) => {
+    setCoachPrompt(prompt);
+    setIsCoachModalOpen(true);
+  };
+
   return (
-    <div className="min-h-screen bg-[#08090e] text-slate-100 flex">
-      {/* Left Navigation Sidebar (Hidden by default, toggled via three-lines menu button) */}
+    <div className="min-h-screen bg-[#06070b] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-violet-500/30 selection:text-cyan-200">
+      {/* 1. Global Scroll Progress Indicator */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-cyan-400 to-amber-400 origin-left z-50 shadow-[0_0_15px_rgba(6,182,212,0.8)]"
+        style={{ scaleX }}
+      />
+
+      {/* 2. Floating Ambient Glow Orbs in Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 left-1/4 w-[650px] h-[650px] bg-violet-600/10 rounded-full blur-[140px] animate-orb-float" />
+        <div className="absolute top-1/3 -right-40 w-[550px] h-[550px] bg-cyan-500/10 rounded-full blur-[130px] animate-orb-pulse" />
+        <div className="absolute bottom-20 left-10 w-[600px] h-[600px] bg-indigo-600/8 rounded-full blur-[150px]" />
+      </div>
+
+      {/* 3. Left Navigation Sidebar Drawer */}
       <Sidebar
         activeTab={activeTab}
         onSelectTab={(tab) => {
           if (tab === 'coach') {
-            setIsCoachModalOpen(true);
+            handleOpenCoach();
           } else {
             setActiveTab(tab);
           }
@@ -296,8 +318,8 @@ export function App() {
         topStreak={highestStreak}
       />
 
-      {/* Main Content Area - Full screen width without permanent sidebar margin */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300">
+      {/* 4. Main Page Container */}
+      <div className="flex-1 flex flex-col min-h-screen min-w-0 z-10">
         {/* Sticky Header */}
         <Header
           onOpenAddModal={() => setIsAddModalOpen(true)}
@@ -306,22 +328,26 @@ export function App() {
           completionRate={completionRate}
           completedCount={completedHabits}
           totalCount={totalHabits}
+          topStreak={highestStreak}
+          userXP={userXP}
         />
 
-        {/* Local Storage & Phase Notice Banner */}
-        <div className="bg-[#0e1122]/90 border-b border-violet-500/20 px-4 sm:px-8 py-2 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-slate-400">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400" />
-            <span className="font-semibold text-slate-200">HabitFlow Phase 1:</span>
-            <span>Local sandbox session active. Data is stored on your device.</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-violet-300 text-[11px]">
-            <Database className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Supabase Cloud Sync scheduled for Phase 2</span>
+        {/* Local Sandbox Notice Pill */}
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pt-3">
+          <div className="p-2 sm:px-4 rounded-2xl bg-[#0b0e1d]/70 backdrop-blur-md border border-white/8 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#06b6d4]" />
+              <span className="font-bold text-slate-200">Local Sandbox Mode:</span>
+              <span>All progress, streaks, and XP saved securely in device storage.</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-violet-300 font-medium text-[11px] self-end sm:self-auto">
+              <Database className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Phase 2 Cloud Sync Architecture Ready</span>
+            </div>
           </div>
         </div>
 
-        {/* Dynamic Page Views with Smooth Transition */}
+        {/* Main Content Body */}
         <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-8">
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' || activeTab === 'habits' ? (
@@ -331,47 +357,75 @@ export function App() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="space-y-8"
+                className="space-y-10"
               >
-                {/* 0. Cinematic Motivational Hero (Phase 1) */}
+                {/* 0. Cinematic Motivational Hero */}
                 <motion.section
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.55 }}
                   aria-label="Motivational Introduction"
                 >
-                  <CinematicHero onStartRituals={handleScrollToRituals} />
+                  <CinematicHero
+                    onStartRituals={handleScrollToRituals}
+                    completionRate={completionRate}
+                    completedCount={completedHabits}
+                    totalCount={totalHabits}
+                    topStreak={highestStreak}
+                  />
                 </motion.section>
 
-                {/* 1. Sanctuary & Daily Rituals Section (Responsive Two-Column with Sticky 3D Sanctuary) */}
+                {/* 1. Daily Focus Hub & AI Companion (Placed above the habit section) */}
                 <section
-                  id="todays-rituals"
-                  className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
-                  aria-label="Sanctuary and Today's Rituals"
+                  id="daily-focus-section"
+                  className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch scroll-mt-24"
+                  aria-label="Daily Focus and AI Companion"
                 >
-                  {/* Left Column: Sticky 3D Monk's Living Sanctuary (Approx 42% / 5 cols) */}
-                  <div className="lg:col-span-5 lg:sticky lg:top-[88px] z-20">
-                    <HabitIslandCanvas
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-30px' }}
+                    transition={{ duration: 0.45 }}
+                    className="lg:col-span-7 flex flex-col"
+                  >
+                    <DailyFocusCard
+                      habits={habits}
                       completionRate={completionRate}
                       completedCount={completedHabits}
                       totalCount={totalHabits}
-                      pulseTrigger={pulseTrigger}
-                      userXP={userXP}
                       topStreak={highestStreak}
-                      lifetimeGrowth={growthInfo.growthFactor}
-                      sanctuaryTier={growthInfo.tier}
-                      sanctuaryTierName={growthInfo.tierName}
-                      lifetimeCompletions={growthInfo.totalCompletions}
+                      userXP={userXP}
+                      onOpenAddModal={() => setIsAddModalOpen(true)}
                     />
-                  </div>
+                  </motion.div>
 
-                  {/* Right Column: AI Companion Panel & Habit Checklist (Approx 58% / 7 cols) */}
-                  <div className="lg:col-span-7 space-y-6">
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-30px' }}
+                    transition={{ duration: 0.45, delay: 0.08 }}
+                    className="lg:col-span-5 flex flex-col"
+                  >
                     <AICoachCard
-                      onOpenCoachModal={() => setIsCoachModalOpen(true)}
+                      onOpenCoachModal={handleOpenCoach}
                       completionRate={completionRate}
                     />
+                  </motion.div>
+                </section>
 
+                {/* 2. Full-Width Habit Rituals Section */}
+                <section
+                  id="todays-rituals"
+                  className="w-full space-y-6 scroll-mt-24"
+                  aria-label="Habit Checklist"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-30px' }}
+                    transition={{ duration: 0.45 }}
+                    className="w-full"
+                  >
                     <HabitList
                       habits={habits}
                       onToggleHabit={handleToggleHabit}
@@ -379,15 +433,17 @@ export function App() {
                       onOpenAddModal={() => setIsAddModalOpen(true)}
                       completionRate={completionRate}
                     />
-                  </div>
+                  </motion.div>
                 </section>
 
-                {/* 4. Streaks, 7-Day Velocity Chart, and Activity Heatmap */}
+                {/* 2. Streaks, 7-Day Velocity Chart, and Activity Heatmap */}
                 <motion.section
-                  initial={{ opacity: 0, y: 16 }}
+                  id="analytics-section"
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-20px' }}
-                  transition={{ duration: 0.45, delay: 0.15 }}
+                  viewport={{ once: true, margin: '-30px' }}
+                  transition={{ duration: 0.5 }}
+                  className="scroll-mt-24"
                   aria-label="Habit Analytics & Heatmap"
                 >
                   <StatsAndCharts
@@ -402,14 +458,14 @@ export function App() {
             ) : (
               <motion.div
                 key={`tab-${activeTab}`}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
+                exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.25 }}
               >
                 <SectionView
                   tab={activeTab}
-                  onOpenCoachModal={() => setIsCoachModalOpen(true)}
+                  onOpenCoachModal={() => handleOpenCoach()}
                   onGoToDashboard={() => setActiveTab('dashboard')}
                 />
               </motion.div>
@@ -417,22 +473,43 @@ export function App() {
           </AnimatePresence>
         </main>
 
-        {/* Footer */}
-        <footer className="border-t border-white/5 py-6 px-4 sm:px-8 text-center text-xs text-slate-500">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="font-semibold text-slate-400">HabitFlow</span>
-              <span>— 3D AI Habit Ecosystem</span>
+        {/* Luxury Footer */}
+        <footer className="border-t border-white/8 py-8 px-4 sm:px-8 text-center text-xs text-slate-500 mt-12 bg-[#05060a]">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-violet-600 to-cyan-400 p-[1px] flex items-center justify-center">
+                <div className="w-full h-full bg-[#05060a] rounded-lg flex items-center justify-center">
+                  <Compass className="w-3.5 h-3.5 text-cyan-400" />
+                </div>
+              </div>
+              <span className="font-bold text-slate-300">HabitFlow</span>
+              <span className="text-slate-600">•</span>
+              <span>Intelligent Habit Architecture</span>
             </div>
-            <div className="text-[11px] text-slate-500">
-              Built with React, TypeScript, Three.js, React Three Fiber & Tailwind CSS
+            <div className="text-[11px] text-slate-500 flex items-center gap-3">
+              <span>React 19</span>
+              <span>•</span>
+              <span>Tailwind CSS</span>
+              <span>•</span>
+              <span>Framer Motion</span>
+              <span>•</span>
+              <span>Web Audio API</span>
             </div>
           </div>
         </footer>
       </div>
 
-      {/* Modals with Spring Transitions & Accessibility */}
+      {/* Floating Bottom Navigation HUD (Appears when scrolled) */}
+      <ScrollHUD
+        completionRate={completionRate}
+        completedCount={completedHabits}
+        totalCount={totalHabits}
+        topStreak={highestStreak}
+        onOpenAddModal={() => setIsAddModalOpen(true)}
+        onOpenCoachModal={() => handleOpenCoach()}
+      />
+
+      {/* Modals */}
       <AddHabitModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -441,13 +518,20 @@ export function App() {
 
       <AICoachModal
         isOpen={isCoachModalOpen}
-        onClose={() => setIsCoachModalOpen(false)}
+        onClose={() => {
+          setIsCoachModalOpen(false);
+          setCoachPrompt(undefined);
+        }}
         completionRate={completionRate}
         streakCount={highestStreak}
+        initialPrompt={coachPrompt}
       />
 
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
+      {/* Interactive Website-wide Custom Cursor */}
+      <CustomCursor />
     </div>
   );
 }

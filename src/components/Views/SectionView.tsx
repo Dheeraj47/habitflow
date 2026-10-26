@@ -261,7 +261,7 @@ export const SectionView: React.FC<SectionViewProps> = ({
               <Trophy className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Island Sanctuary Trophies</h3>
+              <h3 className="text-lg font-bold text-white">HabitFlow Mastery Trophies</h3>
               <p className="text-xs text-slate-400">Milestone badges earned through consistent execution</p>
             </div>
           </div>
@@ -269,10 +269,10 @@ export const SectionView: React.FC<SectionViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
             {[
               { title: 'Habit Luminary', desc: 'Maintain a 14-day streak', unlocked: true, icon: Award, color: '#f59e0b' },
-              { title: 'Crystal Grove Tier 3', desc: 'Reach 80%+ daily completion', unlocked: true, icon: Sparkles, color: '#8b5cf6' },
+              { title: 'Flow State Master', desc: 'Reach 80%+ daily completion', unlocked: true, icon: Sparkles, color: '#8b5cf6' },
               { title: 'Early Bird Mastery', desc: 'Complete all morning habits before 9 AM', unlocked: true, icon: Clock, color: '#06b6d4' },
               { title: 'Iron Will', desc: 'Achieve a 30-day unbroken streak', unlocked: false, icon: ShieldCheck, color: '#64748b' },
-              { title: 'Sanctuary Expansion', desc: 'Unlock the floating sky garden', unlocked: false, icon: Sparkles, color: '#64748b' },
+              { title: 'Habit Architect', desc: 'Maintain 6 active daily habits', unlocked: false, icon: Sparkles, color: '#64748b' },
               { title: 'Community Vanguard', desc: 'Complete 3 group quests with friends', unlocked: false, icon: Users, color: '#64748b' },
             ].map((badge, idx) => (
               <motion.div

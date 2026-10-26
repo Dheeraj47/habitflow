@@ -131,7 +131,7 @@ export const INITIAL_AI_CHAT = [
   {
     id: 'msg-1',
     sender: 'ai' as const,
-    text: "Greetings, Alex! I'm Aura, your AI habit companion. Your 3D Habit Island is radiating steady violet-blue energy today — you've completed 3 out of 6 habits so far. How can I support your momentum?",
+    text: "Greetings, Alex! I'm Aura, your AI habit companion. You've completed 3 out of 6 daily rituals so far and your momentum is strong. How can I support your focus today?",
     timestamp: 'Just now',
   },
 ];

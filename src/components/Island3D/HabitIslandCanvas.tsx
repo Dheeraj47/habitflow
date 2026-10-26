@@ -33,6 +33,8 @@ function checkWebGLSupport(): boolean {
   }
 }
 
+import { soundFx } from '../../utils/sound';
+
 export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
   completionRate = 0,
   completedCount = 0,
@@ -110,6 +112,7 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
   // Handle Camera Presets
   const handleSelectPreset = useCallback((preset: CameraPreset) => {
     setActivePreset(preset);
+    soundFx.playCrystalChime(784);
     if (sceneManagerRef.current) {
       sceneManagerRef.current.setCameraPreset(preset);
     }
@@ -117,6 +120,7 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
 
   const handleResetCamera = useCallback(() => {
     setActivePreset('overview');
+    soundFx.playCrystalChime(659.25);
     if (sceneManagerRef.current) {
       sceneManagerRef.current.resetCamera();
     }
@@ -129,19 +133,19 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] xl:h-[540px] rounded-2xl overflow-hidden bg-gradient-to-b from-[#080914] via-[#06070e] to-[#04050a] border border-violet-500/20 shadow-2xl group select-none flex items-center justify-center cursor-grab active:cursor-grabbing"
+      className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] xl:h-[540px] rounded-3xl overflow-hidden bg-gradient-to-b from-[#0a0d1c] via-[#060812] to-[#030408] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_40px_rgba(139,92,246,0.15)] group select-none flex items-center justify-center cursor-grab active:cursor-grabbing"
     >
       {/* Background Radial Ambiance */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-950/25 via-[#080914]/80 to-[#04050a] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-950/30 via-[#080914]/80 to-[#030408] pointer-events-none" />
 
       {/* Floating HUD Badges: Top Left */}
       <div className="absolute top-4 left-4 z-30 flex flex-col gap-1.5 pointer-events-none">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/85 backdrop-blur-md border border-violet-500/30 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-xs font-semibold tracking-wide text-slate-100">
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-xl border border-violet-500/35 shadow-xl">
+          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#06b6d4]" />
+          <span className="text-xs font-bold tracking-wide text-white">
             Monk&apos;s Living Sanctuary
           </span>
-          <span className="text-[10px] uppercase font-bold text-violet-300 bg-violet-950/90 px-1.5 py-0.5 rounded border border-violet-500/30">
+          <span className="text-[10px] uppercase font-bold text-violet-300 bg-violet-950/90 px-2 py-0.5 rounded-full border border-violet-500/30">
             Tier {sanctuaryTier} • {sanctuaryTierName}
           </span>
         </div>

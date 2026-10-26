@@ -17,6 +17,7 @@ interface AICoachModalProps {
   onClose: () => void;
   completionRate: number;
   streakCount: number;
+  initialPrompt?: string;
 }
 
 export const AICoachModal: React.FC<AICoachModalProps> = ({
@@ -24,17 +25,26 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
   onClose,
   completionRate,
   streakCount,
+  initialPrompt,
 }) => {
   const [messages, setMessages] = useState<AICoachMessage[]>(INITIAL_AI_CHAT);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgCounterRef = useRef<number>(100);
+  const handledInitialRef = useRef<string | null>(null);
 
   // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  useEffect(() => {
+    if (isOpen && initialPrompt && handledInitialRef.current !== initialPrompt) {
+      handledInitialRef.current = initialPrompt;
+      handleSendMessage(initialPrompt);
+    }
+  }, [isOpen, initialPrompt]);
 
   // Close on Escape key press
   useEffect(() => {
