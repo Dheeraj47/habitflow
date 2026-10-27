@@ -9,6 +9,7 @@ import { AICoachModal } from './components/AICoachModal';
 import { AddHabitModal } from './components/AddHabitModal';
 import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
+import { DailyBudgetTracker } from './components/Budget/DailyBudgetTracker';
 import { ScrollHUD } from './components/Navigation/ScrollHUD';
 import { ToastContainer } from './components/Toast/ToastContainer';
 import { CustomCursor } from './components/UI/CustomCursor';
@@ -436,7 +437,20 @@ export function App() {
                   </motion.div>
                 </section>
 
-                {/* 2. Streaks, 7-Day Velocity Chart, and Activity Heatmap */}
+                {/* 3. Daily Budget & Savings Tracker Section */}
+                <motion.section
+                  id="budget-tracker-section"
+                  initial={{ opacity: 0, y: 22 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-30px' }}
+                  transition={{ duration: 0.48 }}
+                  className="w-full scroll-mt-24"
+                  aria-label="Daily Budget and Savings Tracker"
+                >
+                  <DailyBudgetTracker />
+                </motion.section>
+
+                {/* 4. Streaks, 7-Day Velocity Chart, and Activity Heatmap */}
                 <motion.section
                   id="analytics-section"
                   initial={{ opacity: 0, y: 24 }}
@@ -467,6 +481,10 @@ export function App() {
                   tab={activeTab}
                   onOpenCoachModal={() => handleOpenCoach()}
                   onGoToDashboard={() => setActiveTab('dashboard')}
+                  habits={habits}
+                  onToggleHabit={handleToggleHabit}
+                  onOpenAddModal={() => setIsAddModalOpen(true)}
+                  lifetimeStats={lifetimeStats}
                 />
               </motion.div>
             )}

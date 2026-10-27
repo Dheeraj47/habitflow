@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { motion, HTMLMotionProps } from 'motion/react';
+import { motion, type HTMLMotionProps } from 'motion/react';
 
 interface SpotlightCardProps extends HTMLMotionProps<'div'> {
   children: React.ReactNode;

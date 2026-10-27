@@ -43,7 +43,7 @@ export const AICoachCard: React.FC<AICoachCardProps> = ({
       onMouseMove={onMouseMove}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className="relative p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#0e1226]/95 via-[#0a0d1c]/95 to-[#060812]/95 border border-white/10 shadow-2xl overflow-hidden group select-none transition-all duration-300 hover:border-violet-500/40 hover:shadow-[0_20px_50px_rgba(139,92,246,0.18)] h-full flex flex-col justify-between space-y-5"
+      className="relative p-4 sm:p-7 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0e1226]/95 via-[#0a0d1c]/95 to-[#060812]/95 border border-white/10 shadow-2xl overflow-hidden group select-none transition-all duration-300 hover:border-violet-500/40 hover:shadow-[0_20px_50px_rgba(139,92,246,0.18)] h-full flex flex-col justify-between space-y-4 sm:space-y-5"
     >
       {/* Dynamic Cursor Spotlight Layer */}
       <div

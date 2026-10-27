@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  Calendar, 
   BarChart3, 
   Users, 
   Trophy, 
@@ -14,88 +13,56 @@ import {
   Bell,
   Palette
 } from 'lucide-react';
-import type { ActiveTab } from '../../types/habit';
+import type { ActiveTab, Habit, SanctuaryLifetimeStats } from '../../types/habit';
 import { motion } from 'motion/react';
+import { RitualCalendar } from '../Calendar/RitualCalendar';
+import { DailyBudgetTracker } from '../Budget/DailyBudgetTracker';
 
 interface SectionViewProps {
   tab: ActiveTab;
   onOpenCoachModal: () => void;
   onGoToDashboard: () => void;
+  habits?: Habit[];
+  onToggleHabit?: (id: string) => void;
+  onOpenAddModal?: () => void;
+  lifetimeStats?: SanctuaryLifetimeStats;
 }
 
 export const SectionView: React.FC<SectionViewProps> = ({
   tab,
   onOpenCoachModal,
   onGoToDashboard,
+  habits = [],
+  onToggleHabit = () => {},
+  onOpenAddModal = () => {},
+  lifetimeStats,
 }) => {
+  if (tab === 'budget') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+      >
+        <DailyBudgetTracker />
+      </motion.div>
+    );
+  }
+
   if (tab === 'calendar') {
     return (
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="space-y-6"
       >
-        <div className="p-6 rounded-2xl bg-[#0f111e]/90 border border-violet-500/20 shadow-xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-violet-600/20 text-violet-300 border border-violet-500/30">
-                <Calendar className="w-6 h-6 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Interactive Ritual Calendar</h3>
-                <p className="text-xs text-slate-400">Monthly schedule & habit completion timeline</p>
-              </div>
-            </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/30 font-semibold">
-              Preview Mode
-            </span>
-          </div>
-
-          {/* Calendar Grid Mockup */}
-          <div className="grid grid-cols-7 gap-2 text-center text-xs mt-6">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-              <div key={day} className="text-slate-500 font-bold py-2">
-                {day}
-              </div>
-            ))}
-            {Array.from({ length: 31 }, (_, i) => {
-              const dayNum = i + 1;
-              const isToday = dayNum === 24;
-              const hasHighRate = dayNum <= 24 && dayNum % 3 !== 0;
-              return (
-                <motion.div
-                  key={dayNum}
-                  whileHover={{ scale: 1.05 }}
-                  className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                    isToday
-                      ? 'bg-violet-600/40 border-violet-400 text-white font-bold shadow-lg shadow-violet-500/30 ring-1 ring-cyan-400'
-                      : hasHighRate
-                      ? 'bg-slate-900/70 border-violet-500/20 text-slate-200'
-                      : 'bg-slate-900/30 border-white/5 text-slate-500'
-                  }`}
-                >
-                  <div className="text-xs font-semibold">{dayNum}</div>
-                  {hasHighRate && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mx-auto mt-1" />
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <div className="mt-6 p-4 rounded-xl bg-violet-950/30 border border-violet-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span className="text-xs text-violet-300">
-              ⚡ Multi-month calendar syncing will be activated with Supabase authentication in Phase 2.
-            </span>
-            <button
-              onClick={onGoToDashboard}
-              className="px-3.5 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-500 transition-colors cursor-pointer"
-            >
-              Return to Dashboard
-            </button>
-          </div>
-        </div>
+        <RitualCalendar
+          habits={habits}
+          onToggleHabit={onToggleHabit}
+          onOpenAddModal={onOpenAddModal}
+          onGoToDashboard={onGoToDashboard}
+          lifetimeStats={lifetimeStats}
+        />
       </motion.div>
     );
   }

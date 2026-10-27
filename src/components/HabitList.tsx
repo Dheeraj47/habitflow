@@ -35,6 +35,17 @@ export const HabitList: React.FC<HabitListProps> = ({
   completionRate,
 }) => {
   const [filter, setFilter] = useState<'all' | TimeOfDay | 'completed'>('all');
+  const [hoveredHabitId, setHoveredHabitId] = useState<string | null>(null);
+  const [habitSpotlight, setHabitSpotlight] = useState({ x: 0, y: 0 });
+
+  const handleHabitMouseMove = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setHabitSpotlight({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setHoveredHabitId(id);
+  };
 
   const filteredHabits = habits.filter((h) => {
     if (filter === 'all') return true;
@@ -94,7 +105,7 @@ export const HabitList: React.FC<HabitListProps> = ({
   return (
     <div className="space-y-4">
       {/* Top Glass Card: Habit Metrics & Filter Pills */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-[#0c0f1d]/90 border border-white/10 shadow-2xl backdrop-blur-2xl">
+      <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0c0f1d]/90 border border-white/10 shadow-2xl backdrop-blur-2xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/8">
           <div>
             <div className="flex items-center gap-2.5">
@@ -218,14 +229,28 @@ export const HabitList: React.FC<HabitListProps> = ({
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.28, delay: idx * 0.03 }}
                   whileHover={{ y: -2 }}
-                  className={`group relative flex items-center justify-between p-4 sm:p-5 rounded-2xl border transition-all duration-300 ${
+                  onMouseMove={(e) => handleHabitMouseMove(e, habit.id)}
+                  onMouseEnter={() => setHoveredHabitId(habit.id)}
+                  onMouseLeave={() => setHoveredHabitId(null)}
+                  className={`group relative overflow-hidden flex items-center justify-between p-3.5 sm:p-5 rounded-2xl border transition-all duration-300 ${
                     isDone
                       ? 'bg-[#090b16]/70 border-violet-500/25 shadow-md shadow-violet-950/20'
                       : 'bg-[#0e1224]/90 border-white/8 hover:border-violet-500/40 hover:bg-[#13172e] shadow-xl'
                   }`}
                 >
+                  {/* Dynamic Cursor Spotlight Tracking */}
+                  <div
+                    className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-200 z-0"
+                    style={{
+                      opacity: hoveredHabitId === habit.id ? 1 : 0,
+                      background: isDone
+                        ? `radial-gradient(280px circle at ${habitSpotlight.x}px ${habitSpotlight.y}px, rgba(16, 185, 129, 0.14), transparent 70%)`
+                        : `radial-gradient(280px circle at ${habitSpotlight.x}px ${habitSpotlight.y}px, rgba(139, 92, 246, 0.16), rgba(6, 182, 212, 0.08), transparent 70%)`,
+                    }}
+                  />
+
                   {/* Left: Checkbox & Habit Info */}
-                  <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                  <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 relative z-10">
                     {/* Glowing Checkbox Control */}
                     <motion.button
                       whileHover={{ scale: 1.12 }}
@@ -305,7 +330,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                   </div>
 
                   {/* Right: Streak & Actions */}
-                  <div className="flex items-center gap-2.5 sm:gap-3 pl-3 flex-shrink-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 pl-3 flex-shrink-0 relative z-10">
                     {/* Streak Badge */}
                     <div
                       className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
@@ -328,7 +353,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                       whileHover={{ scale: 1.15 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => onDeleteHabit(habit.id)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-70 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                       title="Remove habit"
                       aria-label="Remove habit"
                     >

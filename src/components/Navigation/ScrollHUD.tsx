@@ -9,7 +9,8 @@ import {
   Flame, 
   Target, 
   CheckCircle2, 
-  BarChart2 
+  BarChart2,
+  Wallet
 } from 'lucide-react';
 import { soundFx } from '../../utils/sound';
 
@@ -82,7 +83,7 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 24, scale: 0.95 }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 px-3 py-2 rounded-2xl bg-[#0b0e1b]/85 backdrop-blur-2xl border border-white/12 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(139,92,246,0.15)] flex items-center gap-2 sm:gap-3 select-none max-w-[94vw]"
+          className="fixed bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 z-40 px-2 sm:px-3 py-1.5 sm:py-2 rounded-2xl bg-[#0b0e1b]/90 backdrop-blur-2xl border border-white/12 shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_30px_rgba(139,92,246,0.15)] flex items-center gap-1.5 sm:gap-3 select-none max-w-[96vw]"
           aria-label="Floating Navigation Dock"
         >
           {/* Daily Progress Gauge Badge */}
@@ -150,6 +151,15 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
               <span>Rituals</span>
+            </button>
+
+            <button
+              onClick={() => scrollToSection('budget-tracker-section')}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              title="Jump to Daily Budget Tracker"
+            >
+              <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Budget</span>
             </button>
 
             <button

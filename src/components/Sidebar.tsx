@@ -11,7 +11,8 @@ import {
   Flame, 
   ChevronRight, 
   X, 
-  Compass 
+  Compass,
+  Wallet
 } from 'lucide-react';
 import type { ActiveTab } from '../types/habit';
 import { motion } from 'motion/react';
@@ -69,6 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems: NavItemConfig[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', label: 'My Habits', icon: CheckSquare, badge: '6' },
+    { id: 'budget', label: 'Budget Tracker', icon: Wallet, badge: 'Live', isNew: true },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'insights', label: 'Insights', icon: BarChart3 },
     { id: 'coach', label: 'AI Coach Aura', icon: Bot, isNew: true },

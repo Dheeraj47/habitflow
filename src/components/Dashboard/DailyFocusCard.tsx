@@ -61,7 +61,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
       onMouseMove={onMouseMove}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#0c0f1e]/95 via-[#080a16]/95 to-[#050710]/95 border border-white/10 shadow-2xl relative overflow-hidden group select-none space-y-6 h-full flex flex-col justify-between transition-colors duration-300 hover:border-violet-500/30"
+      className="p-4 sm:p-7 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0c0f1e]/95 via-[#080a16]/95 to-[#050710]/95 border border-white/10 shadow-2xl relative overflow-hidden group select-none space-y-5 sm:space-y-6 h-full flex flex-col justify-between transition-colors duration-300 hover:border-violet-500/30"
     >
       {/* Background ambient light */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/15 rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
