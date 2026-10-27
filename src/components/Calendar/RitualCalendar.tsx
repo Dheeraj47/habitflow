@@ -17,9 +17,18 @@ import {
   Dumbbell,
   Moon,
   MessageSquareQuote,
-  Save
+  Save,
+  Wallet,
+  Utensils,
+  Car,
+  ShoppingBag,
+  HeartPulse,
+  Film
 } from 'lucide-react';
 import type { Habit, SanctuaryLifetimeStats, TimeOfDay, HabitCategory } from '../../types/habit';
+import type { BudgetTrackerState, ExpenseCategory, ExpenseItem } from '../../types/budget';
+import { CATEGORY_METADATA } from '../../types/budget';
+import { loadBudgetTrackerState, formatCurrency, ensureRecordItems } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
 
 interface RitualCalendarProps {
@@ -28,7 +37,19 @@ interface RitualCalendarProps {
   onOpenAddModal: () => void;
   onGoToDashboard: () => void;
   lifetimeStats?: SanctuaryLifetimeStats;
+  budgetState?: BudgetTrackerState;
 }
+
+const CATEGORY_ICONS: Record<ExpenseCategory, React.ElementType> = {
+  food: Utensils,
+  transit: Car,
+  shopping: ShoppingBag,
+  bills: Zap,
+  health: HeartPulse,
+  entertainment: Film,
+  education: BookOpen,
+  other: Sparkles,
+};
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -51,10 +72,91 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
   onOpenAddModal,
   onGoToDashboard,
   lifetimeStats,
+  budgetState,
 }) => {
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth());
   const [selectedDate, setSelectedDate] = useState(getTodayString);
+
+  // Active budget tracker state (passed from App or fallback loaded from localStorage)
+  const activeBudgetState = useMemo(() => {
+    return budgetState ?? loadBudgetTrackerState();
+  }, [budgetState]);
+
+  // Retrieve spend metrics and itemized transactions for any specific date
+  const getDaySpendInfo = useCallback(
+    (dateStr: string) => {
+      const todayStr = getTodayString();
+      const dailyLimit = activeBudgetState.dailyLimit || 50;
+
+      // 1. If date is today
+      if (dateStr === todayStr) {
+        const todayExpenses = activeBudgetState.expenses || [];
+        const totalSpent = todayExpenses.reduce(
+          (sum, item) => sum + (Number(item.amount) || 0),
+          0
+        );
+        const savings = dailyLimit - totalSpent;
+        return {
+          totalSpent,
+          dailyLimit,
+          savings,
+          isUnderBudget: savings >= 0,
+          expenseCount: todayExpenses.length,
+          hasRecord: todayExpenses.length > 0,
+          items: todayExpenses,
+        };
+      }
+
+      // 2. If date is in archived history
+      if (activeBudgetState.historyByDate && activeBudgetState.historyByDate[dateStr]) {
+        const record = activeBudgetState.historyByDate[dateStr];
+        const items = record.items && record.items.length > 0 ? record.items : ensureRecordItems(record);
+        return {
+          totalSpent: record.totalSpent,
+          dailyLimit: record.dailyLimit || dailyLimit,
+          savings: record.savings,
+          isUnderBudget: record.isUnderBudget,
+          expenseCount: record.expenseCount || items.length,
+          hasRecord: true,
+          items,
+        };
+      }
+
+      // 3. Fallback: check matching items in expenses
+      const matchingExpenses = (activeBudgetState.expenses || []).filter(
+        (item) => item.dateStr === dateStr
+      );
+      if (matchingExpenses.length > 0) {
+        const totalSpent = matchingExpenses.reduce(
+          (sum, item) => sum + (Number(item.amount) || 0),
+          0
+        );
+        const savings = dailyLimit - totalSpent;
+        return {
+          totalSpent,
+          dailyLimit,
+          savings,
+          isUnderBudget: savings >= 0,
+          expenseCount: matchingExpenses.length,
+          hasRecord: true,
+          items: matchingExpenses,
+        };
+      }
+
+      // 4. Default: no spend recorded
+      return {
+        totalSpent: 0,
+        dailyLimit,
+        savings: dailyLimit,
+        isUnderBudget: true,
+        expenseCount: 0,
+        hasRecord: false,
+        items: [] as ExpenseItem[],
+      };
+    },
+    [activeBudgetState]
+  );
 
   // Category and TimeOfDay filters
   const [categoryFilter, setCategoryFilter] = useState<'all' | HabitCategory>('all');
@@ -202,6 +304,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
     let totalRateSum = 0;
     let perfectDays = 0;
     let totalCompletions = 0;
+    let totalMonthSpent = 0;
+    let daysWithSpend = 0;
 
     calendarGrid.forEach(({ dateStr, isCurrentMonth }) => {
       if (!isCurrentMonth) return;
@@ -212,13 +316,27 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
         totalCompletions += stats.count;
         if (stats.rate === 100) perfectDays++;
       }
+
+      const spend = getDaySpendInfo(dateStr);
+      if (spend.hasRecord && spend.totalSpent > 0) {
+        totalMonthSpent += spend.totalSpent;
+        daysWithSpend++;
+      }
     });
 
     const averageRate = daysWithData > 0 ? Math.round(totalRateSum / daysWithData) : 0;
-    return { averageRate, perfectDays, totalCompletions, activeDays: daysWithData };
-  }, [calendarGrid, getDayStats]);
+    return { 
+      averageRate, 
+      perfectDays, 
+      totalCompletions, 
+      activeDays: daysWithData,
+      totalMonthSpent,
+      daysWithSpend,
+    };
+  }, [calendarGrid, getDayStats, getDaySpendInfo]);
 
   const selectedStats = getDayStats(selectedDate);
+  const selectedSpend = getDaySpendInfo(selectedDate);
   const selectedDateObj = useMemo(() => {
     const [y, m, d] = selectedDate.split('-').map(Number);
     return new Date(y, m - 1, d);
@@ -311,7 +429,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
         </div>
 
         {/* 2. Monthly Performance Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 pt-4">
           <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5">
             <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 flex-shrink-0">
               <CheckCircle2 className="w-4 h-4" />
@@ -328,7 +446,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             </div>
             <div>
               <div className="text-base font-bold text-white tabular-nums">{monthMetrics.perfectDays} Days</div>
-              <div className="text-[10px] text-slate-400 font-medium">100% Days</div>
+              <div className="text-[10px] text-slate-400 font-medium">100% Habit Days</div>
             </div>
           </div>
 
@@ -342,13 +460,31 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             </div>
           </div>
 
+          {/* Month Total Spend */}
           <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5">
+            <div className="p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
+              <Wallet className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-base font-bold text-white tabular-nums">
+                {formatCurrency(monthMetrics.totalMonthSpent, activeBudgetState.currencySymbol)}
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium">
+                Month Spend ({monthMetrics.daysWithSpend}d)
+              </div>
+            </div>
+          </div>
+
+          {/* Frugality Streak */}
+          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5 col-span-2 sm:col-span-1">
             <div className="p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
               <Flame className="w-4 h-4 fill-emerald-400/80" />
             </div>
             <div>
-              <div className="text-base font-bold text-white tabular-nums">{monthMetrics.activeDays} Days</div>
-              <div className="text-[10px] text-slate-400 font-medium">Active Days</div>
+              <div className="text-base font-bold text-white tabular-nums">
+                {activeBudgetState.savingStreak} Days
+              </div>
+              <div className="text-[10px] text-slate-400 font-medium">Frugal Streak</div>
             </div>
           </div>
         </div>
@@ -424,6 +560,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               const isSelected = dateStr === selectedDate;
               const isToday = stats.isToday;
 
+              const daySpend = getDaySpendInfo(dateStr);
+
               let heatStyles = 'bg-white/[0.02] border-white/[0.05] text-slate-400';
               if (!isCurrentMonth) {
                 heatStyles = 'bg-transparent border-transparent text-slate-600 opacity-25';
@@ -465,6 +603,24 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                     )}
                   </div>
+
+                  {/* Amount Spent on that day */}
+                  {isCurrentMonth && !stats.isFuture && daySpend.hasRecord && (
+                    <div className="my-0.5 flex justify-center">
+                      <span
+                        className={`text-[9px] sm:text-[10px] font-semibold px-1 py-0.2 rounded tabular-nums inline-block ${
+                          daySpend.totalSpent === 0
+                            ? 'text-slate-500 bg-white/[0.02]'
+                            : daySpend.isUnderBudget
+                            ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                            : 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
+                        }`}
+                        title={`Spent: ${formatCurrency(daySpend.totalSpent, activeBudgetState.currencySymbol)} (Limit: ${formatCurrency(daySpend.dailyLimit, activeBudgetState.currencySymbol)})`}
+                      >
+                        {activeBudgetState.currencySymbol}{Math.round(daySpend.totalSpent)}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Micro Habit Dots & Heat Indicators */}
                   <div className="mt-auto pt-1 flex items-center justify-center gap-1">
@@ -522,6 +678,141 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             <p className="text-xs text-slate-400 mt-0.5 tabular-nums">
               {selectedStats.count} of {habits.length} rituals completed on this day.
             </p>
+          </div>
+
+          {/* Daily Spend on Selected Date */}
+          <div className="p-3 sm:p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.07] space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <Wallet className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-white tracking-tight">Amount Spent on This Day</div>
+                  <div className="text-[10px] text-slate-400">
+                    {isSelectedDateToday 
+                      ? "Today's live spending & limit" 
+                      : `Financial ledger for ${selectedDate}`}
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border tabular-nums ${
+                selectedSpend.totalSpent === 0
+                  ? 'bg-slate-800/80 text-slate-300 border-white/[0.08]'
+                  : selectedSpend.isUnderBudget
+                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+                  : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+              }`}>
+                {selectedSpend.totalSpent === 0 
+                  ? 'No Spend' 
+                  : selectedSpend.isUnderBudget 
+                  ? 'Under Limit' 
+                  : 'Over Limit'}
+              </span>
+            </div>
+
+            {/* Main Spent Figure and Daily Allowance */}
+            <div className="flex items-baseline justify-between pt-0.5">
+              <div>
+                <span className="text-[10px] text-slate-400 font-medium block">Total Spent</span>
+                <div className="flex items-baseline gap-1.5">
+                  <span className={`text-xl sm:text-2xl font-bold tracking-tight tabular-nums ${
+                    selectedSpend.totalSpent === 0 
+                      ? 'text-slate-200' 
+                      : selectedSpend.isUnderBudget 
+                      ? 'text-emerald-400' 
+                      : 'text-rose-400'
+                  }`}>
+                    {formatCurrency(selectedSpend.totalSpent, activeBudgetState.currencySymbol)}
+                  </span>
+                  {selectedSpend.hasRecord && selectedSpend.expenseCount > 0 && (
+                    <span className="text-[11px] text-slate-400 tabular-nums">
+                      ({selectedSpend.expenseCount} txn{selectedSpend.expenseCount === 1 ? '' : 's'})
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 font-medium block">Daily Allowance</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-200 tabular-nums">
+                  {formatCurrency(selectedSpend.dailyLimit, activeBudgetState.currencySymbol)}
+                </span>
+              </div>
+            </div>
+
+            {/* Pacing Progress Bar */}
+            <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  selectedSpend.isUnderBudget ? 'bg-emerald-500' : 'bg-rose-500'
+                }`}
+                style={{
+                  width: `${Math.min(
+                    selectedSpend.dailyLimit > 0
+                      ? Math.round((selectedSpend.totalSpent / selectedSpend.dailyLimit) * 100)
+                      : 0,
+                    100
+                  )}%`,
+                }}
+              />
+            </div>
+
+            {/* Remaining Balance / Over budget footnote */}
+            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+              <span>
+                {selectedSpend.isUnderBudget ? 'Remaining Allowance:' : 'Exceeded Allowance By:'}
+              </span>
+              <span className={`font-semibold tabular-nums ${
+                selectedSpend.isUnderBudget ? 'text-emerald-400' : 'text-rose-400'
+              }`}>
+                {selectedSpend.isUnderBudget ? '+' : '-'}{formatCurrency(Math.abs(selectedSpend.savings), activeBudgetState.currencySymbol)}
+              </span>
+            </div>
+
+            {/* Itemized Transactions for Selected Date */}
+            {selectedSpend.items.length > 0 && (
+              <div className="pt-2 border-t border-white/[0.05] space-y-1.5">
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  Itemized Expenses ({selectedSpend.items.length})
+                </div>
+                <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                  {selectedSpend.items.map((item) => {
+                    const Icon = CATEGORY_ICONS[item.category] || Sparkles;
+                    const meta = CATEGORY_METADATA[item.category];
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-1.5 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
+                            <Icon className={`w-3 h-3 ${meta?.color || 'text-slate-300'}`} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
+                            <div className="text-[9px] text-slate-500 flex items-center gap-1">
+                              <span>{meta?.label || item.category}</span>
+                              {item.timestamp && (
+                                <>
+                                  <span>•</span>
+                                  <span>{item.timestamp}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-xs font-semibold text-white tabular-nums flex-shrink-0 ml-2">
+                          {formatCurrency(item.amount, activeBudgetState.currencySymbol)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Habit Checklist for Selected Date */}

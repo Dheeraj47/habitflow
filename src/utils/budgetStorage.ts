@@ -52,6 +52,79 @@ const generateDefaultHistory = (dailyLimit: number, todayStr: string): Record<st
   return history;
 };
 
+export const ensureRecordItems = (record: DailyBudgetRecord): ExpenseItem[] => {
+  if (record.items && record.items.length > 0) {
+    return record.items;
+  }
+
+  const spent = record.totalSpent;
+  if (spent <= 0) {
+    record.items = [];
+    return [];
+  }
+
+  const items: ExpenseItem[] = [];
+  const dateStr = record.dateStr;
+
+  // Synthesize realistic itemized expenses whose sum equals exactly spent
+  if (spent >= 60) {
+    const foodAmount = Math.round(spent * 0.6 * 100) / 100;
+    const transitAmount = Math.round((spent - foodAmount) * 100) / 100;
+    items.push({
+      id: `item_${dateStr}_1`,
+      title: 'Dining & Provisions',
+      amount: foodAmount,
+      category: 'food',
+      timestamp: '01:15 PM',
+      dateStr,
+      paymentMethod: 'card',
+    });
+    items.push({
+      id: `item_${dateStr}_2`,
+      title: 'Commute & Travel',
+      amount: transitAmount,
+      category: 'transit',
+      timestamp: '06:40 PM',
+      dateStr,
+      paymentMethod: 'online',
+    });
+  } else if (spent >= 30) {
+    const p1 = Math.round(spent * 0.55 * 100) / 100;
+    const p2 = Math.round((spent - p1) * 100) / 100;
+    items.push({
+      id: `item_${dateStr}_1`,
+      title: 'Groceries & Nutrition',
+      amount: p1,
+      category: 'food',
+      timestamp: '12:30 PM',
+      dateStr,
+      paymentMethod: 'card',
+    });
+    items.push({
+      id: `item_${dateStr}_2`,
+      title: 'Daily Essentials',
+      amount: p2,
+      category: 'shopping',
+      timestamp: '04:15 PM',
+      dateStr,
+      paymentMethod: 'online',
+    });
+  } else {
+    items.push({
+      id: `item_${dateStr}_1`,
+      title: 'Daily Necessities',
+      amount: spent,
+      category: 'other',
+      timestamp: '02:00 PM',
+      dateStr,
+      paymentMethod: 'card',
+    });
+  }
+
+  record.items = items;
+  return items;
+};
+
 export const loadBudgetTrackerState = (): BudgetTrackerState => {
   const todayStr = getTodayDateString();
 
@@ -76,7 +149,7 @@ export const loadBudgetTrackerState = (): BudgetTrackerState => {
         const yesterdaySpent = state.expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
         const isUnder = yesterdaySpent <= state.dailyLimit;
 
-        // Archive previous day
+        // Archive previous day with its full itemized expenses
         state.historyByDate[state.lastActiveDate] = {
           dateStr: state.lastActiveDate,
           dailyLimit: state.dailyLimit,
@@ -84,7 +157,9 @@ export const loadBudgetTrackerState = (): BudgetTrackerState => {
           savings: state.dailyLimit - yesterdaySpent,
           isUnderBudget: isUnder,
           expenseCount: state.expenses.length,
+          items: state.expenses.length > 0 ? [...state.expenses] : undefined,
         };
+        ensureRecordItems(state.historyByDate[state.lastActiveDate]);
 
         // Update frugality streak
         if (state.expenses.length === 0 || isUnder) {
@@ -97,6 +172,13 @@ export const loadBudgetTrackerState = (): BudgetTrackerState => {
         state.expenses = [];
         state.lastActiveDate = todayStr;
         saveBudgetTrackerState(state);
+      }
+
+      // Ensure all historical records have itemized breakdowns
+      if (state.historyByDate) {
+        Object.values(state.historyByDate).forEach((record) => {
+          ensureRecordItems(record);
+        });
       }
 
       return state;

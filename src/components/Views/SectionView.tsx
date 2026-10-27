@@ -15,6 +15,7 @@ import {
   HardDrive
 } from 'lucide-react';
 import type { ActiveTab, Habit, SanctuaryLifetimeStats } from '../../types/habit';
+import type { BudgetTrackerState } from '../../types/budget';
 import { motion } from 'motion/react';
 import { RitualCalendar } from '../Calendar/RitualCalendar';
 import { DailyBudgetTracker } from '../Budget/DailyBudgetTracker';
@@ -28,6 +29,8 @@ interface SectionViewProps {
   onToggleHabit?: (id: string) => void;
   onOpenAddModal?: () => void;
   lifetimeStats?: SanctuaryLifetimeStats;
+  budgetState?: BudgetTrackerState;
+  onBudgetChange?: (state: BudgetTrackerState) => void;
 }
 
 export const SectionView: React.FC<SectionViewProps> = ({
@@ -38,6 +41,8 @@ export const SectionView: React.FC<SectionViewProps> = ({
   onToggleHabit = () => {},
   onOpenAddModal = () => {},
   lifetimeStats,
+  budgetState,
+  onBudgetChange,
 }) => {
   const [soundEnabled, setSoundEnabled] = useState(() => soundFx.enabled);
   const [inviteSent, setInviteSent] = useState(false);
@@ -57,7 +62,10 @@ export const SectionView: React.FC<SectionViewProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
       >
-        <DailyBudgetTracker />
+        <DailyBudgetTracker 
+          budgetState={budgetState}
+          onBudgetChange={onBudgetChange}
+        />
       </motion.div>
     );
   }
@@ -75,6 +83,7 @@ export const SectionView: React.FC<SectionViewProps> = ({
           onOpenAddModal={onOpenAddModal}
           onGoToDashboard={onGoToDashboard}
           lifetimeStats={lifetimeStats}
+          budgetState={budgetState}
         />
       </motion.div>
     );

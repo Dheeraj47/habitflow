@@ -19,7 +19,9 @@ import {
   Film,
   BookOpen,
   PieChart,
-  CalendarCheck2
+  CalendarCheck2,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import type { 
   BudgetTrackerState, 
@@ -31,7 +33,8 @@ import {
   formatCurrency, 
   generateUniqueExpenseId, 
   saveBudgetTrackerState,
-  getTodayDateString 
+  getTodayDateString,
+  ensureRecordItems
 } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
 
@@ -103,6 +106,14 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
 
   // Tab View for Details (Expenses vs History vs Breakdown)
   const [activeSubTab, setActiveSubTab] = useState<'today' | 'history' | 'categories'>('today');
+
+  // Expanded date in 7-Day History for full breakdown
+  const [expandedDateStr, setExpandedDateStr] = useState<string | null>('2026-10-27');
+
+  const toggleExpandDate = (dateStr: string) => {
+    soundFx.playCrystalChime(850);
+    setExpandedDateStr((prev) => (prev === dateStr ? null : dateStr));
+  };
 
   // Calculations
   const todaySpent = state.expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -668,49 +679,218 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
               <span className="text-[11px] font-medium text-slate-400 block">Daily Records:</span>
               <div className="space-y-1">
                 {/* Include Today */}
-                <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.07] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white">Today ({getTodayDateString()})</span>
-                    <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
-                      isUnderBudget ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
-                    }`}>
-                      {isUnderBudget ? 'Under' : 'Over'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-400 tabular-nums">
-                      Spent: <span className="text-white font-medium">{formatCurrency(todaySpent, state.currencySymbol)}</span>
-                    </span>
-                    <span className={`font-semibold tabular-nums ${isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {isUnderBudget ? '+' : '-'}{formatCurrency(Math.abs(savings), state.currencySymbol)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* History Rows */}
-                {historyList.map((record) => (
-                  <div
-                    key={record.dateStr}
-                    className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center justify-between text-xs"
+                <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] overflow-hidden transition-all">
+                  <button
+                    type="button"
+                    onClick={() => toggleExpandDate('today')}
+                    className="w-full p-2.5 flex items-center justify-between text-xs hover:bg-white/[0.05] transition-colors cursor-pointer text-left"
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-300">{record.dateStr}</span>
-                      <span className={`text-[10px] font-medium px-1.5 py-0.2 rounded ${
-                        record.isUnderBudget ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'
+                      <span className="font-semibold text-white">Today ({getTodayDateString()})</span>
+                      <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                        isUnderBudget ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' : 'bg-rose-500/15 text-rose-300 border-rose-500/25'
                       }`}>
-                        {record.isUnderBudget ? 'Under' : 'Over'}
+                        {isUnderBudget ? 'Under' : 'Over'}
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        ({state.expenses.length} txn{state.expenses.length === 1 ? '' : 's'})
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-slate-400 tabular-nums">
-                        Spent: <span className="text-slate-300">{formatCurrency(record.totalSpent, state.currencySymbol)}</span>
+                        Spent: <span className="text-white font-medium">{formatCurrency(todaySpent, state.currencySymbol)}</span>
                       </span>
-                      <span className={`font-semibold tabular-nums ${record.isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {record.savings >= 0 ? '+' : '-'}{formatCurrency(Math.abs(record.savings), state.currencySymbol)}
+                      <span className={`font-semibold tabular-nums ${isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {isUnderBudget ? '+' : '-'}{formatCurrency(Math.abs(savings), state.currencySymbol)}
                       </span>
+                      <div className="text-slate-400 pl-1">
+                        {expandedDateStr === 'today' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  </button>
+
+                  {/* Expanded Today Breakdown */}
+                  {expandedDateStr === 'today' && (
+                    <div className="p-3 sm:p-4 bg-[#0a0d14] border-t border-white/[0.06] space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/[0.05]">
+                        <div>
+                          <span className="text-xs font-bold text-white block">Today&apos;s Live Breakdown</span>
+                          <span className="text-[11px] text-slate-400">
+                            {isUnderBudget 
+                              ? `${formatCurrency(savings, state.currencySymbol)} remaining of your ${formatCurrency(dailyLimit, state.currencySymbol)} limit.` 
+                              : `Exceeded target by ${formatCurrency(Math.abs(savings), state.currencySymbol)}.`}
+                          </span>
+                        </div>
+                        <div className="text-right text-xs tabular-nums">
+                          <span className="text-slate-400 text-[10px] block">Spent Today</span>
+                          <span className={`font-bold ${isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {formatCurrency(todaySpent, state.currencySymbol)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Today Items */}
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                          Today&apos;s Transactions ({state.expenses.length})
+                        </span>
+                        {state.expenses.length === 0 ? (
+                          <p className="text-xs text-slate-500 italic py-1">No expenses recorded today yet.</p>
+                        ) : (
+                          <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                            {state.expenses.map((item) => {
+                              const Icon = CATEGORY_ICONS[item.category] || Sparkles;
+                              const meta = CATEGORY_METADATA[item.category];
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
+                                      <Icon className={`w-3.5 h-3.5 ${meta?.color || 'text-slate-300'}`} />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
+                                      <div className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                                        <span>{meta?.label || item.category}</span>
+                                        <span>•</span>
+                                        <span>{item.timestamp || 'Recorded'}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-semibold text-white tabular-nums flex-shrink-0 ml-2">
+                                    {formatCurrency(item.amount, state.currencySymbol)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* History Rows with Expandable Breakdown */}
+                {historyList.map((record) => {
+                  const isExpanded = expandedDateStr === record.dateStr;
+                  const items = record.items && record.items.length > 0 ? record.items : ensureRecordItems(record);
+
+                  return (
+                    <div
+                      key={record.dateStr}
+                      className="rounded-xl border border-white/[0.05] bg-white/[0.02] overflow-hidden transition-all"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandDate(record.dateStr)}
+                        className="w-full p-2.5 flex items-center justify-between text-xs hover:bg-white/[0.04] transition-colors cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-200 font-medium">{record.dateStr}</span>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                            record.isUnderBudget 
+                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' 
+                              : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+                          }`}>
+                            {record.isUnderBudget ? 'Under' : 'Over'}
+                          </span>
+                          <span className="text-[10px] text-slate-500">
+                            ({items.length} txn{items.length === 1 ? '' : 's'})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className="text-slate-400 tabular-nums">
+                            Spent: <span className="text-slate-200 font-semibold">{formatCurrency(record.totalSpent, state.currencySymbol)}</span>
+                          </span>
+                          <span className={`font-semibold tabular-nums ${record.isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {record.savings >= 0 ? '+' : '-'}{formatCurrency(Math.abs(record.savings), state.currencySymbol)}
+                          </span>
+                          <div className="text-slate-400 pl-1">
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* Expanded Breakdown for this date */}
+                      {isExpanded && (
+                        <div className="p-3 sm:p-4 bg-[#0a0d14] border-t border-white/[0.06] space-y-3">
+                          {/* Overview banner */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/[0.05]">
+                            <div>
+                              <span className="text-xs font-bold text-white block">Day Breakdown ({record.dateStr})</span>
+                              <span className="text-[11px] text-slate-400">
+                                {record.isUnderBudget 
+                                  ? `Saved ${formatCurrency(record.savings, state.currencySymbol)} below the ${formatCurrency(record.dailyLimit, state.currencySymbol)} daily limit.` 
+                                  : `Exceeded the ${formatCurrency(record.dailyLimit, state.currencySymbol)} daily limit by ${formatCurrency(Math.abs(record.savings), state.currencySymbol)}.`}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs tabular-nums">
+                              <div className="text-right">
+                                <span className="text-slate-400 text-[10px] block">Daily Limit</span>
+                                <span className="font-semibold text-white">{formatCurrency(record.dailyLimit, state.currencySymbol)}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-slate-400 text-[10px] block">Total Spent</span>
+                                <span className={`font-bold ${record.isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                  {formatCurrency(record.totalSpent, state.currencySymbol)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Itemized Transactions */}
+                          <div className="space-y-1.5">
+                            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                              Itemized Expenses ({items.length})
+                            </span>
+                            {items.length === 0 ? (
+                              <p className="text-xs text-slate-500 italic py-1">No items recorded for this date.</p>
+                            ) : (
+                              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                                {items.map((item) => {
+                                  const Icon = CATEGORY_ICONS[item.category] || Sparkles;
+                                  const meta = CATEGORY_METADATA[item.category];
+                                  return (
+                                    <div
+                                      key={item.id}
+                                      className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
+                                          <Icon className={`w-3.5 h-3.5 ${meta?.color || 'text-slate-300'}`} />
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
+                                          <div className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                                            <span>{meta?.label || item.category}</span>
+                                            <span>•</span>
+                                            <span>{item.timestamp || 'Recorded'}</span>
+                                            {item.paymentMethod && (
+                                              <>
+                                                <span>•</span>
+                                                <span className="uppercase">{item.paymentMethod}</span>
+                                              </>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <span className="text-xs font-semibold text-white tabular-nums flex-shrink-0 ml-2">
+                                        {formatCurrency(item.amount, state.currencySymbol)}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

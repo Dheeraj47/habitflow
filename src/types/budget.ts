@@ -25,6 +25,8 @@ export interface DailyBudgetRecord {
   savings: number; // positive if saved under budget, negative if exceeded
   isUnderBudget: boolean;
   expenseCount: number;
+  items?: ExpenseItem[];
+  categoryTotals?: Partial<Record<ExpenseCategory, number>>;
 }
 
 export interface BudgetTrackerState {

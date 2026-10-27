@@ -518,6 +518,8 @@ export function App() {
                   onToggleHabit={handleToggleHabit}
                   onOpenAddModal={() => setIsAddModalOpen(true)}
                   lifetimeStats={lifetimeStats}
+                  budgetState={budgetState}
+                  onBudgetChange={handleBudgetChange}
                 />
               </motion.div>
             )}
