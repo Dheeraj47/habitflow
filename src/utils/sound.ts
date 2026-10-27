@@ -5,10 +5,30 @@
 
 class SoundSynthesizer {
   private ctx: AudioContext | null = null;
-  public enabled: boolean = true;
+  public enabled: boolean = false;
   private ambientGain: GainNode | null = null;
   private ambientOscs: OscillatorNode[] = [];
   public ambientPlaying: boolean = false;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('habitflow_sound_enabled');
+        if (saved !== null) {
+          this.enabled = saved === 'true';
+        }
+      } catch {}
+    }
+  }
+
+  public setEnabled(val: boolean) {
+    this.enabled = val;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('habitflow_sound_enabled', String(val));
+      } catch {}
+    }
+  }
 
   private init() {
     if (!this.ctx) {
@@ -23,7 +43,7 @@ class SoundSynthesizer {
   }
 
   /**
-   * Serene crystal chime on habit check or small interaction
+   * Subtle, refined micro-haptic click on interaction
    */
   public playCrystalChime(pitch: number = 880) {
     if (!this.enabled) return;
@@ -36,17 +56,17 @@ class SoundSynthesizer {
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(pitch, t);
-    osc.frequency.exponentialRampToValueAtTime(pitch * 1.5, t + 0.3);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 1.15, t + 0.08);
 
-    gain.gain.setValueAtTime(0.001, t);
-    gain.gain.linearRampToValueAtTime(0.12, t + 0.04);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.linearRampToValueAtTime(0.035, t + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
 
     osc.start(t);
-    osc.stop(t + 1.25);
+    osc.stop(t + 0.18);
   }
 
   /**

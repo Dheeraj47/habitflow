@@ -9,7 +9,6 @@ import {
   Trophy, 
   Settings, 
   Flame, 
-  ChevronRight, 
   X, 
   Compass,
   Wallet
@@ -34,7 +33,6 @@ interface NavItemConfig {
   label: string;
   icon: React.ElementType;
   badge?: string;
-  isNew?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -69,22 +67,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems: NavItemConfig[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'habits', label: 'My Habits', icon: CheckSquare, badge: '6' },
-    { id: 'budget', label: 'Budget Tracker', icon: Wallet, badge: 'Live', isNew: true },
+    { id: 'habits', label: 'Habits', icon: CheckSquare, badge: '6' },
+    { id: 'budget', label: 'Budget Tracker', icon: Wallet },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'insights', label: 'Insights', icon: BarChart3 },
-    { id: 'coach', label: 'AI Coach Aura', icon: Bot, isNew: true },
-    { id: 'friends', label: 'Friends & Groups', icon: Users, badge: '3' },
-    { id: 'achievements', label: 'Achievements', icon: Trophy },
+    { id: 'insights', label: 'Insights & Analytics', icon: BarChart3 },
+    { id: 'coach', label: 'AI Habit Coach', icon: Bot },
+    { id: 'friends', label: 'Community', icon: Users, badge: '3' },
+    { id: 'achievements', label: 'Milestones', icon: Trophy },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
     <>
-      {/* Backdrop with frosted blur */}
+      {/* Backdrop */}
       {isVisible && (
         <div
-          className="fixed inset-0 bg-black/75 backdrop-blur-md z-40 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-200"
           onClick={handleClose}
           aria-label="Close navigation overlay"
         />
@@ -92,147 +90,113 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Drawer */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-76 bg-[#080a14]/95 backdrop-blur-2xl border-r border-white/10 flex flex-col shadow-[0_0_50px_rgba(0,0,0,0.9)] transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-[#0c0e15] border-r border-white/[0.08] flex flex-col shadow-2xl transition-transform duration-250 ease-out ${
           isVisible ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand Header */}
-        <div className="h-20 flex items-center justify-between px-6 border-b border-white/8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-500 to-cyan-400 p-[1.5px] shadow-lg shadow-violet-600/30 flex items-center justify-center">
-              <div className="w-full h-full bg-[#080a14] rounded-2xl flex items-center justify-center">
-                <Compass className="w-5 h-5 text-cyan-400" />
-              </div>
+        <div className="h-16 flex items-center justify-between px-5 border-b border-white/[0.07]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600/15 border border-indigo-500/25 flex items-center justify-center">
+              <Compass className="w-4 h-4 text-indigo-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-black tracking-tight text-white">
-                  HabitFlow
-                </h1>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                  AI
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">Intelligent Habit Architecture</p>
+              <h2 className="text-sm font-bold tracking-tight text-white">
+                HabitFlow
+              </h2>
+              <p className="text-[11px] text-slate-400">Personal Productivity OS</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
             aria-label="Close navigation sidebar"
             title="Close menu (Esc)"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Navigation Items */}
-        <div className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto no-scrollbar">
-          <div className="px-3 pb-2 text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-            Menu Navigation
+        <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto no-scrollbar">
+          <div className="px-3 pb-1.5 text-[10px] font-semibold tracking-wider text-slate-500 uppercase">
+            Platform
           </div>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <motion.button
+              <button
                 key={item.id}
-                whileTap={{ scale: 0.98 }}
-                whileHover={{ x: 3 }}
                 onClick={() => {
                   soundFx.playCrystalChime(700);
                   onSelectTab(item.id);
                   handleClose();
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-sm font-semibold transition-all group cursor-pointer ${
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   isActive
-                    ? 'bg-gradient-to-r from-violet-600/30 via-indigo-600/20 to-transparent text-white border border-violet-500/40 shadow-lg shadow-violet-600/15'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-indigo-600/15 text-indigo-300 border border-indigo-500/25'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`p-2 rounded-xl transition-colors ${
-                      isActive
-                        ? 'bg-violet-600 text-white shadow-md shadow-violet-600/40'
-                        : 'bg-slate-900 text-slate-400 group-hover:text-white group-hover:bg-slate-800'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-400' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  {item.badge && (
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                        isActive
-                          ? 'bg-violet-500/30 text-violet-200'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                  {item.isNew && (
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 animate-pulse">
-                      Live
-                    </span>
-                  )}
-                  {isActive && <ChevronRight className="w-4 h-4 text-cyan-400" />}
-                </div>
-              </motion.button>
+                {item.badge && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded font-semibold tabular-nums ${
+                      isActive
+                        ? 'bg-indigo-500/20 text-indigo-200'
+                        : 'bg-white/[0.05] text-slate-400'
+                    }`}
+                  >
+                    {item.badge}
+                  </span>
+                )}
+              </button>
             );
           })}
         </div>
 
         {/* User Profile Card & Streak Banner */}
-        <div className="p-4 border-t border-white/8 bg-[#06070e]/80">
+        <div className="p-4 border-t border-white/[0.07] bg-[#090b10]">
           {/* Streak indicator badge */}
-          <div className="mb-3 px-3 py-2 rounded-2xl bg-gradient-to-r from-amber-500/15 via-violet-500/15 to-transparent border border-amber-500/25 flex items-center justify-between">
+          <div className="mb-3 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.07] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400">
-                <Flame className="w-4 h-4 fill-amber-400 text-amber-400" />
-              </div>
+              <Flame className="w-4 h-4 text-amber-400 fill-amber-400/80" />
               <div>
-                <div className="text-xs font-bold text-white">{topStreak} Day Streak</div>
-                <div className="text-[10px] text-amber-300/80">Active habit momentum</div>
+                <div className="text-xs font-semibold text-slate-200">{topStreak} Day Streak</div>
+                <div className="text-[10px] text-slate-400">Consistency chain</div>
               </div>
             </div>
-            <span className="text-xs font-bold text-amber-400">🔥</span>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              Active
+            </span>
           </div>
 
           {/* Profile snippet with live XP bar */}
           <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-cyan-400 p-[1.5px]">
-                  <div className="w-full h-full bg-slate-900 rounded-2xl flex items-center justify-center font-black text-xs text-white">
-                    AR
-                  </div>
-                </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#080a14] rounded-full" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-xs text-indigo-300">
+                AR
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-bold text-white truncate">Alex Rivera</div>
+                <div className="text-xs font-semibold text-slate-200 truncate">Alex Rivera</div>
                 <div className="text-[11px] text-slate-400 truncate">
-                  Level {currentLevel} Habit Architect
+                  Level {currentLevel} • {userXP} XP
                 </div>
               </div>
             </div>
 
             {/* Level XP Progress Bar */}
-            <div className="pt-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1 font-medium">
-                <span className="text-violet-300 font-bold">{userXP} Total XP</span>
-                <span className="text-slate-400">{xpIntoCurrentLevel}/100 XP</span>
-              </div>
-              <div className="w-full h-2 bg-slate-800/80 rounded-full overflow-hidden p-[1px] border border-white/5">
+            <div className="pt-0.5">
+              <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full"
+                  className="h-full bg-indigo-500 rounded-full"
                   animate={{ width: `${xpIntoCurrentLevel}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />

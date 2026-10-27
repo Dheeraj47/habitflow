@@ -1,19 +1,17 @@
 import React from 'react';
 import { 
   Flame, 
-  Sparkles, 
   Plus, 
   Sun, 
   Sunset, 
   Moon, 
   Trophy, 
   Target,
-  Zap
+  CheckCircle2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Habit } from '../../types/habit';
 import { soundFx } from '../../utils/sound';
-import { useTilt } from '../../utils/useTilt';
 
 interface DailyFocusCardProps {
   habits: Habit[];
@@ -52,57 +50,32 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
     onOpenAddModal();
   };
 
-  const { ref, style, spotlight, isHovered, onMouseMove, onMouseEnter, onMouseLeave } = useTilt(2.5);
-
   return (
-    <div
-      ref={ref}
-      style={style}
-      onMouseMove={onMouseMove}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      className="p-4 sm:p-7 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#0c0f1e]/95 via-[#080a16]/95 to-[#050710]/95 border border-white/10 shadow-2xl relative overflow-hidden group select-none space-y-5 sm:space-y-6 h-full flex flex-col justify-between transition-colors duration-300 hover:border-violet-500/30"
-    >
-      {/* Background ambient light */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-violet-600/15 rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700" />
-      <div className="absolute -bottom-10 -left-10 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Dynamic Cursor Spotlight Layer */}
-      <div
-        className="pointer-events-none absolute -inset-px rounded-3xl transition-opacity duration-300 z-0"
-        style={{
-          opacity: isHovered ? 1 : 0,
-          background: `radial-gradient(450px circle at ${spotlight.x}px ${spotlight.y}px, rgba(139, 92, 246, 0.16), rgba(6, 182, 212, 0.08), transparent 70%)`,
-        }}
-      />
-
-      {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/8 relative z-10">
+    <div className="p-5 sm:p-6 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl relative overflow-hidden space-y-5 h-full flex flex-col justify-between transition-all hover:border-white/[0.12]">
+      {/* Top Header */}
+      <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.07]">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-violet-600/20 text-violet-300 border border-violet-500/30">
-            <Target className="w-5 h-5 text-cyan-400" />
+          <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <Target className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-white tracking-tight">Today&apos;s Focus &amp; Mastery</h3>
-            <p className="text-xs text-slate-400">Daily execution overview</p>
+            <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">Daily Execution Focus</h3>
+            <p className="text-[11px] text-slate-400">Habit completion overview</p>
           </div>
         </div>
 
-        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-cyan-950/80 text-cyan-300 border border-cyan-500/30">
-          Day Flow
+        <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-white/[0.04] text-slate-300 border border-white/[0.07]">
+          Today
         </span>
       </div>
 
-      {/* Big Circular Progress Dial */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 py-2 relative z-10">
-        <div className="relative w-32 h-32 flex items-center justify-center flex-shrink-0">
-          {/* Subtle Outer Glow Ring */}
-          <div className="absolute inset-0 rounded-full bg-violet-600/15 blur-xl" />
-
-          <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
+      {/* Circular Progress Dial & Context */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-5 py-2">
+        <div className="relative w-28 h-28 flex items-center justify-center flex-shrink-0">
+          <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
             <circle
-              className="text-slate-800/80"
-              strokeWidth="8"
+              className="text-slate-800"
+              strokeWidth="7"
               stroke="currentColor"
               fill="transparent"
               r="40"
@@ -110,14 +83,14 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
               cy="50"
             />
             <motion.circle
-              className="text-cyan-400"
-              strokeWidth="8"
+              className="text-indigo-500"
+              strokeWidth="7"
               strokeDasharray={2 * Math.PI * 40}
               initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
               animate={{
                 strokeDashoffset: (2 * Math.PI * 40) * (1 - completionRate / 100),
               }}
-              transition={{ duration: 0.9, ease: 'easeOut' }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
               strokeLinecap="round"
               stroke="currentColor"
               fill="transparent"
@@ -128,101 +101,96 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </svg>
 
           <div className="absolute flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-black text-white tracking-tight">{completionRate}%</span>
-            <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-wider">
-              Complete
+            <span className="text-2xl font-bold text-white tabular-nums tracking-tight">{completionRate}%</span>
+            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
+              Score
             </span>
           </div>
         </div>
 
         {/* Dial Stats Text */}
-        <div className="space-y-2 text-center sm:text-left">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/8 text-xs font-semibold text-slate-300">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>{completedCount} of {totalCount} Rituals Done</span>
+        <div className="space-y-1.5 text-center sm:text-left">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.07] text-[11px] font-medium text-slate-300">
+            <CheckCircle2 className="w-3 h-3 text-indigo-400" />
+            <span>{completedCount} of {totalCount} Rituals Finished</span>
           </div>
 
-          <h4 className="text-lg font-bold text-white">
+          <h4 className="text-base font-semibold text-white">
             {completionRate === 100
-              ? 'Flawless Mastery! 🌟'
+              ? 'All Goals Met Today'
               : completionRate >= 50
-              ? 'Great Momentum 🔥'
-              : 'Start Your Day Right ⚡'}
+              ? 'Steady Progress Maintained'
+              : 'Kickstart Your Routine'}
           </h4>
 
           <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
             {completionRate === 100
-              ? 'All daily habits executed. Your discipline chain is solid.'
-              : `${totalCount - completedCount} rituals remaining to complete today's full streak.`}
+              ? 'All scheduled habits for today are completed. Consistency chain extended.'
+              : `${totalCount - completedCount} habits remaining to reach 100% daily adherence.`}
           </p>
         </div>
       </div>
 
-      {/* Time-Of-Day Micro Breakdown Grid */}
-      <div className="grid grid-cols-3 gap-2.5 relative z-10">
-        <div className="p-3 rounded-2xl bg-slate-900/60 border border-white/5 text-center space-y-1">
-          <Sun className="w-4 h-4 text-amber-400 mx-auto" />
-          <div className="text-[11px] font-bold text-slate-300">Morning</div>
-          <div className="text-xs font-extrabold text-white">
+      {/* Time-Of-Day Breakdown Grid */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-center space-y-0.5">
+          <Sun className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1" />
+          <div className="text-[10px] font-medium text-slate-400">Morning</div>
+          <div className="text-xs font-bold text-white tabular-nums">
             {morningDone}/{morningHabits.length}
           </div>
         </div>
 
-        <div className="p-3 rounded-2xl bg-slate-900/60 border border-white/5 text-center space-y-1">
-          <Sunset className="w-4 h-4 text-orange-400 mx-auto" />
-          <div className="text-[11px] font-bold text-slate-300">Afternoon</div>
-          <div className="text-xs font-extrabold text-white">
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-center space-y-0.5">
+          <Sunset className="w-3.5 h-3.5 text-orange-400 mx-auto mb-1" />
+          <div className="text-[10px] font-medium text-slate-400">Afternoon</div>
+          <div className="text-xs font-bold text-white tabular-nums">
             {afternoonDone}/{afternoonHabits.length}
           </div>
         </div>
 
-        <div className="p-3 rounded-2xl bg-slate-900/60 border border-white/5 text-center space-y-1">
-          <Moon className="w-4 h-4 text-indigo-400 mx-auto" />
-          <div className="text-[11px] font-bold text-slate-300">Evening</div>
-          <div className="text-xs font-extrabold text-white">
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-center space-y-0.5">
+          <Moon className="w-3.5 h-3.5 text-indigo-400 mx-auto mb-1" />
+          <div className="text-[10px] font-medium text-slate-400">Evening</div>
+          <div className="text-xs font-bold text-white tabular-nums">
             {eveningDone}/{eveningHabits.length}
           </div>
         </div>
       </div>
 
-      {/* Streak & Level XP Dual Card */}
-      <div className="grid grid-cols-2 gap-2.5 relative z-10">
-        {/* Streak Pill */}
-        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 flex-shrink-0">
-            <Flame className="w-5 h-5 fill-amber-400" />
+      {/* Streak & XP Dual Card */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center gap-2.5">
+          <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 flex-shrink-0">
+            <Flame className="w-4 h-4 fill-amber-400/80" />
           </div>
           <div className="min-w-0">
-            <div className="text-base font-black text-white">{topStreak} Days</div>
-            <div className="text-[10px] text-amber-300 font-medium truncate">Active Chain</div>
+            <div className="text-sm font-bold text-white tabular-nums">{topStreak} Days</div>
+            <div className="text-[10px] text-slate-400 truncate">Streak Chain</div>
           </div>
         </div>
 
-        {/* Level XP Pill */}
-        <div className="p-3.5 rounded-2xl bg-violet-600/10 border border-violet-500/25 flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-violet-600/20 text-violet-300 flex-shrink-0">
-            <Trophy className="w-5 h-5 text-cyan-400" />
+        <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center gap-2.5">
+          <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-400 flex-shrink-0">
+            <Trophy className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <div className="text-base font-black text-white">Level {currentLevel}</div>
-            <div className="text-[10px] text-violet-300 font-medium truncate">
+            <div className="text-sm font-bold text-white">Level {currentLevel}</div>
+            <div className="text-[10px] text-slate-400 truncate tabular-nums">
               {xpIntoCurrentLevel}/100 XP
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Action: Add Ritual Button */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+      {/* Quick Action: Add Habit Button */}
+      <button
         onClick={handleAddClick}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-violet-600/30 transition-all border border-violet-400/30 cursor-pointer relative z-10"
+        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.09] text-slate-200 text-xs font-semibold transition-all border border-white/[0.08] cursor-pointer"
       >
-        <Plus className="w-4 h-4" />
-        <span>Create New Ritual</span>
-        <Zap className="w-3.5 h-3.5 text-amber-300" />
-      </motion.button>
+        <Plus className="w-3.5 h-3.5" />
+        <span>Add New Habit</span>
+      </button>
     </div>
   );
 };

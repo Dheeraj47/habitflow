@@ -43,7 +43,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
 
   const categories: { id: HabitCategory; label: string; icon: React.ElementType; color: string }[] = [
     { id: 'mindfulness', label: 'Mindfulness', icon: Sparkles, color: '#8b5cf6' },
-    { id: 'productivity', label: 'Productivity', icon: Zap, color: '#06b6d4' },
+    { id: 'productivity', label: 'Productivity', icon: Zap, color: '#6366f1' },
     { id: 'health', label: 'Health', icon: Droplets, color: '#3b82f6' },
     { id: 'fitness', label: 'Fitness', icon: Dumbbell, color: '#ec4899' },
     { id: 'learning', label: 'Learning', icon: BookOpen, color: '#10b981' },
@@ -58,7 +58,6 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
 
     const matchedCategory = categories.find((c) => c.id === category);
 
-    // Map icon name based on category
     let iconName = 'Sparkles';
     if (category === 'productivity') iconName = 'Zap';
     if (category === 'health') iconName = 'Droplets';
@@ -68,15 +67,14 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
 
     onAddHabit({
       title: title.trim(),
-      description: description.trim() || 'Daily ritual for personal excellence',
+      description: description.trim() || 'Daily routine for personal excellence',
       category,
       timeOfDay,
       targetPerWeek,
-      color: matchedCategory?.color || '#8b5cf6',
+      color: matchedCategory?.color || '#6366f1',
       iconName,
     });
 
-    // Reset fields & close
     setTitle('');
     setDescription('');
     setError('');
@@ -90,49 +88,48 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
           onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
         >
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-habit-modal-title"
             onClick={(e) => e.stopPropagation()}
-            initial={{ opacity: 0, scale: 0.94, y: 15 }}
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 15 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 320 }}
-            className="relative w-full max-w-lg rounded-2xl bg-[#0e101c] border border-violet-500/30 shadow-2xl overflow-hidden"
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="relative w-full max-w-lg rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="p-5 border-b border-white/5 bg-[#121528] flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-white/[0.06] bg-[#0f121d] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-violet-600/20 text-violet-300 border border-violet-500/30">
-                  <Plus className="w-5 h-5 text-cyan-400" />
+                <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
                 </div>
                 <div>
-                  <h3 id="add-habit-modal-title" className="text-base font-bold text-white">
-                    Design New Ritual
+                  <h3 id="add-habit-modal-title" className="text-sm sm:text-base font-bold text-white tracking-tight">
+                    Create New Habit
                   </h3>
-                  <p className="text-xs text-slate-400">Add a new anchor habit to your living island</p>
+                  <p className="text-xs text-slate-400">Add a routine to your daily schedule</p>
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+              <button
+                type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
-              </motion.button>
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Form Body */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
               {error && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+                <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
                   {error}
                 </div>
               )}
@@ -149,8 +146,8 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
                     setTitle(e.target.value);
                     if (error) setError('');
                   }}
-                  placeholder="e.g. Cold Shower & Breathing, 30m Deep Work"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500"
+                  placeholder="e.g. 45-Min Deep Focus, Read 20 Pages"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#111420] border border-white/[0.08] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                   autoFocus
                 />
               </div>
@@ -158,23 +155,23 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
               {/* Habit Description */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Purpose & Cue (Optional)
+                  Context / Cue (Optional)
                 </label>
                 <input
                   type="text"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Immediately after waking up; phone in airplane mode"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500/60"
+                  placeholder="e.g. Immediately after morning coffee; phone in drawer"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#111420] border border-white/[0.08] text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
 
               {/* Category Selection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-2">
-                  Domain / Category
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Category
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                   {categories.map((cat) => {
                     const Icon = cat.icon;
                     const isSelected = category === cat.id;
@@ -183,10 +180,10 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
                         type="button"
                         key={cat.id}
                         onClick={() => setCategory(cat.id)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                        className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
                           isSelected
-                            ? 'bg-violet-600/30 border-violet-400 text-white shadow-md'
-                            : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                            ? 'bg-indigo-600/15 border-indigo-500/30 text-white'
+                            : 'bg-white/[0.02] border-white/[0.06] text-slate-400 hover:text-slate-200 hover:bg-white/[0.05]'
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" style={{ color: cat.color }} />
@@ -198,16 +195,16 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
               </div>
 
               {/* Time of Day & Weekly Target */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 {/* Time of Day */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Preferred Time
+                    Time Window
                   </label>
                   <select
                     value={timeOfDay}
                     onChange={(e) => setTimeOfDay(e.target.value as TimeOfDay)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-violet-500/60"
+                    className="w-full px-3 py-2 rounded-lg bg-[#111420] border border-white/[0.08] text-xs sm:text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
                   >
                     <option value="morning">Morning</option>
                     <option value="afternoon">Afternoon</option>
@@ -218,38 +215,37 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
 
                 {/* Weekly Target Days */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Target Days ({targetPerWeek} days/wk)
-                  </label>
+                  <div className="flex justify-between items-center text-xs font-semibold text-slate-300 mb-1.5">
+                    <span>Weekly Target</span>
+                    <span className="text-indigo-400 font-bold tabular-nums">{targetPerWeek} days/wk</span>
+                  </div>
                   <input
                     type="range"
                     min="1"
                     max="7"
                     value={targetPerWeek}
                     onChange={(e) => setTargetPerWeek(Number(e.target.value))}
-                    className="w-full accent-violet-500 cursor-pointer mt-2"
+                    className="w-full accent-indigo-500 cursor-pointer mt-1"
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-white/[0.06]">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                <button
                   type="submit"
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-semibold shadow-lg shadow-violet-600/30 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold transition-all border border-indigo-400/20 cursor-pointer shadow-sm active:scale-98"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Plant Habit on Island</span>
-                </motion.button>
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                  <span>Create Habit</span>
+                </button>
               </div>
             </form>
           </motion.div>

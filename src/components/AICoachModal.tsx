@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   X, 
   Send, 
   Bot, 
-  Sparkles, 
   User, 
   Lightbulb, 
   Clock
@@ -39,13 +38,6 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  useEffect(() => {
-    if (isOpen && initialPrompt && handledInitialRef.current !== initialPrompt) {
-      handledInitialRef.current = initialPrompt;
-      handleSendMessage(initialPrompt);
-    }
-  }, [isOpen, initialPrompt]);
-
   // Close on Escape key press
   useEffect(() => {
     if (!isOpen) return;
@@ -58,37 +50,36 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Intelligent demo response generator based on question keywords & habit context
-  const getSimulatedResponse = (question: string): string => {
+  // Intelligent response generator based on question keywords & habit context
+  const getSimulatedResponse = useCallback((question: string): string => {
     const q = question.toLowerCase();
 
     if (q.includes('streak') || q.includes('maintain') || q.includes('mindfulness')) {
-      return `To maintain your current ${streakCount}-day streak, anchor your habits to existing routines (Habit Stacking). For instance: 'Immediately after brewing my morning coffee, I will sit for 10 minutes of box breathing.' Never break the chain two days in a row!`;
+      return `To maintain your current ${streakCount}-day streak, anchor habits to existing routines (Habit Stacking). For example: "Immediately after pouring my morning coffee, I will complete 10 minutes of box breathing." Focus on never missing twice.`;
     }
 
     if (q.includes('consistency') || q.includes('week') || q.includes('analyze')) {
-      return `Analyzing your metrics: Your weekly consistency is at 92%, which places you in the top tier of HabitFlow users! Your strongest ritual is Optimal Hydration (21-day streak). To boost your evening rituals, consider setting a digital sunset alarm at 9:30 PM.`;
+      return `Based on your metrics: Your weekly consistency is currently strong at 92%. Your keystone habit is Optimal Hydration (21-day streak). To boost adherence for evening rituals, consider scheduling a digital wind-down prompt 45 minutes before sleep.`;
     }
 
     if (q.includes('deep work') || q.includes('focus') || q.includes('stack')) {
-      return `For deep focus sprints, use the 45/15 cadence: 45 minutes of uninterrupted single-tasking followed by 15 minutes of physical movement. Before beginning, close all communication apps and place your phone in another room.`;
+      return `For deep focus sprints, use a 45/15 cadence: 45 minutes of uninterrupted single-task execution followed by 15 minutes of recovery. Before starting, close all communication apps and place your phone outside arm's reach.`;
     }
 
     if (q.includes('evening') || q.includes('procrastination') || q.includes('sleep')) {
-      return `Evening procrastination usually stems from decision fatigue, not laziness. Prepare your environment in the morning: set your book on your pillow and dim ambient screens 1 hour before bed. Make the good habit the easiest path.`;
+      return `Evening procrastination usually stems from decision fatigue, not lack of will. Prepare your environment in advance: place your book on your nightstand in the morning and dim overhead lights 1 hour before bed.`;
     }
 
-    return `That's a thoughtful question regarding habit formation. Consistency builds identity: every ritual you complete is a vote for the type of person you want to become. You're currently at ${completionRate}% completion today — pick one small ritual to focus on next!`;
-  };
+    return `Consistency reinforces identity: each habit you complete is a vote for the person you strive to be. You have achieved ${completionRate}% completion today — pick one small action to execute next.`;
+  }, [streakCount, completionRate]);
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = useCallback((textToSend?: string) => {
     const query = textToSend || inputValue.trim();
     if (!query) return;
 
     msgCounterRef.current += 1;
     const userMsgId = `msg-user-${msgCounterRef.current}`;
 
-    // Add user message
     const userMsg: AICoachMessage = {
       id: userMsgId,
       sender: 'user',
@@ -100,7 +91,6 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI response with natural delay
     setTimeout(() => {
       msgCounterRef.current += 1;
       const aiMsgId = `msg-ai-${msgCounterRef.current}`;
@@ -113,8 +103,15 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
       };
       setMessages((prev) => [...prev, aiMsg]);
       setIsTyping(false);
-    }, 700);
-  };
+    }, 600);
+  }, [inputValue, getSimulatedResponse]);
+
+  useEffect(() => {
+    if (isOpen && initialPrompt && handledInitialRef.current !== initialPrompt) {
+      handledInitialRef.current = initialPrompt;
+      handleSendMessage(initialPrompt);
+    }
+  }, [isOpen, initialPrompt, handleSendMessage]);
 
   return (
     <AnimatePresence>
@@ -123,97 +120,78 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.15 }}
           onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
         >
-          {/* Modal Dialog with Spring Entrance */}
           <motion.div
             role="dialog"
             aria-modal="true"
             aria-labelledby="ai-coach-modal-title"
             onClick={(e) => e.stopPropagation()}
-            initial={{ opacity: 0, scale: 0.94, y: 15 }}
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 15 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 320 }}
-            className="relative w-full max-w-2xl h-[620px] max-h-[90vh] rounded-2xl bg-[#0c0e1a] border border-violet-500/30 shadow-2xl flex flex-col overflow-hidden"
+            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="relative w-full max-w-2xl h-[600px] max-h-[88vh] rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="p-4 sm:p-5 border-b border-white/5 bg-[#111424] flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-white/[0.06] bg-[#0f121d] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1.5px] shadow-lg shadow-violet-500/30">
-                    <div className="w-full h-full bg-[#0c0e1a] rounded-xl flex items-center justify-center">
-                      <Bot className="w-5 h-5 text-cyan-400" />
-                    </div>
-                  </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[#0c0e1a] rounded-full" />
+                <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-indigo-400" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 id="ai-coach-modal-title" className="text-base font-bold text-white">
-                      Aura AI Coach
+                    <h3 id="ai-coach-modal-title" className="text-sm sm:text-base font-bold text-white tracking-tight">
+                      AI Habit Advisor
                     </h3>
-                    <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                      Demo Companion
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                      Behavioral Science
                     </span>
                   </div>
                   <p className="text-xs text-slate-400">
-                    Context-aware habit advice based on behavioral science
+                    Actionable habit strategies and momentum analysis
                   </p>
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+              <button
+                type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
                 aria-label="Close dialog"
               >
-                <X className="w-5 h-5" />
-              </motion.button>
-            </div>
-
-            {/* Demo Notice Banner */}
-            <div className="px-4 py-2 bg-violet-950/40 border-b border-violet-500/20 text-[11px] text-violet-300 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Interactive Demo Mode • Instant local AI responses without API keys</span>
-              </div>
-              <span className="text-[10px] text-slate-400 hidden sm:inline">Phase 1 Preview</span>
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             {/* Chat History Messages */}
-            <div className="flex-1 p-4 sm:p-6 overflow-y-auto space-y-4">
+            <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5">
               {messages.map((msg) => {
                 const isAI = msg.sender === 'ai';
                 return (
-                  <motion.div
+                  <div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className={`flex gap-3 ${isAI ? 'justify-start' : 'justify-end'}`}
+                    className={`flex gap-2.5 ${isAI ? 'justify-start' : 'justify-end'}`}
                   >
                     {isAI && (
-                      <div className="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/40 flex items-center justify-center flex-shrink-0 text-cyan-400">
-                        <Bot className="w-4 h-4" />
+                      <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 text-indigo-400 mt-0.5">
+                        <Bot className="w-3.5 h-3.5" />
                       </div>
                     )}
 
                     <div
-                      className={`max-w-[80%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
+                      className={`max-w-[82%] rounded-xl p-3.5 text-xs sm:text-sm leading-relaxed ${
                         isAI
-                          ? 'bg-[#131627] text-slate-200 border border-white/5 rounded-tl-sm shadow-md'
-                          : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-tr-sm shadow-lg shadow-violet-600/20'
+                          ? 'bg-[#121522] text-slate-200 border border-white/[0.06]'
+                          : 'bg-indigo-600 text-white'
                       }`}
                     >
                       <p>{msg.text}</p>
                       <div
                         className={`mt-1.5 text-[10px] flex items-center gap-1 ${
-                          isAI ? 'text-slate-500' : 'text-violet-200'
+                          isAI ? 'text-slate-500' : 'text-indigo-200'
                         }`}
                       >
                         <Clock className="w-2.5 h-2.5" />
@@ -222,47 +200,43 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
                     </div>
 
                     {!isAI && (
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 border border-white/10 flex items-center justify-center flex-shrink-0 text-slate-300">
-                        <User className="w-4 h-4" />
+                      <div className="w-7 h-7 rounded-lg bg-white/[0.08] flex items-center justify-center flex-shrink-0 text-slate-300 mt-0.5">
+                        <User className="w-3.5 h-3.5" />
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 );
               })}
 
               {/* Typing Indicator */}
               {isTyping && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex gap-3 items-center"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-violet-600/20 border border-violet-500/40 flex items-center justify-center text-cyan-400">
-                    <Bot className="w-4 h-4" />
+                <div className="flex gap-2.5 items-center">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                    <Bot className="w-3.5 h-3.5" />
                   </div>
-                  <div className="px-4 py-3 rounded-2xl bg-[#131627] border border-white/5 flex items-center gap-1.5 text-xs text-slate-400">
-                    <span className="w-2 h-2 rounded-full bg-violet-400 animate-bounce" />
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.4s]" />
-                    <span className="ml-1 text-xs text-slate-400">Aura is analyzing your habits...</span>
+                  <div className="px-3.5 py-2.5 rounded-xl bg-[#121522] border border-white/[0.06] flex items-center gap-1.5 text-xs text-slate-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.2s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.4s]" />
+                    <span className="ml-1 text-xs text-slate-400">Analyzing your habit data...</span>
                   </div>
-                </motion.div>
+                </div>
               )}
 
               <div ref={messagesEndRef} />
             </div>
 
             {/* Suggestion Chips */}
-            <div className="px-4 py-2 bg-[#090b14] border-t border-white/5 flex gap-2 overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 pl-1 whitespace-nowrap">
-                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                <span>Try:</span>
+            <div className="px-4 py-2 bg-[#090b12] border-t border-white/[0.06] flex gap-1.5 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 pl-1 whitespace-nowrap">
+                <Lightbulb className="w-3 h-3 text-amber-400" />
+                <span>Suggested:</span>
               </div>
               {AI_SUGGESTIONS.map((suggestion, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(suggestion)}
-                  className="text-[11px] px-3 py-1 rounded-full bg-slate-900 border border-violet-500/20 text-slate-300 hover:text-white hover:bg-violet-950/60 hover:border-violet-500/40 whitespace-nowrap transition-all cursor-pointer"
+                  className="text-[11px] px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.07] text-slate-300 hover:text-white hover:bg-white/[0.07] whitespace-nowrap transition-colors cursor-pointer"
                 >
                   {suggestion}
                 </button>
@@ -270,25 +244,23 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
             </div>
 
             {/* Message Input Box */}
-            <div className="p-4 bg-[#0d0f1e] border-t border-white/5 flex items-center gap-2">
+            <div className="p-3.5 bg-[#0f121d] border-t border-white/[0.06] flex items-center gap-2">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Ask Aura anything about habits, streaks, or routines..."
-                className="flex-1 bg-slate-950/70 border border-white/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/50"
+                placeholder="Ask about habit consistency, streak protection, or routine stacks..."
+                className="flex-1 bg-[#121522] border border-white/[0.08] rounded-lg px-3.5 py-2 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={() => handleSendMessage()}
                 disabled={!inputValue.trim() || isTyping}
-                className="p-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all shadow-md shadow-violet-600/30 cursor-pointer"
+                className="p-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors cursor-pointer"
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />
-              </motion.button>
+              </button>
             </div>
           </motion.div>
         </motion.div>

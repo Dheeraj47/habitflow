@@ -4,11 +4,12 @@ import {
   Plus, 
   Menu, 
   Flame, 
-  Sparkles, 
   Maximize2, 
   Minimize2,
   Volume2,
-  VolumeX
+  VolumeX,
+  Compass,
+  CheckCircle2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { soundFx } from '../utils/sound';
@@ -43,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   );
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [soundOn, setSoundOn] = useState(true);
+  const [soundOn, setSoundOn] = useState(() => soundFx.enabled);
 
   useEffect(() => {
     const handleFsChange = () => {
@@ -62,9 +63,10 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleToggleSound = () => {
-    soundFx.enabled = !soundOn;
-    setSoundOn(!soundOn);
-    if (!soundOn) {
+    const nextState = !soundOn;
+    soundFx.setEnabled(nextState);
+    setSoundOn(nextState);
+    if (nextState) {
       soundFx.playCrystalChime(880);
     }
   };
@@ -73,116 +75,114 @@ export const Header: React.FC<HeaderProps> = ({
   const currentLevel = Math.floor(userXP / 100);
 
   return (
-    <header className="sticky top-0 z-30 bg-[#06070b]/80 backdrop-blur-2xl border-b border-white/8 px-4 sm:px-8 py-3.5 transition-all">
+    <header className="sticky top-0 z-30 bg-[#08090e]/90 backdrop-blur-xl border-b border-white/[0.07] px-4 sm:px-8 py-3 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Left: Brand Menu & Quick Status */}
         <div className="flex items-center gap-3">
-          <motion.button
+          <button
             id="nav-menu-toggle-btn"
-            whileTap={{ scale: 0.92 }}
-            whileHover={{ scale: 1.05 }}
             onClick={handleMenuClick}
-            className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-violet-500/25 text-slate-300 hover:text-white transition-all cursor-pointer shadow-lg flex items-center justify-center group"
+            className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 hover:text-white transition-all cursor-pointer flex items-center justify-center"
             aria-label="Toggle navigation menu"
             title="Toggle Sidebar Navigation"
           >
-            <Menu className="w-5 h-5 text-violet-400 group-hover:text-cyan-400 transition-colors" />
-          </motion.button>
+            <Menu className="w-4 h-4 text-slate-300" />
+          </button>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                HabitFlow
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
-                <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
-                Lvl {currentLevel}
-              </span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600/15 border border-indigo-500/25 flex items-center justify-center">
+              <Compass className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
-              <CalendarIcon className="w-3.5 h-3.5 text-violet-400" />
-              <span>{formattedDate}</span>
-              <span className="text-slate-600 hidden xs:inline">•</span>
-              <span className="text-emerald-400 font-medium hidden xs:inline flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-cyan-400" /> Focus Mode Active
-              </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm sm:text-base font-bold tracking-tight text-white">
+                  HabitFlow
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/[0.05] text-slate-300 border border-white/[0.08]">
+                  Level {currentLevel}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                <span className="flex items-center gap-1">
+                  <CalendarIcon className="w-3 h-3 text-slate-500" />
+                  {formattedDate}
+                </span>
+                <span className="text-slate-600 hidden xs:inline">•</span>
+                <span className="text-emerald-400 font-medium hidden xs:inline flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                  {completionRate === 100 ? 'All Completed' : `${totalCount - completedCount} Left Today`}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Center / Right: Progress, Streak, Sound & Add Habit */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Active Habit Momentum Pill */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0f1325]/80 border border-amber-500/25 text-xs shadow-sm">
-            <Flame className="w-4 h-4 text-amber-400 fill-amber-400 animate-pulse" />
-            <span className="font-bold text-amber-300">{topStreak}d</span>
+          <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.07] text-xs">
+            <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400/80" />
+            <span className="font-semibold text-slate-200 tabular-nums">{topStreak}d</span>
             <span className="text-[11px] text-slate-400">Streak</span>
           </div>
 
           {/* Daily Progress Gauge Pill */}
-          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#0f1325]/80 border border-violet-500/25 shadow-sm">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-200">
-              <span className="text-cyan-300 font-bold">{completedCount}</span>
-              <span className="text-slate-500">/</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.07]">
+            <div className="flex items-center gap-1 text-xs font-semibold text-slate-200 tabular-nums">
+              <span className="text-indigo-300 font-bold">{completedCount}</span>
+              <span className="text-slate-600">/</span>
               <span>{totalCount}</span>
             </div>
-            <div className="w-14 sm:w-20 h-2 bg-slate-800/90 rounded-full overflow-hidden p-[1px] border border-white/5">
+            <div className="w-14 sm:w-20 h-1.5 bg-slate-800 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-gradient-to-r from-violet-500 via-indigo-500 to-cyan-400 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.5)]"
+                className="h-full bg-indigo-500 rounded-full"
                 initial={false}
                 animate={{ width: `${completionRate}%` }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
               />
             </div>
-            <span className="text-xs font-bold text-violet-300 min-w-[32px] text-right">{completionRate}%</span>
+            <span className="text-xs font-semibold text-slate-300 min-w-[28px] text-right tabular-nums">{completionRate}%</span>
           </div>
 
           {/* Sound FX Audio Toggle */}
-          <motion.button
+          <button
             id="sound-fx-toggle-btn"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
             onClick={handleToggleSound}
-            className={`p-2 rounded-xl border transition-all cursor-pointer shadow-sm hidden sm:flex items-center justify-center ${
+            className={`p-2 rounded-lg border transition-all cursor-pointer hidden sm:flex items-center justify-center ${
               soundOn
-                ? 'bg-slate-900/80 border-violet-500/30 text-violet-300 hover:text-white'
-                : 'bg-slate-900/40 border-white/5 text-slate-500 hover:text-slate-300'
+                ? 'bg-indigo-600/15 border-indigo-500/30 text-indigo-300 hover:text-white'
+                : 'bg-white/[0.03] border-white/[0.07] text-slate-500 hover:text-slate-300'
             }`}
-            title={soundOn ? 'Crystal Sound FX: ON' : 'Crystal Sound FX: MUTED'}
-            aria-label="Toggle sound effects"
+            title={soundOn ? 'UI Audio: ON (Click to mute)' : 'UI Audio: MUTED (Click to enable)'}
+            aria-label="Toggle audio feedback"
           >
-            {soundOn ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4" />}
-          </motion.button>
+            {soundOn ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+          </button>
 
           {/* Fullscreen Toggle */}
-          <motion.button
+          <button
             id="fullscreen-toggle-btn"
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
             onClick={handleToggleFullscreen}
-            className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-white/8 text-slate-300 hover:text-white transition-all cursor-pointer shadow-sm hidden sm:flex items-center justify-center"
+            className="p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-slate-400 hover:text-white transition-all cursor-pointer hidden sm:flex items-center justify-center"
             title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
             aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
           >
             {isFullscreen ? (
-              <Minimize2 className="w-4 h-4 text-violet-300" />
+              <Minimize2 className="w-3.5 h-3.5" />
             ) : (
-              <Maximize2 className="w-4 h-4 text-violet-300" />
+              <Maximize2 className="w-3.5 h-3.5" />
             )}
-          </motion.button>
+          </button>
 
           {/* Primary Action Button: Add Habit */}
-          <motion.button
+          <button
             id="header-add-habit-btn"
-            whileHover={{ scale: 1.04, y: -1 }}
-            whileTap={{ scale: 0.96 }}
             onClick={onOpenAddModal}
-            className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-600 hover:from-violet-500 hover:via-indigo-500 hover:to-cyan-500 text-white text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(139,92,246,0.35)] transition-all border border-violet-400/30 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold transition-all border border-indigo-400/20 cursor-pointer shadow-sm active:scale-98"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Habit</span>
-            <Sparkles className="w-3.5 h-3.5 text-cyan-200 hidden sm:inline" />
-          </motion.button>
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>New Habit</span>
+          </button>
         </div>
       </div>
     </header>

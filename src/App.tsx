@@ -10,11 +10,13 @@ import { AddHabitModal } from './components/AddHabitModal';
 import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
 import { DailyBudgetTracker } from './components/Budget/DailyBudgetTracker';
+import { BudgetPulseCard } from './components/Budget/BudgetPulseCard';
 import { ScrollHUD } from './components/Navigation/ScrollHUD';
 import { ToastContainer } from './components/Toast/ToastContainer';
-import { CustomCursor } from './components/UI/CustomCursor';
 import type { ToastItem } from './components/Toast/ToastContainer';
 import type { Habit, ActiveTab, SanctuaryLifetimeStats } from './types/habit';
+import type { BudgetTrackerState } from './types/budget';
+import { loadBudgetTrackerState, saveBudgetTrackerState } from './utils/budgetStorage';
 import {
   loadSanctuaryStats,
   saveSanctuaryStats,
@@ -24,7 +26,7 @@ import {
   migrateCollidingHabitsAndSanctuary,
 } from './utils/sanctuaryGrowth';
 import { INITIAL_HABITS, PAST_WEEK_ACTIVITY, generateHeatmapData } from './data/initialData';
-import { Database, Compass } from 'lucide-react';
+import { Compass } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 
 const STORAGE_KEY = 'habitflow_habits_v1';
@@ -193,6 +195,32 @@ export function App() {
     }, 60);
   };
 
+  // Daily budget tracker state persisted in localStorage
+  const [budgetState, setBudgetState] = useState<BudgetTrackerState>(() => loadBudgetTrackerState());
+
+  const handleBudgetChange = (nextState: BudgetTrackerState) => {
+    setBudgetState(nextState);
+    saveBudgetTrackerState(nextState);
+  };
+
+  const handleScrollToBudget = () => {
+    if (activeTab !== 'dashboard' && activeTab !== 'habits') {
+      setActiveTab('dashboard');
+    }
+    setTimeout(() => {
+      const el = document.getElementById('budget-tracker-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  };
+
+  const todayBudgetSpent = budgetState.expenses.reduce(
+    (sum, item) => sum + (Number(item.amount) || 0),
+    0
+  );
+  const dailyBudgetLimit = Number(budgetState.dailyLimit) || 1;
+
   // Toggle habit completion with Undo Toast and streak tracking
   const handleToggleHabit = (id: string) => {
     const target = habits.find((h) => h.id === id);
@@ -289,18 +317,17 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06070b] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-violet-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-[#08090e] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-indigo-500/25 selection:text-indigo-200">
       {/* 1. Global Scroll Progress Indicator */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-cyan-400 to-amber-400 origin-left z-50 shadow-[0_0_15px_rgba(6,182,212,0.8)]"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-indigo-500 origin-left z-50 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
         style={{ scaleX }}
       />
 
-      {/* 2. Floating Ambient Glow Orbs in Background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-40 left-1/4 w-[650px] h-[650px] bg-violet-600/10 rounded-full blur-[140px] animate-orb-float" />
-        <div className="absolute top-1/3 -right-40 w-[550px] h-[550px] bg-cyan-500/10 rounded-full blur-[130px] animate-orb-pulse" />
-        <div className="absolute bottom-20 left-10 w-[600px] h-[600px] bg-indigo-600/8 rounded-full blur-[150px]" />
+      {/* 2. Executive Dark Precision Grid & Subtle Ambient Mesh */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(99,102,241,0.08),rgba(0,0,0,0))]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_70%_50%_at_50%_0%,#000_60%,transparent_100%)] opacity-35" />
       </div>
 
       {/* 3. Left Navigation Sidebar Drawer */}
@@ -333,21 +360,6 @@ export function App() {
           userXP={userXP}
         />
 
-        {/* Local Sandbox Notice Pill */}
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 pt-3">
-          <div className="p-2 sm:px-4 rounded-2xl bg-[#0b0e1d]/70 backdrop-blur-md border border-white/8 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_6px_#06b6d4]" />
-              <span className="font-bold text-slate-200">Local Sandbox Mode:</span>
-              <span>All progress, streaks, and XP saved securely in device storage.</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-violet-300 font-medium text-[11px] self-end sm:self-auto">
-              <Database className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Phase 2 Cloud Sync Architecture Ready</span>
-            </div>
-          </div>
-        </div>
-
         {/* Main Content Body */}
         <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-8">
           <AnimatePresence mode="wait">
@@ -373,21 +385,25 @@ export function App() {
                     completedCount={completedHabits}
                     totalCount={totalHabits}
                     topStreak={highestStreak}
+                    budgetTodaySpent={todayBudgetSpent}
+                    budgetDailyLimit={dailyBudgetLimit}
+                    budgetCurrencySymbol={budgetState.currencySymbol}
+                    onScrollToBudget={handleScrollToBudget}
                   />
                 </motion.section>
 
-                {/* 1. Daily Focus Hub & AI Companion (Placed above the habit section) */}
+                {/* 1. Daily Command Hub: Focus Dial, Budget Pulse & AI Companion */}
                 <section
                   id="daily-focus-section"
-                  className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch scroll-mt-24"
-                  aria-label="Daily Focus and AI Companion"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch scroll-mt-24"
+                  aria-label="Daily Command Hub"
                 >
                   <motion.div
                     initial={{ opacity: 0, y: 16 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-30px' }}
                     transition={{ duration: 0.45 }}
-                    className="lg:col-span-7 flex flex-col"
+                    className="flex flex-col h-full"
                   >
                     <DailyFocusCard
                       habits={habits}
@@ -404,8 +420,22 @@ export function App() {
                     initial={{ opacity: 0, y: 16 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: '-30px' }}
-                    transition={{ duration: 0.45, delay: 0.08 }}
-                    className="lg:col-span-5 flex flex-col"
+                    transition={{ duration: 0.45, delay: 0.06 }}
+                    className="flex flex-col h-full"
+                  >
+                    <BudgetPulseCard
+                      budgetState={budgetState}
+                      onBudgetChange={handleBudgetChange}
+                      onScrollToBudget={handleScrollToBudget}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-30px' }}
+                    transition={{ duration: 0.45, delay: 0.12 }}
+                    className="flex flex-col h-full md:col-span-2 lg:col-span-1"
                   >
                     <AICoachCard
                       onOpenCoachModal={handleOpenCoach}
@@ -447,7 +477,10 @@ export function App() {
                   className="w-full scroll-mt-24"
                   aria-label="Daily Budget and Savings Tracker"
                 >
-                  <DailyBudgetTracker />
+                  <DailyBudgetTracker
+                    budgetState={budgetState}
+                    onBudgetChange={handleBudgetChange}
+                  />
                 </motion.section>
 
                 {/* 4. Streaks, 7-Day Velocity Chart, and Activity Heatmap */}
@@ -491,27 +524,23 @@ export function App() {
           </AnimatePresence>
         </main>
 
-        {/* Luxury Footer */}
-        <footer className="border-t border-white/8 py-8 px-4 sm:px-8 text-center text-xs text-slate-500 mt-12 bg-[#05060a]">
+        {/* Clean Executive Footer */}
+        <footer className="border-t border-white/[0.06] py-6 px-4 sm:px-8 text-xs text-slate-500 mt-16 bg-[#07080c]">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-violet-600 to-cyan-400 p-[1px] flex items-center justify-center">
-                <div className="w-full h-full bg-[#05060a] rounded-lg flex items-center justify-center">
-                  <Compass className="w-3.5 h-3.5 text-cyan-400" />
-                </div>
+              <div className="w-6 h-6 rounded-md bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+                <Compass className="w-3.5 h-3.5 text-indigo-400" />
               </div>
-              <span className="font-bold text-slate-300">HabitFlow</span>
+              <span className="font-semibold text-slate-300">HabitFlow</span>
               <span className="text-slate-600">•</span>
-              <span>Intelligent Habit Architecture</span>
+              <span>Habit Tracker &amp; Personal Productivity Engine</span>
             </div>
             <div className="text-[11px] text-slate-500 flex items-center gap-3">
-              <span>React 19</span>
+              <span>Local Storage Encrypted</span>
               <span>•</span>
-              <span>Tailwind CSS</span>
+              <span>Offline Ready</span>
               <span>•</span>
-              <span>Framer Motion</span>
-              <span>•</span>
-              <span>Web Audio API</span>
+              <span>v1.2</span>
             </div>
           </div>
         </footer>
@@ -547,9 +576,6 @@ export function App() {
 
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-
-      {/* Interactive Website-wide Custom Cursor */}
-      <CustomCursor />
     </div>
   );
 }

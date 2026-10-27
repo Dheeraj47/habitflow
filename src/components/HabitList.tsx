@@ -35,17 +35,6 @@ export const HabitList: React.FC<HabitListProps> = ({
   completionRate,
 }) => {
   const [filter, setFilter] = useState<'all' | TimeOfDay | 'completed'>('all');
-  const [hoveredHabitId, setHoveredHabitId] = useState<string | null>(null);
-  const [habitSpotlight, setHabitSpotlight] = useState({ x: 0, y: 0 });
-
-  const handleHabitMouseMove = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setHabitSpotlight({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-    setHoveredHabitId(id);
-  };
 
   const filteredHabits = habits.filter((h) => {
     if (filter === 'all') return true;
@@ -56,7 +45,7 @@ export const HabitList: React.FC<HabitListProps> = ({
   const completedCount = habits.filter((h) => h.completed).length;
 
   const renderHabitIcon = (iconName: string, color: string) => {
-    const props = { className: 'w-4 h-4', style: { color } };
+    const props = { className: 'w-3.5 h-3.5', style: { color } };
     switch (iconName) {
       case 'Sparkles':
         return <Sparkles {...props} />;
@@ -78,15 +67,14 @@ export const HabitList: React.FC<HabitListProps> = ({
   const handleToggle = (id: string) => {
     const habit = habits.find((h) => h.id === id);
     if (habit && !habit.completed) {
-      // Sound feedback: Ascending chime
       soundFx.playCrystalChime(987.77);
 
-      // Confetti celebration
+      // Subtle celebration confetti
       confetti({
-        particleCount: 40,
-        spread: 65,
-        origin: { y: 0.75 },
-        colors: ['#a855f7', '#06b6d4', '#f59e0b', '#10b981', '#ec4899'],
+        particleCount: 25,
+        spread: 50,
+        origin: { y: 0.8 },
+        colors: ['#6366f1', '#10b981', '#f59e0b'],
       });
     } else {
       soundFx.playCrystalChime(587.33);
@@ -103,29 +91,29 @@ export const HabitList: React.FC<HabitListProps> = ({
   ] as const;
 
   return (
-    <div className="space-y-4">
-      {/* Top Glass Card: Habit Metrics & Filter Pills */}
-      <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#0c0f1d]/90 border border-white/10 shadow-2xl backdrop-blur-2xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/8">
+    <div className="space-y-3.5">
+      {/* Top Filter Bar & Summary */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
           <div>
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30">
-                <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <CheckCircle2 className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-bold text-white tracking-tight">Today&apos;s Rituals</h3>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-bold border border-violet-500/30">
-                {completedCount} of {habits.length}
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Today&apos;s Rituals</h3>
+              <span className="text-xs px-2 py-0.5 rounded-md bg-white/[0.05] text-slate-300 font-semibold border border-white/[0.08] tabular-nums">
+                {completedCount} of {habits.length} Done
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Every completed ritual extends your streak and strengthens your daily momentum.
+              Mark rituals complete as you finish them throughout your day.
             </p>
           </div>
 
-          {/* Interactive Progress Meter */}
-          <div className="flex items-center gap-3 bg-[#070912]/80 px-4 py-2.5 rounded-2xl border border-white/8 shadow-inner self-start sm:self-auto">
-            <div className="relative w-11 h-11 flex items-center justify-center">
-              <svg className="w-11 h-11 -rotate-90" viewBox="0 0 36 36">
+          {/* Clean Progress Meter */}
+          <div className="flex items-center gap-3 bg-white/[0.03] px-3.5 py-2 rounded-xl border border-white/[0.06] self-start sm:self-auto">
+            <div className="relative w-9 h-9 flex items-center justify-center">
+              <svg className="w-9 h-9 -rotate-90" viewBox="0 0 36 36">
                 <path
                   className="text-slate-800"
                   strokeWidth="3.5"
@@ -134,7 +122,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
                 <path
-                  className="text-cyan-400 transition-all duration-700 ease-out"
+                  className="text-indigo-500 transition-all duration-500 ease-out"
                   strokeDasharray={`${completionRate}, 100`}
                   strokeWidth="3.5"
                   strokeLinecap="round"
@@ -143,21 +131,21 @@ export const HabitList: React.FC<HabitListProps> = ({
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
-              <span className="absolute text-xs font-black text-white">{completionRate}%</span>
+              <span className="absolute text-[11px] font-bold text-white tabular-nums">{completionRate}%</span>
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-200">Daily Mastery</div>
-              <div className="text-[11px] text-cyan-400 font-medium">
+              <div className="text-xs font-semibold text-slate-200">Daily Adherence</div>
+              <div className="text-[11px] text-slate-400 font-medium">
                 {completionRate === 100
-                  ? 'All rituals complete! 🌟'
-                  : `${habits.length - completedCount} habits left`}
+                  ? 'All rituals finished'
+                  : `${habits.length - completedCount} remaining`}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Filter Pills with animated sliding active background */}
-        <div className="flex items-center gap-1 pt-4 overflow-x-auto no-scrollbar">
+        {/* Filter Tabs */}
+        <div className="flex items-center gap-1.5 pt-3.5 overflow-x-auto no-scrollbar">
           <ListFilter className="w-3.5 h-3.5 text-slate-500 mr-1 flex-shrink-0" />
           {filterTabs.map((item) => {
             const isActive = filter === item.id;
@@ -168,21 +156,16 @@ export const HabitList: React.FC<HabitListProps> = ({
                   setFilter(item.id);
                   soundFx.playCrystalChime(784);
                 }}
-                className={`relative px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-                  isActive ? 'text-white' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                  isActive 
+                    ? 'bg-indigo-600/15 text-indigo-300 border border-indigo-500/30' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="activeFilterPill"
-                    className="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl shadow-md shadow-violet-600/30 border border-violet-400/40"
-                    transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5">
                   {item.label}
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-500'
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold tabular-nums ${
+                    isActive ? 'bg-indigo-500/25 text-indigo-200' : 'bg-white/[0.06] text-slate-400'
                   }`}>
                     {item.count}
                   </span>
@@ -193,28 +176,27 @@ export const HabitList: React.FC<HabitListProps> = ({
         </div>
       </div>
 
-      {/* Staggered Habit Checklist Cards */}
-      <motion.div layout className="space-y-2.5">
+      {/* Habit Checklist Cards */}
+      <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {filteredHabits.length === 0 ? (
             <motion.div
               key="empty-state"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="p-10 text-center rounded-3xl bg-[#0c0f1d]/50 border border-dashed border-white/10"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="p-8 text-center rounded-xl bg-[#0d1019] border border-dashed border-white/[0.08]"
             >
-              <Sparkles className="w-8 h-8 text-violet-400 mx-auto mb-2 opacity-60" />
-              <h4 className="text-sm font-bold text-slate-300">No habits in this category</h4>
+              <h4 className="text-sm font-semibold text-slate-300">No habits in this category</h4>
               <p className="text-xs text-slate-500 mt-1">
-                Plant a new ritual to track this time slot.
+                Add a new habit to track your routine in this time slot.
               </p>
               <button
                 onClick={onOpenAddModal}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600/30 text-violet-300 border border-violet-500/40 text-xs font-bold hover:bg-violet-600/50 transition-all cursor-pointer shadow-lg"
+                className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600/15 text-indigo-300 border border-indigo-500/30 text-xs font-semibold hover:bg-indigo-600/25 transition-all cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Plant New Habit
+                Add Habit
               </button>
             </motion.div>
           ) : (
@@ -224,70 +206,42 @@ export const HabitList: React.FC<HabitListProps> = ({
                 <motion.div
                   layout
                   key={habit.id}
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.28, delay: idx * 0.03 }}
-                  whileHover={{ y: -2 }}
-                  onMouseMove={(e) => handleHabitMouseMove(e, habit.id)}
-                  onMouseEnter={() => setHoveredHabitId(habit.id)}
-                  onMouseLeave={() => setHoveredHabitId(null)}
-                  className={`group relative overflow-hidden flex items-center justify-between p-3.5 sm:p-5 rounded-2xl border transition-all duration-300 ${
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.2, delay: idx * 0.02 }}
+                  className={`group relative flex items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-150 ${
                     isDone
-                      ? 'bg-[#090b16]/70 border-violet-500/25 shadow-md shadow-violet-950/20'
-                      : 'bg-[#0e1224]/90 border-white/8 hover:border-violet-500/40 hover:bg-[#13172e] shadow-xl'
+                      ? 'bg-[#0b0d14] border-white/[0.05] opacity-80'
+                      : 'bg-[#0d1019] border-white/[0.07] hover:border-white/[0.14] hover:bg-[#101320] shadow-sm'
                   }`}
                 >
-                  {/* Dynamic Cursor Spotlight Tracking */}
-                  <div
-                    className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-200 z-0"
-                    style={{
-                      opacity: hoveredHabitId === habit.id ? 1 : 0,
-                      background: isDone
-                        ? `radial-gradient(280px circle at ${habitSpotlight.x}px ${habitSpotlight.y}px, rgba(16, 185, 129, 0.14), transparent 70%)`
-                        : `radial-gradient(280px circle at ${habitSpotlight.x}px ${habitSpotlight.y}px, rgba(139, 92, 246, 0.16), rgba(6, 182, 212, 0.08), transparent 70%)`,
-                    }}
-                  />
-
                   {/* Left: Checkbox & Habit Info */}
-                  <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 relative z-10">
-                    {/* Glowing Checkbox Control */}
-                    <motion.button
-                      whileHover={{ scale: 1.12 }}
-                      whileTap={{ scale: 0.88 }}
+                  <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                    {/* Clean Checkbox Control */}
+                    <button
                       onClick={() => handleToggle(habit.id)}
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer relative overflow-hidden flex-shrink-0 ${
+                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
                         isDone
-                          ? 'bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 text-white shadow-[0_0_15px_rgba(6,182,212,0.45)] border border-cyan-300/40'
-                          : 'border-2 border-slate-600 hover:border-violet-400 bg-slate-900/80 shadow-inner'
+                          ? 'bg-emerald-500 text-slate-950 border border-emerald-400'
+                          : 'border border-slate-600 hover:border-indigo-400 bg-white/[0.02]'
                       }`}
                       aria-label={`Toggle habit: ${habit.title}`}
                     >
-                      <AnimatePresence>
-                        {isDone && (
-                          <motion.div
-                            initial={{ scale: 0, rotate: -45 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            exit={{ scale: 0 }}
-                            transition={{ type: 'spring', damping: 15, stiffness: 450 }}
-                          >
-                            <Check className="w-4 h-4 stroke-[3]" />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.button>
+                      {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </button>
 
                     {/* Category Icon & Details */}
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <div
-                          className="p-1 rounded-md bg-white/5 flex-shrink-0"
+                          className="p-1 rounded bg-white/[0.04] flex-shrink-0"
                           title={habit.category}
                         >
                           {renderHabitIcon(habit.iconName, habit.color)}
                         </div>
                         <h4
-                          className={`text-sm sm:text-base font-bold truncate transition-all ${
+                          className={`text-xs sm:text-sm font-semibold truncate transition-colors ${
                             isDone
                               ? 'line-through text-slate-500'
                               : 'text-slate-100 group-hover:text-white'
@@ -297,14 +251,14 @@ export const HabitList: React.FC<HabitListProps> = ({
                         </h4>
                       </div>
 
-                      <p className="text-xs text-slate-400 truncate mt-0.5 max-w-sm sm:max-w-md">
+                      <p className="text-[11px] text-slate-400 truncate mt-0.5 max-w-sm sm:max-w-md">
                         {habit.description}
                       </p>
 
                       {/* Meta Tags & Weekly Progress Bar */}
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[11px] text-slate-400">
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[10px] text-slate-400">
                         <span className="flex items-center gap-1 capitalize text-slate-300 font-medium">
-                          <Clock className="w-3 h-3 text-violet-400" />
+                          <Clock className="w-3 h-3 text-slate-500" />
                           {habit.timeOfDay}
                         </span>
                         <span className="text-slate-600">•</span>
@@ -313,15 +267,15 @@ export const HabitList: React.FC<HabitListProps> = ({
                         
                         {/* Weekly target bar */}
                         <div className="flex items-center gap-1.5">
-                          <div className="w-14 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="w-12 h-1 bg-slate-800 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full"
+                              className="h-full bg-indigo-500 rounded-full"
                               style={{
                                 width: `${Math.min(100, Math.round((habit.completedThisWeek / habit.targetPerWeek) * 100))}%`,
                               }}
                             />
                           </div>
-                          <span className="text-cyan-400 font-semibold text-[10px]">
+                          <span className="text-slate-400 font-medium tabular-nums">
                             {habit.completedThisWeek}/{habit.targetPerWeek}w
                           </span>
                         </div>
@@ -330,42 +284,40 @@ export const HabitList: React.FC<HabitListProps> = ({
                   </div>
 
                   {/* Right: Streak & Actions */}
-                  <div className="flex items-center gap-2.5 sm:gap-3 pl-3 flex-shrink-0 relative z-10">
+                  <div className="flex items-center gap-2 pl-3 flex-shrink-0">
                     {/* Streak Badge */}
                     <div
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all ${
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-colors tabular-nums ${
                         isDone
-                          ? 'bg-amber-500/15 border-amber-500/30 text-amber-400 shadow-sm shadow-amber-500/20'
-                          : 'bg-slate-900/60 border-white/5 text-slate-400'
+                          ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                          : 'bg-white/[0.03] border-white/[0.06] text-slate-400'
                       }`}
                       title={`${habit.streak} day active streak`}
                     >
                       <Flame
-                        className={`w-3.5 h-3.5 ${
-                          isDone ? 'fill-amber-400 text-amber-400' : 'text-slate-500'
+                        className={`w-3 h-3 ${
+                          isDone ? 'fill-amber-400/80 text-amber-400' : 'text-slate-500'
                         }`}
                       />
                       <span>{habit.streak}d</span>
                     </div>
 
                     {/* Delete button */}
-                    <motion.button
-                      whileHover={{ scale: 1.15 }}
-                      whileTap={{ scale: 0.9 }}
+                    <button
                       onClick={() => onDeleteHabit(habit.id)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-70 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+                      className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-70 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                       title="Remove habit"
                       aria-label="Remove habit"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </motion.button>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </motion.div>
               );
             })
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     </div>
   );
 };
