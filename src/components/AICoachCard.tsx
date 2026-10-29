@@ -33,17 +33,17 @@ export const AICoachCard: React.FC<AICoachCardProps> = ({
   };
 
   return (
-    <div className="p-5 sm:p-6 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl relative overflow-hidden space-y-4 sm:space-y-5 h-full flex flex-col justify-between transition-all hover:border-white/[0.12]">
+    <div className="p-5 sm:p-6 rounded-2xl bg-[#0d1019] border border-white/[0.07] shadow-xl relative overflow-hidden space-y-4 sm:space-y-5 h-full flex flex-col justify-between transition-all hover:border-white/[0.12] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
       {/* Top Header Row */}
-      <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-white/[0.07]">
+      <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-white/[0.06]">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
             <Bot className="w-4 h-4 text-indigo-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">AI Habit Advisor</h3>
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
                 Insights
               </span>
             </div>
@@ -51,8 +51,8 @@ export const AICoachCard: React.FC<AICoachCardProps> = ({
           </div>
         </div>
 
-        <span className="text-[11px] font-medium text-emerald-400 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        <span className="text-[11px] font-medium text-emerald-300 flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           Active
         </span>
       </div>
@@ -77,7 +77,7 @@ export const AICoachCard: React.FC<AICoachCardProps> = ({
               <button
                 key={item.label}
                 onClick={() => handleCardClick(item.prompt)}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] hover:border-indigo-500/30 text-[11px] font-medium text-slate-300 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.025] hover:bg-white/[0.06] border border-white/[0.06] hover:border-indigo-500/30 text-[11px] font-medium text-slate-300 hover:text-white transition-colors cursor-pointer active:scale-98"
               >
                 <Icon className="w-3 h-3 text-indigo-400" />
                 <span>{item.label}</span>

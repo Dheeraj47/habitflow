@@ -197,6 +197,9 @@ export function App() {
 
   // Daily budget tracker state persisted in localStorage
   const [budgetState, setBudgetState] = useState<BudgetTrackerState>(() => loadBudgetTrackerState());
+  const [budgetSubTab, setBudgetSubTab] = useState<'today' | 'history' | 'categories' | 'debts'>('today');
+
+  const pendingDebtsCount = (budgetState.debts || []).filter((d) => d.status === 'pending').length;
 
   const handleBudgetChange = (nextState: BudgetTrackerState) => {
     setBudgetState(nextState);
@@ -207,6 +210,19 @@ export function App() {
     if (activeTab !== 'dashboard' && activeTab !== 'habits') {
       setActiveTab('dashboard');
     }
+    setTimeout(() => {
+      const el = document.getElementById('budget-tracker-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 60);
+  };
+
+  const handleNavigateToDebts = () => {
+    if (activeTab !== 'dashboard' && activeTab !== 'habits') {
+      setActiveTab('dashboard');
+    }
+    setBudgetSubTab('debts');
     setTimeout(() => {
       const el = document.getElementById('budget-tracker-section');
       if (el) {
@@ -344,6 +360,7 @@ export function App() {
         onClose={() => setIsSidebarOpen(false)}
         userXP={userXP}
         topStreak={highestStreak}
+        pendingDebtsCount={pendingDebtsCount}
       />
 
       {/* 4. Main Page Container */}
@@ -358,6 +375,8 @@ export function App() {
           totalCount={totalHabits}
           topStreak={highestStreak}
           userXP={userXP}
+          onNavigateToDebts={handleNavigateToDebts}
+          pendingDebtsCount={pendingDebtsCount}
         />
 
         {/* Main Content Body */}
@@ -480,6 +499,8 @@ export function App() {
                   <DailyBudgetTracker
                     budgetState={budgetState}
                     onBudgetChange={handleBudgetChange}
+                    defaultSubTab={budgetSubTab}
+                    onSubTabChange={setBudgetSubTab}
                   />
                 </motion.section>
 
@@ -556,6 +577,8 @@ export function App() {
         topStreak={highestStreak}
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenCoachModal={() => handleOpenCoach()}
+        onNavigateToDebts={handleNavigateToDebts}
+        pendingDebtsCount={pendingDebtsCount}
       />
 
       {/* Modals */}

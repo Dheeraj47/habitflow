@@ -70,6 +70,22 @@ export const SectionView: React.FC<SectionViewProps> = ({
     );
   }
 
+  if (tab === 'debts') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <DailyBudgetTracker 
+          budgetState={budgetState}
+          onBudgetChange={onBudgetChange}
+          defaultSubTab="debts"
+        />
+      </motion.div>
+    );
+  }
+
   if (tab === 'calendar') {
     return (
       <motion.div

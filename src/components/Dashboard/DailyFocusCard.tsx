@@ -51,11 +51,11 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
   };
 
   return (
-    <div className="p-5 sm:p-6 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl relative overflow-hidden space-y-5 h-full flex flex-col justify-between transition-all hover:border-white/[0.12]">
+    <div className="p-5 sm:p-6 rounded-2xl bg-[#0d1019] border border-white/[0.07] shadow-xl relative overflow-hidden space-y-4 sm:space-y-5 h-full flex flex-col justify-between transition-all hover:border-white/[0.12] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.07]">
+      <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.06]">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 text-indigo-400">
             <Target className="w-4 h-4" />
           </div>
           <div>
@@ -64,17 +64,17 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </div>
         </div>
 
-        <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-white/[0.04] text-slate-300 border border-white/[0.07]">
+        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-white/[0.04] text-slate-300 border border-white/[0.07]">
           Today
         </span>
       </div>
 
       {/* Circular Progress Dial & Context */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-5 py-2">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-5 py-1">
         <div className="relative w-28 h-28 flex items-center justify-center flex-shrink-0">
           <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
             <circle
-              className="text-slate-800"
+              className="text-slate-800/80"
               strokeWidth="7"
               stroke="currentColor"
               fill="transparent"
@@ -110,12 +110,12 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
 
         {/* Dial Stats Text */}
         <div className="space-y-1.5 text-center sm:text-left">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.07] text-[11px] font-medium text-slate-300">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[11px] font-medium text-slate-300">
             <CheckCircle2 className="w-3 h-3 text-indigo-400" />
             <span>{completedCount} of {totalCount} Rituals Finished</span>
           </div>
 
-          <h4 className="text-base font-semibold text-white">
+          <h4 className="text-sm sm:text-base font-semibold text-white">
             {completionRate === 100
               ? 'All Goals Met Today'
               : completionRate >= 50
@@ -133,7 +133,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
 
       {/* Time-Of-Day Breakdown Grid */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-center space-y-0.5">
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] transition-colors text-center space-y-0.5">
           <Sun className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1" />
           <div className="text-[10px] font-medium text-slate-400">Morning</div>
           <div className="text-xs font-bold text-white tabular-nums">
@@ -141,7 +141,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </div>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-center space-y-0.5">
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] transition-colors text-center space-y-0.5">
           <Sunset className="w-3.5 h-3.5 text-orange-400 mx-auto mb-1" />
           <div className="text-[10px] font-medium text-slate-400">Afternoon</div>
           <div className="text-xs font-bold text-white tabular-nums">
@@ -149,7 +149,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </div>
         </div>
 
-        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] text-center space-y-0.5">
+        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] transition-colors text-center space-y-0.5">
           <Moon className="w-3.5 h-3.5 text-indigo-400 mx-auto mb-1" />
           <div className="text-[10px] font-medium text-slate-400">Evening</div>
           <div className="text-xs font-bold text-white tabular-nums">
@@ -160,7 +160,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
 
       {/* Streak & XP Dual Card */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center gap-2.5">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center gap-2.5">
           <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 flex-shrink-0">
             <Flame className="w-4 h-4 fill-amber-400/80" />
           </div>
@@ -170,7 +170,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </div>
         </div>
 
-        <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center gap-2.5">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center gap-2.5">
           <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-400 flex-shrink-0">
             <Trophy className="w-4 h-4" />
           </div>
@@ -186,7 +186,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
       {/* Quick Action: Add Habit Button */}
       <button
         onClick={handleAddClick}
-        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-white/[0.05] hover:bg-white/[0.09] text-slate-200 text-xs font-semibold transition-all border border-white/[0.08] cursor-pointer"
+        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white text-xs font-semibold transition-all border border-white/[0.07] hover:border-white/[0.12] cursor-pointer active:scale-98"
       >
         <Plus className="w-3.5 h-3.5" />
         <span>Add New Habit</span>

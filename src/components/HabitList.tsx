@@ -93,15 +93,15 @@ export const HabitList: React.FC<HabitListProps> = ({
   return (
     <div className="space-y-3.5">
       {/* Top Filter Bar & Summary */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl">
+      <div className="p-4 sm:p-5 rounded-2xl bg-[#0d1019] border border-white/[0.07] shadow-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
           <div>
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Today&apos;s Rituals</h3>
-              <span className="text-xs px-2 py-0.5 rounded-md bg-white/[0.05] text-slate-300 font-semibold border border-white/[0.08] tabular-nums">
+              <span className="text-xs px-2 py-0.5 rounded-md bg-white/[0.04] text-slate-300 font-semibold border border-white/[0.07] tabular-nums">
                 {completedCount} of {habits.length} Done
               </span>
             </div>
@@ -111,11 +111,11 @@ export const HabitList: React.FC<HabitListProps> = ({
           </div>
 
           {/* Clean Progress Meter */}
-          <div className="flex items-center gap-3 bg-white/[0.03] px-3.5 py-2 rounded-xl border border-white/[0.06] self-start sm:self-auto">
+          <div className="flex items-center gap-3 bg-white/[0.025] px-3.5 py-2 rounded-xl border border-white/[0.06] self-start sm:self-auto">
             <div className="relative w-9 h-9 flex items-center justify-center">
               <svg className="w-9 h-9 -rotate-90" viewBox="0 0 36 36">
                 <path
-                  className="text-slate-800"
+                  className="text-slate-800/80"
                   strokeWidth="3.5"
                   stroke="currentColor"
                   fill="none"
@@ -156,10 +156,10 @@ export const HabitList: React.FC<HabitListProps> = ({
                   setFilter(item.id);
                   soundFx.playCrystalChime(784);
                 }}
-                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
                   isActive 
-                    ? 'bg-indigo-600/15 text-indigo-300 border border-indigo-500/30' 
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
+                    ? 'bg-indigo-600/15 text-indigo-300 border-indigo-500/30' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border-transparent'
                 }`}
               >
                 <span className="flex items-center gap-1.5">
@@ -210,21 +210,21 @@ export const HabitList: React.FC<HabitListProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.2, delay: idx * 0.02 }}
-                  className={`group relative flex items-center justify-between p-3 sm:p-4 rounded-xl border transition-all duration-150 ${
+                  className={`group relative flex items-start justify-between p-3.5 sm:p-4 rounded-xl border transition-all duration-150 ${
                     isDone
-                      ? 'bg-[#0b0d14] border-white/[0.05] opacity-80'
+                      ? 'bg-[#090b10]/90 border-white/[0.04] opacity-75'
                       : 'bg-[#0d1019] border-white/[0.07] hover:border-white/[0.14] hover:bg-[#101320] shadow-sm'
                   }`}
                 >
                   {/* Left: Checkbox & Habit Info */}
-                  <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+                  <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0 flex-1">
                     {/* Clean Checkbox Control */}
                     <button
                       onClick={() => handleToggle(habit.id)}
-                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer flex-shrink-0 ${
+                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer flex-shrink-0 mt-0.5 ${
                         isDone
                           ? 'bg-emerald-500 text-slate-950 border border-emerald-400'
-                          : 'border border-slate-600 hover:border-indigo-400 bg-white/[0.02]'
+                          : 'border border-slate-600 hover:border-indigo-400 bg-white/[0.02] hover:bg-indigo-500/10'
                       }`}
                       aria-label={`Toggle habit: ${habit.title}`}
                     >
@@ -232,16 +232,16 @@ export const HabitList: React.FC<HabitListProps> = ({
                     </button>
 
                     {/* Category Icon & Details */}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1 pr-1.5 sm:pr-2">
+                      <div className="flex items-start gap-1.5 sm:gap-2">
                         <div
-                          className="p-1 rounded bg-white/[0.04] flex-shrink-0"
+                          className="p-1 rounded bg-white/[0.04] flex-shrink-0 mt-0.5"
                           title={habit.category}
                         >
                           {renderHabitIcon(habit.iconName, habit.color)}
                         </div>
                         <h4
-                          className={`text-xs sm:text-sm font-semibold truncate transition-colors ${
+                          className={`text-xs sm:text-sm font-semibold break-words transition-colors leading-snug flex-1 ${
                             isDone
                               ? 'line-through text-slate-500'
                               : 'text-slate-100 group-hover:text-white'
@@ -251,23 +251,25 @@ export const HabitList: React.FC<HabitListProps> = ({
                         </h4>
                       </div>
 
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5 max-w-sm sm:max-w-md">
-                        {habit.description}
-                      </p>
+                      {habit.description && (
+                        <p className="text-[11px] text-slate-400 break-words mt-1 leading-relaxed">
+                          {habit.description}
+                        </p>
+                      )}
 
                       {/* Meta Tags & Weekly Progress Bar */}
-                      <div className="flex flex-wrap items-center gap-2 mt-1.5 text-[10px] text-slate-400">
-                        <span className="flex items-center gap-1 capitalize text-slate-300 font-medium">
-                          <Clock className="w-3 h-3 text-slate-500" />
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-2 text-[10px] sm:text-[11px] text-slate-400">
+                        <span className="flex items-center gap-1 capitalize text-slate-300 font-medium whitespace-nowrap">
+                          <Clock className="w-3 h-3 text-slate-500 flex-shrink-0" />
                           {habit.timeOfDay}
                         </span>
                         <span className="text-slate-600">•</span>
-                        <span className="capitalize text-slate-400">{habit.category}</span>
+                        <span className="capitalize text-slate-400 whitespace-nowrap">{habit.category}</span>
                         <span className="text-slate-600">•</span>
                         
                         {/* Weekly target bar */}
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-12 h-1 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap">
+                          <div className="w-12 h-1 bg-slate-800 rounded-full overflow-hidden flex-shrink-0">
                             <div
                               className="h-full bg-indigo-500 rounded-full"
                               style={{
@@ -284,13 +286,13 @@ export const HabitList: React.FC<HabitListProps> = ({
                   </div>
 
                   {/* Right: Streak & Actions */}
-                  <div className="flex items-center gap-2 pl-3 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 sm:gap-2 pl-2 sm:pl-3 flex-shrink-0 self-start mt-0.5">
                     {/* Streak Badge */}
                     <div
                       className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-colors tabular-nums ${
                         isDone
                           ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-                          : 'bg-white/[0.03] border-white/[0.06] text-slate-400'
+                          : 'bg-white/[0.025] border-white/[0.06] text-slate-400'
                       }`}
                       title={`${habit.streak} day active streak`}
                     >
@@ -305,7 +307,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                     {/* Delete button */}
                     <button
                       onClick={() => onDeleteHabit(habit.id)}
-                      className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-70 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-70 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                       title="Remove habit"
                       aria-label="Remove habit"
                     >

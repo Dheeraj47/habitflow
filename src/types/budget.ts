@@ -29,6 +29,21 @@ export interface DailyBudgetRecord {
   categoryTotals?: Partial<Record<ExpenseCategory, number>>;
 }
 
+export type DebtType = 'lend' | 'borrow';
+export type DebtStatus = 'pending' | 'settled';
+
+export interface DebtRecord {
+  id: string;
+  type: DebtType;         // 'lend' (you lent / they owe you) vs 'borrow' (you borrowed / you owe them)
+  personName: string;
+  amount: number;
+  note?: string;
+  createdAt: string;      // "YYYY-MM-DD"
+  dueDate?: string;       // "YYYY-MM-DD" (optional)
+  status: DebtStatus;     // 'pending' | 'settled'
+  settledAt?: string;     // "YYYY-MM-DD" when paid/received
+}
+
 export interface BudgetTrackerState {
   dailyLimit: number;
   currencySymbol: string;
@@ -36,6 +51,7 @@ export interface BudgetTrackerState {
   historyByDate: Record<string, DailyBudgetRecord>;
   savingStreak: number;
   lastActiveDate: string;
+  debts?: DebtRecord[];
 }
 
 export interface CategoryMeta {

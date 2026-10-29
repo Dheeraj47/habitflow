@@ -41,6 +41,7 @@ export type ActiveTab =
   | 'dashboard'
   | 'habits'
   | 'budget'
+  | 'debts'
   | 'calendar'
   | 'insights'
   | 'coach'

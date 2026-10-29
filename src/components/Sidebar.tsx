@@ -11,7 +11,8 @@ import {
   Flame, 
   X, 
   Compass,
-  Wallet
+  Wallet,
+  ArrowLeftRight
 } from 'lucide-react';
 import type { ActiveTab } from '../types/habit';
 import { motion } from 'motion/react';
@@ -26,6 +27,7 @@ interface SidebarProps {
   onClose?: () => void;
   userXP?: number;
   topStreak?: number;
+  pendingDebtsCount?: number;
 }
 
 interface NavItemConfig {
@@ -44,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   userXP = 1450,
   topStreak = 14,
+  pendingDebtsCount = 0,
 }) => {
   const isVisible = isOpen ?? isOpenMobile ?? false;
   const handleClose = useCallback(() => {
@@ -69,6 +72,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', label: 'Habits', icon: CheckSquare, badge: '6' },
     { id: 'budget', label: 'Budget Tracker', icon: Wallet },
+    { 
+      id: 'debts', 
+      label: 'Lend & Borrow', 
+      icon: ArrowLeftRight, 
+      badge: pendingDebtsCount > 0 ? `${pendingDebtsCount}` : undefined 
+    },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'insights', label: 'Insights & Analytics', icon: BarChart3 },
     { id: 'coach', label: 'AI Habit Coach', icon: Bot },

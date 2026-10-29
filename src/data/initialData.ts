@@ -95,17 +95,17 @@ export const PAST_WEEK_ACTIVITY: DayActivity[] = [
 export const generateHeatmapData = (): HeatmapCell[] => {
   const cells: HeatmapCell[] = [];
   const levels: (0 | 1 | 2 | 3 | 4)[] = [
-    3, 4, 4, 2, 4, 3, 4,
-    2, 3, 4, 4, 1, 3, 4,
-    4, 4, 3, 4, 2, 4, 3,
-    3, 2, 4, 4, 4, 3, 4,
-    4, 4, 3, 2, 4, 4, 3,
-    2, 4, 4, 3, 4, 2, 4,
-    3, 4, 4, 4, 3, 4, 3,
-    4, 3, 4, 4, 3, 4, 2
+    3, 4, 4, 0, 4, 3, 4,
+    2, 3, 0, 4, 1, 3, 4,
+    4, 4, 3, 4, 2, 0, 3,
+    3, 2, 4, 4, 0, 3, 4,
+    4, 4, 3, 0, 4, 4, 3,
+    2, 0, 4, 3, 4, 2, 4,
+    3, 4, 0, 4, 3, 4, 3,
+    4, 3, 4, 4, 0, 4, 2
   ];
 
-  const today = new Date('2026-10-24');
+  const today = new Date();
   for (let i = 55; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
@@ -114,7 +114,7 @@ export const generateHeatmapData = (): HeatmapCell[] => {
     cells.push({
       date: dateStr,
       level: lvl,
-      count: lvl === 0 ? 0 : Math.round(lvl * 1.5 + 1),
+      count: lvl === 0 ? (i % 2 === 0 ? 1 : 0) : Math.round(lvl * 1.5 + 1),
     });
   }
   return cells;

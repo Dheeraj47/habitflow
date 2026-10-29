@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Wallet, 
@@ -21,8 +21,10 @@ import {
   PieChart,
   CalendarCheck2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ArrowLeftRight
 } from 'lucide-react';
+import { LendBorrowTracker } from './LendBorrowTracker';
 import type { 
   BudgetTrackerState, 
   ExpenseCategory, 
@@ -43,6 +45,8 @@ interface DailyBudgetTrackerProps {
   onBudgetChange?: (state: BudgetTrackerState) => void;
   initialState?: BudgetTrackerState;
   onStateChange?: (state: BudgetTrackerState) => void;
+  defaultSubTab?: 'today' | 'history' | 'categories' | 'debts';
+  onSubTabChange?: (tab: 'today' | 'history' | 'categories' | 'debts') => void;
 }
 
 const CATEGORY_ICONS: Record<ExpenseCategory, React.ElementType> = {
@@ -72,6 +76,8 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   onBudgetChange,
   initialState,
   onStateChange,
+  defaultSubTab,
+  onSubTabChange,
 }) => {
   const [internalState, setInternalState] = useState<BudgetTrackerState>(() => {
     if (budgetState) return budgetState;
@@ -104,8 +110,14 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   // Currency Dropdown
   const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
 
-  // Tab View for Details (Expenses vs History vs Breakdown)
-  const [activeSubTab, setActiveSubTab] = useState<'today' | 'history' | 'categories'>('today');
+  // Tab View for Details (Expenses vs History vs Breakdown vs Debts)
+  const [activeSubTab, setActiveSubTab] = useState<'today' | 'history' | 'categories' | 'debts'>(defaultSubTab || 'today');
+
+  useEffect(() => {
+    if (defaultSubTab) {
+      setActiveSubTab(defaultSubTab);
+    }
+  }, [defaultSubTab]);
 
   // Expanded date in 7-Day History for full breakdown (starts closed by default)
   const [expandedDateStr, setExpandedDateStr] = useState<string | null>(null);
@@ -121,6 +133,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   const savings = dailyLimit - todaySpent;
   const isUnderBudget = savings >= 0;
   const spentPercentage = Math.min(Math.round((todaySpent / dailyLimit) * 100), 999);
+  const pendingDebtsCount = (state.debts || []).filter((d) => d.status === 'pending').length;
 
   const updateStateAndPersist = (newState: BudgetTrackerState) => {
     setInternalState(newState);
@@ -239,11 +252,11 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   );
 
   return (
-    <div className="w-full rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl p-5 sm:p-6 md:p-7 space-y-5">
+    <div className="w-full rounded-2xl bg-[#0d1019] border border-white/[0.07] shadow-xl p-5 sm:p-6 md:p-7 space-y-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
       {/* 1. Header Row */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
             <Wallet className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
@@ -541,33 +554,39 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
       </div>
 
       {/* 4. Sub-Navigation Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-2">
+      <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-2 overflow-x-auto no-scrollbar">
         <button
           onClick={() => {
             setActiveSubTab('today');
             setExpandedDateStr(null);
+            if (onSubTabChange) onSubTabChange('today');
           }}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
             activeSubTab === 'today'
-              ? 'bg-white/[0.06] text-white border border-white/[0.08]'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
           }`}
         >
-          <span>Today&apos;s Expenses ({state.expenses.length})</span>
+          <Wallet className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+          <span>Today&apos;s Expenses</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold tabular-nums bg-white/[0.08] text-slate-300">
+            {state.expenses.length}
+          </span>
         </button>
 
         <button
           onClick={() => {
             setActiveSubTab('history');
             setExpandedDateStr(null);
+            if (onSubTabChange) onSubTabChange('history');
           }}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
             activeSubTab === 'history'
-              ? 'bg-white/[0.06] text-white border border-white/[0.08]'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
           }`}
         >
-          <CalendarCheck2 className="w-3.5 h-3.5" />
+          <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
           <span>7-Day History</span>
         </button>
 
@@ -575,15 +594,37 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           onClick={() => {
             setActiveSubTab('categories');
             setExpandedDateStr(null);
+            if (onSubTabChange) onSubTabChange('categories');
           }}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
             activeSubTab === 'categories'
-              ? 'bg-white/[0.06] text-white border border-white/[0.08]'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
           }`}
         >
-          <PieChart className="w-3.5 h-3.5" />
+          <PieChart className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
           <span>Category Breakdown</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveSubTab('debts');
+            setExpandedDateStr(null);
+            if (onSubTabChange) onSubTabChange('debts');
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
+            activeSubTab === 'debts'
+              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+          }`}
+        >
+          <ArrowLeftRight className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          <span>Lend &amp; Borrow</span>
+          {pendingDebtsCount > 0 && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold tabular-nums bg-amber-500/15 text-amber-300 border border-amber-500/25">
+              {pendingDebtsCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -978,6 +1019,14 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
               </div>
             )}
           </div>
+        )}
+
+        {/* TAB 4: Lend & Borrow Tracker */}
+        {activeSubTab === 'debts' && (
+          <LendBorrowTracker
+            budgetState={state}
+            onBudgetChange={updateStateAndPersist}
+          />
         )}
       </div>
     </div>

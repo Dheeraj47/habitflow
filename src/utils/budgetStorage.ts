@@ -1,4 +1,4 @@
-import type { BudgetTrackerState, ExpenseItem, DailyBudgetRecord } from '../types/budget';
+import type { BudgetTrackerState, ExpenseItem, DailyBudgetRecord, DebtRecord } from '../types/budget';
 
 const BUDGET_STORAGE_KEY = 'habitflow_budget_tracker_v1';
 
@@ -16,6 +16,46 @@ export const formatCurrency = (amount: number, symbol: string = '$'): string => 
 
 export const generateUniqueExpenseId = (): string => {
   return `exp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+};
+
+export const generateUniqueDebtId = (): string => {
+  return `debt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+};
+
+export const generateDefaultDebts = (todayStr: string): DebtRecord[] => {
+  return [
+    {
+      id: 'debt_init_1',
+      type: 'lend',
+      personName: 'Alex Mercer',
+      amount: 45.0,
+      note: 'Dinner bill split & dessert',
+      createdAt: todayStr,
+      dueDate: '',
+      status: 'pending',
+    },
+    {
+      id: 'debt_init_2',
+      type: 'borrow',
+      personName: 'Sarah Jenkins',
+      amount: 20.0,
+      note: 'Shared Uber cab fare',
+      createdAt: todayStr,
+      dueDate: '',
+      status: 'pending',
+    },
+    {
+      id: 'debt_init_3',
+      type: 'lend',
+      personName: 'Marcus Cole',
+      amount: 60.0,
+      note: 'Concert ticket pass',
+      createdAt: todayStr,
+      dueDate: '',
+      status: 'settled',
+      settledAt: todayStr,
+    },
+  ];
 };
 
 /**
@@ -181,6 +221,12 @@ export const loadBudgetTrackerState = (): BudgetTrackerState => {
         });
       }
 
+      // Initialize lend/borrow records if not present
+      if (!state.debts) {
+        state.debts = generateDefaultDebts(todayStr);
+        saveBudgetTrackerState(state);
+      }
+
       return state;
     }
   } catch (e) {
@@ -217,6 +263,7 @@ export const loadBudgetTrackerState = (): BudgetTrackerState => {
     historyByDate: generateDefaultHistory(defaultLimit, todayStr),
     savingStreak: 3,
     lastActiveDate: todayStr,
+    debts: generateDefaultDebts(todayStr),
   };
 
   saveBudgetTrackerState(defaultState);

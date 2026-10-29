@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowUp, 
@@ -9,7 +9,8 @@ import {
   Target, 
   CheckCircle2, 
   BarChart2,
-  Wallet
+  Wallet,
+  ArrowLeftRight
 } from 'lucide-react';
 import { soundFx } from '../../utils/sound';
 
@@ -20,6 +21,8 @@ interface ScrollHUDProps {
   topStreak: number;
   onOpenAddModal: () => void;
   onOpenCoachModal: () => void;
+  onNavigateToDebts?: () => void;
+  pendingDebtsCount?: number;
 }
 
 export const ScrollHUD: React.FC<ScrollHUDProps> = ({
@@ -29,22 +32,11 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
   topStreak: _topStreak,
   onOpenAddModal,
   onOpenCoachModal,
+  onNavigateToDebts,
+  pendingDebtsCount,
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(() => soundFx.enabled);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 220) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const handleScrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -76,19 +68,19 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.96 }}
           transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-2.5 py-1.5 rounded-xl bg-[#0e111a]/95 backdrop-blur-xl border border-white/[0.09] shadow-2xl flex items-center gap-1.5 sm:gap-2.5 select-none max-w-[96vw]"
-          aria-label="Floating Navigation Dock"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-2.5 py-1.5 rounded-2xl bg-[#0c0e15]/95 backdrop-blur-xl border border-white/[0.08] shadow-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] flex items-center gap-1.5 sm:gap-2 select-none max-w-[96vw] overflow-x-auto no-scrollbar"
+          aria-label="Floating Navigation Dock / Taskbar"
         >
           {/* Daily Progress Gauge Badge */}
           <button 
             onClick={() => scrollToSection('todays-rituals')}
-            className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] transition-colors cursor-pointer border border-white/[0.06]"
+            className="flex items-center gap-2 px-2 py-1 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] transition-colors cursor-pointer border border-white/[0.06] active:scale-98 flex-shrink-0"
             title="Jump to Today's Rituals"
           >
             <div className="relative w-6 h-6 flex items-center justify-center">
               <svg className="w-6 h-6 -rotate-90" viewBox="0 0 36 36">
                 <path
-                  className="text-slate-800"
+                  className="text-slate-800/80"
                   strokeWidth="3.5"
                   stroke="currentColor"
                   fill="none"
@@ -111,13 +103,13 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
             </span>
           </button>
 
-          <div className="h-4 w-[1px] bg-white/[0.08] hidden sm:block" />
+          <div className="h-4 w-[1px] bg-white/[0.08] hidden sm:block flex-shrink-0" />
 
           {/* Quick Jump Links */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
             <button
               onClick={() => scrollToSection('daily-focus-section')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
               title="Daily Focus"
             >
               <Target className="w-4 h-4" />
@@ -125,7 +117,7 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
 
             <button
               onClick={() => scrollToSection('todays-rituals')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
               title="Habit Checklist"
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -133,15 +125,37 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
 
             <button
               onClick={() => scrollToSection('budget-tracker-section')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
               title="Budget Tracker"
             >
               <Wallet className="w-4 h-4" />
             </button>
 
             <button
+              id="taskbar-lend-borrow-btn"
+              onClick={() => {
+                if (onNavigateToDebts) {
+                  onNavigateToDebts();
+                } else {
+                  scrollToSection('budget-tracker-section');
+                }
+              }}
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 transition-all cursor-pointer active:scale-95 relative"
+              title="Lend & Borrow Tracker"
+              aria-label="Lend & Borrow Tracker"
+            >
+              <ArrowLeftRight className="w-4 h-4 text-amber-400" />
+              <span className="hidden md:inline text-xs font-semibold text-amber-300">Debts</span>
+              {pendingDebtsCount !== undefined && pendingDebtsCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-black text-[9px] font-bold leading-none">
+                  {pendingDebtsCount}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => scrollToSection('analytics-section')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
               title="Analytics"
             >
               <BarChart2 className="w-4 h-4" />
@@ -153,7 +167,7 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
           {/* Audio toggle */}
           <button
             onClick={handleToggleSound}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 ${
               soundEnabled 
                 ? 'text-indigo-400 hover:text-indigo-300' 
                 : 'text-slate-500 hover:text-slate-400'
@@ -167,7 +181,7 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
           {/* AI Coach Action Button */}
           <button
             onClick={onOpenCoachModal}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.07] text-slate-300 text-xs font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer active:scale-98"
             title="Ask AI Habit Advisor"
           >
             <Bot className="w-3.5 h-3.5 text-indigo-400" />
@@ -187,7 +201,7 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
           {/* Scroll to Top */}
           <button
             onClick={handleScrollToTop}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
             title="Back to top"
             aria-label="Scroll back to top"
           >
