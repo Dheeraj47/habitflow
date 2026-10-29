@@ -133,46 +133,76 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
 
       {/* Time-Of-Day Breakdown Grid */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] transition-colors text-center space-y-0.5">
+        <motion.div
+          whileHover={{ scale: 1.04, y: -2 }}
+          transition={{ duration: 0.15 }}
+          className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-amber-500/30 transition-colors text-center space-y-0.5 cursor-default"
+        >
           <Sun className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1" />
           <div className="text-[10px] font-medium text-slate-400">Morning</div>
           <div className="text-xs font-bold text-white tabular-nums">
             {morningDone}/{morningHabits.length}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] transition-colors text-center space-y-0.5">
+        <motion.div
+          whileHover={{ scale: 1.04, y: -2 }}
+          transition={{ duration: 0.15 }}
+          className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-orange-500/30 transition-colors text-center space-y-0.5 cursor-default"
+        >
           <Sunset className="w-3.5 h-3.5 text-orange-400 mx-auto mb-1" />
           <div className="text-[10px] font-medium text-slate-400">Afternoon</div>
           <div className="text-xs font-bold text-white tabular-nums">
             {afternoonDone}/{afternoonHabits.length}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] transition-colors text-center space-y-0.5">
+        <motion.div
+          whileHover={{ scale: 1.04, y: -2 }}
+          transition={{ duration: 0.15 }}
+          className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-indigo-500/30 transition-colors text-center space-y-0.5 cursor-default"
+        >
           <Moon className="w-3.5 h-3.5 text-indigo-400 mx-auto mb-1" />
           <div className="text-[10px] font-medium text-slate-400">Evening</div>
           <div className="text-xs font-bold text-white tabular-nums">
             {eveningDone}/{eveningHabits.length}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Streak & XP Dual Card */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="p-2.5 sm:p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center gap-2.5">
+        <motion.div
+          whileHover={{ y: -2, transition: { duration: 0.15 } }}
+          className="p-2.5 sm:p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:border-amber-500/25 flex items-center gap-2.5 transition-colors"
+        >
           <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 flex-shrink-0">
-            <Flame className="w-4 h-4 fill-amber-400/80" />
+            <motion.span
+              animate={topStreak > 0 ? { scale: [1, 1.22, 1] } : undefined}
+              transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              className="inline-flex items-center justify-center"
+            >
+              <Flame className="w-4 h-4 fill-amber-400/80" />
+            </motion.span>
           </div>
           <div className="min-w-0">
             <div className="text-sm font-bold text-white tabular-nums">{topStreak} Days</div>
             <div className="text-[10px] text-slate-400 truncate">Streak Chain</div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="p-2.5 sm:p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center gap-2.5">
+        <motion.div
+          whileHover={{ y: -2, transition: { duration: 0.15 } }}
+          className="p-2.5 sm:p-3 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:border-indigo-500/25 flex items-center gap-2.5 transition-colors"
+        >
           <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-400 flex-shrink-0">
-            <Trophy className="w-4 h-4" />
+            <motion.span
+              animate={{ rotate: [0, -5, 5, 0] }}
+              transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="inline-flex items-center justify-center"
+            >
+              <Trophy className="w-4 h-4" />
+            </motion.span>
           </div>
           <div className="min-w-0">
             <div className="text-sm font-bold text-white">Level {currentLevel}</div>
@@ -180,17 +210,19 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
               {xpIntoCurrentLevel}/100 XP
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Quick Action: Add Habit Button */}
-      <button
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={handleAddClick}
-        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white text-xs font-semibold transition-all border border-white/[0.07] hover:border-white/[0.12] cursor-pointer active:scale-98"
+        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white text-xs font-semibold transition-all border border-white/[0.07] hover:border-white/[0.12] cursor-pointer shadow-sm"
       >
         <Plus className="w-3.5 h-3.5" />
         <span>Add New Habit</span>
-      </button>
+      </motion.button>
     </div>
   );
 };

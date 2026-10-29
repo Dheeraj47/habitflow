@@ -28,6 +28,8 @@ import {
 import { INITIAL_HABITS, PAST_WEEK_ACTIVITY, generateHeatmapData } from './data/initialData';
 import { Compass } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
+import confetti from 'canvas-confetti';
+import { soundFx } from './utils/sound';
 
 const STORAGE_KEY = 'habitflow_habits_v1';
 const XP_STORAGE_KEY = 'habitflow_user_xp_v1';
@@ -268,13 +270,42 @@ export function App() {
 
     if (willBeCompleted) {
       setUserXP((prev) => prev + 50);
-      addToast({
-        type: 'success',
-        message: `Marked "${target.title}" done!`,
-        subtext: '+50 XP earned • Momentum streak extended',
-        actionLabel: 'Undo',
-        onAction: () => handleToggleHabit(id),
-      });
+      const remainingIncomplete = habits.filter((h) => h.id !== id && !h.completed).length;
+
+      if (remainingIncomplete === 0 && habits.length > 0) {
+        // 100% Rituals Completed Today Grand Finale!
+        soundFx.playSingingBowl();
+        confetti({
+          particleCount: 80,
+          spread: 90,
+          origin: { x: 0.25, y: 0.6 },
+          colors: ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'],
+        });
+        setTimeout(() => {
+          confetti({
+            particleCount: 80,
+            spread: 90,
+            origin: { x: 0.75, y: 0.6 },
+            colors: ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'],
+          });
+        }, 220);
+
+        addToast({
+          type: 'success',
+          message: '100% Rituals Completed Today! 🎉',
+          subtext: 'Flawless execution! Daily streak and bonus XP secured.',
+          actionLabel: 'Undo',
+          onAction: () => handleToggleHabit(id),
+        });
+      } else {
+        addToast({
+          type: 'success',
+          message: `Marked "${target.title}" done!`,
+          subtext: '+50 XP earned • Momentum streak extended',
+          actionLabel: 'Undo',
+          onAction: () => handleToggleHabit(id),
+        });
+      }
     } else {
       setUserXP((prev) => Math.max(0, prev - 50));
       addToast({

@@ -9,6 +9,7 @@ import {
   Calendar,
   Wallet
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../../utils/sound';
 
 interface CinematicHeroProps {
@@ -84,8 +85,12 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
 
   return (
     <div className="relative rounded-2xl bg-[#0d1019] border border-white/[0.07] p-6 sm:p-7 shadow-xl overflow-hidden transition-all shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
-      {/* Subtle top ambient tint */}
-      <div className="absolute top-0 right-0 w-80 h-40 bg-indigo-500/[0.03] rounded-full blur-2xl pointer-events-none" />
+      {/* Subtle animated top ambient tint */}
+      <motion.div
+        animate={{ scale: [1, 1.25, 1], opacity: [0.03, 0.08, 0.03] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-0 right-0 w-80 h-40 bg-indigo-500 rounded-full blur-2xl pointer-events-none"
+      />
 
       <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         {/* Left Column: Greeting, Headline & Primary Action */}
@@ -133,31 +138,38 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
           </div>
 
           <div className="pt-1.5 flex flex-wrap items-center gap-2.5">
-            <button
+            <motion.button
               id="hero-start-rituals-btn"
+              whileHover={{ scale: 1.025 }}
+              whileTap={{ scale: 0.97 }}
               onClick={handleStart}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm transition-all border border-indigo-400/20 shadow-sm cursor-pointer active:scale-98"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm transition-all border border-indigo-400/20 shadow-sm cursor-pointer shadow-[0_0_15px_rgba(99,102,241,0.25)]"
             >
               <span>Review Today&apos;s Rituals</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            </motion.button>
 
             {/* Subtle rotating quote chip */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.94 }}
               onClick={handleNextQuote}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.07] text-xs text-slate-300 transition-colors cursor-pointer"
               title="Next daily reflection quote"
             >
               <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-slate-400">Reflect</span>
-            </button>
+            </motion.button>
           </div>
         </div>
 
         {/* Right Column: Executive KPI Mini-Cards */}
         <div className={`grid grid-cols-1 ${hasBudget ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} lg:grid-cols-1 gap-2.5 w-full lg:w-72 flex-shrink-0`}>
           {/* Card 1: Daily Progress */}
-          <div className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors flex items-center justify-between lg:justify-start gap-3">
+          <motion.div
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors flex items-center justify-between lg:justify-start gap-3"
+          >
             <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
               <CheckCircle2 className="w-4 h-4 text-indigo-400" />
             </div>
@@ -168,10 +180,13 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
                 <span className="text-xs font-semibold text-indigo-400 tabular-nums">({completionRate}%)</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 2: Momentum Chain */}
-          <div className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors flex items-center justify-between lg:justify-start gap-3">
+          <motion.div
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors flex items-center justify-between lg:justify-start gap-3"
+          >
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
               <Flame className="w-4 h-4 text-amber-400 fill-amber-400/80" />
             </div>
@@ -182,11 +197,12 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
                 <span className="text-[11px] text-amber-300 font-medium">Unbroken</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 3: Budget Pacing (if enabled) */}
           {hasBudget ? (
-            <div 
+            <motion.div 
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
               onClick={onScrollToBudget}
               className="p-3 rounded-xl bg-white/[0.025] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/[0.12] flex items-center justify-between lg:justify-start gap-3 cursor-pointer transition-colors"
               title="Jump to Budget Tracker"
@@ -209,10 +225,13 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ) : (
             /* Card 3: Consistency Rating (fallback) */
-            <div className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors flex items-center justify-between lg:justify-start gap-3">
+            <motion.div
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
+              className="p-3 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-white/[0.12] transition-colors flex items-center justify-between lg:justify-start gap-3"
+            >
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
                 <TrendingUp className="w-4 h-4 text-emerald-400" />
               </div>
@@ -223,18 +242,27 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
                   <span className="text-[11px] text-emerald-300 font-medium">+4% week</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>
 
-      {/* Quote Banner at bottom of card */}
-      <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-start gap-2.5 text-xs text-slate-400">
+      {/* Quote Banner at bottom of card with smooth crossfade */}
+      <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-start gap-2.5 text-xs text-slate-400 overflow-hidden">
         <Quote className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0 mt-0.5" />
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-          <span className="italic text-slate-300">&ldquo;{currentQuote.quote}&rdquo;</span>
-          <span className="text-slate-500 font-medium">— {currentQuote.author}</span>
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={quoteIndex}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.22 }}
+            className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2"
+          >
+            <span className="italic text-slate-300">&ldquo;{currentQuote.quote}&rdquo;</span>
+            <span className="text-slate-500 font-medium">— {currentQuote.author}</span>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -107,32 +107,40 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
 
           {/* Quick Jump Links */}
           <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.14, y: -1 }}
+              whileTap={{ scale: 0.88 }}
               onClick={() => scrollToSection('daily-focus-section')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               title="Daily Focus"
             >
               <Target className="w-4 h-4" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.14, y: -1 }}
+              whileTap={{ scale: 0.88 }}
               onClick={() => scrollToSection('todays-rituals')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               title="Habit Checklist"
             >
               <CheckCircle2 className="w-4 h-4" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.14, y: -1 }}
+              whileTap={{ scale: 0.88 }}
               onClick={() => scrollToSection('budget-tracker-section')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               title="Budget Tracker"
             >
               <Wallet className="w-4 h-4" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
               id="taskbar-lend-borrow-btn"
+              whileHover={{ scale: 1.06, y: -1 }}
+              whileTap={{ scale: 0.92 }}
               onClick={() => {
                 if (onNavigateToDebts) {
                   onNavigateToDebts();
@@ -140,34 +148,42 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
                   scrollToSection('budget-tracker-section');
                 }
               }}
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 transition-all cursor-pointer active:scale-95 relative"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-amber-300 hover:text-amber-200 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/25 transition-all cursor-pointer relative"
               title="Lend & Borrow Tracker"
               aria-label="Lend & Borrow Tracker"
             >
               <ArrowLeftRight className="w-4 h-4 text-amber-400" />
               <span className="hidden md:inline text-xs font-semibold text-amber-300">Debts</span>
               {pendingDebtsCount !== undefined && pendingDebtsCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-amber-400 text-black text-[9px] font-bold leading-none">
+                <motion.span
+                  animate={{ scale: [1, 1.25, 1] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                  className="px-1.5 py-0.2 rounded-full bg-amber-400 text-black text-[9px] font-bold leading-none inline-block"
+                >
                   {pendingDebtsCount}
-                </span>
+                </motion.span>
               )}
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.14, y: -1 }}
+              whileTap={{ scale: 0.88 }}
               onClick={() => scrollToSection('analytics-section')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               title="Analytics"
             >
               <BarChart2 className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
           <div className="h-4 w-[1px] bg-white/[0.08]" />
 
           {/* Audio toggle */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.14, y: -1 }}
+            whileTap={{ scale: 0.88 }}
             onClick={handleToggleSound}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer active:scale-95 ${
+            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
               soundEnabled 
                 ? 'text-indigo-400 hover:text-indigo-300' 
                 : 'text-slate-500 hover:text-slate-400'
@@ -176,37 +192,43 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
             aria-label="Toggle audio feedback"
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </button>
+          </motion.button>
 
           {/* AI Coach Action Button */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05, y: -1 }}
+            whileTap={{ scale: 0.94 }}
             onClick={onOpenCoachModal}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer active:scale-98"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.07] border border-white/[0.06] text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
             title="Ask AI Habit Advisor"
           >
             <Bot className="w-3.5 h-3.5 text-indigo-400" />
             <span className="hidden sm:inline">Coach</span>
-          </button>
+          </motion.button>
 
           {/* Quick Add Habit Primary Action */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.06, y: -1 }}
+            whileTap={{ scale: 0.94 }}
             onClick={onOpenAddModal}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all border border-indigo-400/20 cursor-pointer shadow-sm active:scale-98"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all border border-indigo-400/20 cursor-pointer shadow-[0_0_12px_rgba(99,102,241,0.35)]"
             title="Add a new habit"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span className="hidden sm:inline">New</span>
-          </button>
+          </motion.button>
 
           {/* Scroll to Top */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.14, y: -1 }}
+            whileTap={{ scale: 0.88 }}
             onClick={handleScrollToTop}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer active:scale-95"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
             title="Back to top"
             aria-label="Scroll back to top"
           >
             <ArrowUp className="w-4 h-4" />
-          </button>
+          </motion.button>
         </motion.div>
       )}
     </AnimatePresence>

@@ -17,6 +17,7 @@ import {
 import type { DebtRecord, DebtType, DebtStatus, BudgetTrackerState } from '../../types/budget';
 import { formatCurrency, generateUniqueDebtId, getTodayDateString } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
+import confetti from 'canvas-confetti';
 
 interface LendBorrowTrackerProps {
   budgetState: BudgetTrackerState;
@@ -119,8 +120,21 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
   };
 
   const handleToggleStatus = (id: string) => {
-    soundFx.playCrystalChime(880);
     const todayStr = getTodayDateString();
+    const target = debts.find((d) => d.id === id);
+    const willBeSettled = target?.status === 'pending';
+
+    if (willBeSettled) {
+      soundFx.playCrystalChime(1046.5);
+      confetti({
+        particleCount: 35,
+        spread: 60,
+        origin: { y: 0.7 },
+        colors: ['#10b981', '#34d399', '#f59e0b', '#6366f1'],
+      });
+    } else {
+      soundFx.playCrystalChime(880);
+    }
 
     const nextDebts = debts.map((d) => {
       if (d.id === id) {
@@ -154,7 +168,10 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
       {/* 1. Executive Summary Cards: Lent, Borrowed & Net Balance */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Card 1: You Lent (To Collect) */}
-        <div className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between">
+        <motion.div
+          whileHover={{ y: -3, transition: { duration: 0.15 } }}
+          className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] hover:border-emerald-500/25 shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between transition-colors"
+        >
           <div className="flex items-center justify-between gap-1.5 mb-1.5">
             <span className="text-xs font-medium text-slate-400 whitespace-nowrap">You Lent (To Collect)</span>
             <div className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -170,10 +187,13 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Money others owe to you</p>
-        </div>
+        </motion.div>
 
         {/* Card 2: You Borrowed (To Pay) */}
-        <div className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between">
+        <motion.div
+          whileHover={{ y: -3, transition: { duration: 0.15 } }}
+          className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] hover:border-rose-500/25 shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between transition-colors"
+        >
           <div className="flex items-center justify-between gap-1.5 mb-1.5">
             <span className="text-xs font-medium text-slate-400 whitespace-nowrap">You Borrowed (To Pay)</span>
             <div className="w-6 h-6 rounded-md bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
@@ -189,10 +209,13 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Money you owe to others</p>
-        </div>
+        </motion.div>
 
         {/* Card 3: Net Outstanding Balance */}
-        <div className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between">
+        <motion.div
+          whileHover={{ y: -3, transition: { duration: 0.15 } }}
+          className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] hover:border-indigo-500/25 shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between transition-colors"
+        >
           <div className="flex items-center justify-between gap-1.5 mb-1.5">
             <span className="text-xs font-medium text-slate-400 whitespace-nowrap">Net Position</span>
             <div className="w-6 h-6 rounded-md bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
@@ -218,7 +241,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
           <p className="text-[11px] text-slate-400 mt-1">
             {netBalance >= 0 ? 'You will collect more than you owe' : 'You owe more than you are to collect'}
           </p>
-        </div>
+        </motion.div>
       </div>
 
       {/* 2. Action Bar & Add Form Trigger */}
@@ -482,11 +505,12 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
+                  whileHover={{ y: -2, transition: { duration: 0.15 } }}
                   transition={{ duration: 0.2, delay: idx * 0.02 }}
                   className={`group relative flex items-start justify-between p-3.5 sm:p-4 rounded-xl border transition-all ${
                     isSettled
                       ? 'bg-[#090b10]/90 border-white/[0.04] opacity-75'
-                      : 'bg-[#0d1019] border-white/[0.07] hover:border-white/[0.12] shadow-sm'
+                      : 'bg-[#0d1019] border-white/[0.07] hover:border-white/[0.14] hover:bg-[#101320] shadow-sm'
                   }`}
                 >
                   {/* Left: Avatar / Type Icon & Details */}

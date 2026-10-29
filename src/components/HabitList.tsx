@@ -150,19 +150,27 @@ export const HabitList: React.FC<HabitListProps> = ({
           {filterTabs.map((item) => {
             const isActive = filter === item.id;
             return (
-              <button
+              <motion.button
                 key={item.id}
+                whileTap={{ scale: 0.94 }}
                 onClick={() => {
                   setFilter(item.id);
                   soundFx.playCrystalChime(784);
                 }}
                 className={`relative px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
                   isActive 
-                    ? 'bg-indigo-600/15 text-indigo-300 border-indigo-500/30' 
+                    ? 'text-indigo-200 border-indigo-500/30' 
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border-transparent'
                 }`}
               >
-                <span className="flex items-center gap-1.5">
+                {isActive && (
+                  <motion.span
+                    layoutId="activeHabitFilterPill"
+                    className="absolute inset-0 rounded-lg bg-indigo-600/20 border border-indigo-500/35 shadow-[0_0_12px_rgba(99,102,241,0.2)]"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-1.5">
                   {item.label}
                   <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold tabular-nums ${
                     isActive ? 'bg-indigo-500/25 text-indigo-200' : 'bg-white/[0.06] text-slate-400'
@@ -170,7 +178,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                     {item.count}
                   </span>
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
@@ -209,27 +217,39 @@ export const HabitList: React.FC<HabitListProps> = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
+                  whileHover={{ y: -2, transition: { duration: 0.15 } }}
                   transition={{ duration: 0.2, delay: idx * 0.02 }}
                   className={`group relative flex items-start justify-between p-3.5 sm:p-4 rounded-xl border transition-all duration-150 ${
                     isDone
                       ? 'bg-[#090b10]/90 border-white/[0.04] opacity-75'
-                      : 'bg-[#0d1019] border-white/[0.07] hover:border-white/[0.14] hover:bg-[#101320] shadow-sm'
+                      : 'bg-[#0d1019] border-white/[0.07] hover:border-white/[0.14] hover:bg-[#101320] shadow-sm hover:shadow-indigo-500/5'
                   }`}
                 >
                   {/* Left: Checkbox & Habit Info */}
                   <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0 flex-1">
-                    {/* Clean Checkbox Control */}
-                    <button
+                    {/* Interactive Spring Checkbox Control */}
+                    <motion.button
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.82 }}
                       onClick={() => handleToggle(habit.id)}
-                      className={`w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer flex-shrink-0 mt-0.5 ${
+                      className={`relative w-6 h-6 rounded-md flex items-center justify-center transition-all cursor-pointer flex-shrink-0 mt-0.5 ${
                         isDone
-                          ? 'bg-emerald-500 text-slate-950 border border-emerald-400'
+                          ? 'bg-emerald-500 text-slate-950 border border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.35)]'
                           : 'border border-slate-600 hover:border-indigo-400 bg-white/[0.02] hover:bg-indigo-500/10'
                       }`}
                       aria-label={`Toggle habit: ${habit.title}`}
                     >
-                      {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    </button>
+                      {isDone && (
+                        <motion.span
+                          initial={{ scale: 0, rotate: -45 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+                          className="flex items-center justify-center"
+                        >
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </motion.span>
+                      )}
+                    </motion.button>
 
                     {/* Category Icon & Details */}
                     <div className="min-w-0 flex-1 pr-1.5 sm:pr-2">
@@ -270,11 +290,13 @@ export const HabitList: React.FC<HabitListProps> = ({
                         {/* Weekly target bar */}
                         <div className="flex items-center gap-1.5 whitespace-nowrap">
                           <div className="w-12 h-1 bg-slate-800 rounded-full overflow-hidden flex-shrink-0">
-                            <div
+                            <motion.div
                               className="h-full bg-indigo-500 rounded-full"
-                              style={{
+                              initial={false}
+                              animate={{
                                 width: `${Math.min(100, Math.round((habit.completedThisWeek / habit.targetPerWeek) * 100))}%`,
                               }}
+                              transition={{ duration: 0.4, ease: 'easeOut' }}
                             />
                           </div>
                           <span className="text-slate-400 font-medium tabular-nums">
@@ -287,7 +309,7 @@ export const HabitList: React.FC<HabitListProps> = ({
 
                   {/* Right: Streak & Actions */}
                   <div className="flex items-center gap-1.5 sm:gap-2 pl-2 sm:pl-3 flex-shrink-0 self-start mt-0.5">
-                    {/* Streak Badge */}
+                    {/* Animated Streak Badge */}
                     <div
                       className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold border transition-colors tabular-nums ${
                         isDone
@@ -296,23 +318,31 @@ export const HabitList: React.FC<HabitListProps> = ({
                       }`}
                       title={`${habit.streak} day active streak`}
                     >
-                      <Flame
-                        className={`w-3 h-3 ${
-                          isDone ? 'fill-amber-400/80 text-amber-400' : 'text-slate-500'
-                        }`}
-                      />
+                      <motion.span
+                        animate={habit.streak > 0 ? { scale: [1, 1.2, 1] } : undefined}
+                        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                        className="inline-flex items-center justify-center"
+                      >
+                        <Flame
+                          className={`w-3 h-3 ${
+                            isDone ? 'fill-amber-400/80 text-amber-400' : 'text-slate-500'
+                          }`}
+                        />
+                      </motion.span>
                       <span>{habit.streak}d</span>
                     </div>
 
                     {/* Delete button */}
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.88 }}
                       onClick={() => onDeleteHabit(habit.id)}
                       className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-70 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
                       title="Remove habit"
                       aria-label="Remove habit"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </motion.button>
                   </div>
                 </motion.div>
               );
