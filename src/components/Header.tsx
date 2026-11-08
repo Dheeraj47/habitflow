@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { soundFx } from '../utils/sound';
+import { UserMenu } from './Auth/UserMenu';
 
 interface HeaderProps {
   onOpenAddModal: () => void;
@@ -26,6 +27,7 @@ interface HeaderProps {
   userXP?: number;
   onNavigateToDebts?: () => void;
   pendingDebtsCount?: number;
+  onNavigateToSettings?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   userXP = 1450,
   onNavigateToDebts,
   pendingDebtsCount = 0,
+  onNavigateToSettings,
 }) => {
   const [formattedDate] = React.useState(() =>
     new Intl.DateTimeFormat('en-US', {
@@ -215,6 +218,9 @@ export const Header: React.FC<HeaderProps> = ({
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>New Habit</span>
           </button>
+
+          {/* User Account / Sign In Menu */}
+          <UserMenu onNavigateToSettings={onNavigateToSettings} />
         </div>
       </div>
     </header>

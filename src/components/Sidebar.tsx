@@ -12,11 +12,14 @@ import {
   X, 
   Compass,
   Wallet,
-  ArrowLeftRight
+  ArrowLeftRight,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 import type { ActiveTab } from '../types/habit';
 import { motion } from 'motion/react';
 import { soundFx } from '../utils/sound';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -48,6 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   topStreak = 14,
   pendingDebtsCount = 0,
 }) => {
+  const { authUser, isAuthenticated, openAuthModal, signOut } = useAuth();
   const isVisible = isOpen ?? isOpenMobile ?? false;
   const handleClose = useCallback(() => {
     if (onClose) onClose();
@@ -188,17 +192,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Profile snippet with live XP bar */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-xs text-indigo-300">
-                AR
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-slate-200 truncate">Alex Rivera</div>
-                <div className="text-[11px] text-slate-400 truncate">
-                  Level {currentLevel} • {userXP} XP
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {isAuthenticated && authUser?.avatarUrl ? (
+                  <img
+                    src={authUser.avatarUrl}
+                    alt={authUser.fullName}
+                    className="w-8 h-8 rounded-lg object-cover border border-indigo-500/30 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-xs text-indigo-300 flex-shrink-0">
+                    {isAuthenticated && authUser
+                      ? authUser.fullName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
+                      : 'GA'}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold text-slate-200 truncate">
+                    {isAuthenticated && authUser ? authUser.fullName : 'Guest Explorer'}
+                  </div>
+                  <div className="text-[11px] text-slate-400 truncate">
+                    Level {currentLevel} • {userXP} XP {!isAuthenticated && '(Local)'}
+                  </div>
                 </div>
               </div>
+
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundFx.playCrystalChime(650);
+                    signOut();
+                  }}
+                  className="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer flex-shrink-0"
+                  title="Sign out of account"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleClose();
+                    openAuthModal('signin');
+                  }}
+                  className="px-2 py-1 rounded-md bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-[10px] font-semibold transition-colors cursor-pointer flex-shrink-0 flex items-center gap-1"
+                  title="Sign in to your account"
+                >
+                  <LogIn className="w-3 h-3" />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
 
             {/* Level XP Progress Bar */}

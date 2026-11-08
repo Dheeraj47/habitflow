@@ -7,6 +7,7 @@ import { StatsAndCharts } from './components/StatsAndCharts';
 import { AICoachCard } from './components/AICoachCard';
 import { AICoachModal } from './components/AICoachModal';
 import { AddHabitModal } from './components/AddHabitModal';
+import { AuthModal } from './components/Auth/AuthModal';
 import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
 import { DailyBudgetTracker } from './components/Budget/DailyBudgetTracker';
@@ -30,6 +31,7 @@ import { Compass } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { soundFx } from './utils/sound';
+import { useAuth } from './context/AuthContext';
 
 const STORAGE_KEY = 'habitflow_habits_v1';
 const XP_STORAGE_KEY = 'habitflow_user_xp_v1';
@@ -110,6 +112,10 @@ export function App() {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastCounterRef = useRef<number>(1);
 
+  // Authentication state
+  const { authUser, isAuthenticated } = useAuth();
+  const prevAuthRef = useRef<boolean | null>(null);
+
   // Scroll Progress Bar calculation with spring damping
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -177,6 +183,29 @@ export function App() {
   const dismissToast = (id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
+
+  // Auth transition feedback toasts (only on user-initiated changes, not initial mount)
+  useEffect(() => {
+    if (prevAuthRef.current === null) {
+      prevAuthRef.current = isAuthenticated;
+      return;
+    }
+
+    if (!prevAuthRef.current && isAuthenticated && authUser) {
+      addToast({
+        type: 'success',
+        message: `Welcome, ${authUser.fullName}!`,
+        subtext: 'Authenticated session active • Cloud identity connected',
+      });
+    } else if (prevAuthRef.current && !isAuthenticated) {
+      addToast({
+        type: 'info',
+        message: 'Signed out',
+        subtext: 'Operating in guest mode • Local habits & data preserved',
+      });
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, authUser]);
 
   // Derived metrics
   const totalHabits = habits.length;
@@ -408,6 +437,7 @@ export function App() {
           userXP={userXP}
           onNavigateToDebts={handleNavigateToDebts}
           pendingDebtsCount={pendingDebtsCount}
+          onNavigateToSettings={() => setActiveTab('settings')}
         />
 
         {/* Main Content Body */}
@@ -613,6 +643,8 @@ export function App() {
       />
 
       {/* Modals */}
+      <AuthModal />
+
       <AddHabitModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
