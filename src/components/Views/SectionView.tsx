@@ -24,6 +24,7 @@ import type { BudgetTrackerState } from '../../types/budget';
 import { motion } from 'motion/react';
 import { RitualCalendar } from '../Calendar/RitualCalendar';
 import { DailyBudgetTracker } from '../Budget/DailyBudgetTracker';
+import { ChallengesDashboard } from '../Challenges/ChallengesDashboard';
 import { soundFx } from '../../utils/sound';
 import { useAuth } from '../../context/AuthContext';
 
@@ -37,6 +38,7 @@ interface SectionViewProps {
   lifetimeStats?: SanctuaryLifetimeStats;
   budgetState?: BudgetTrackerState;
   onBudgetChange?: (state: BudgetTrackerState) => void;
+  onRewardEarned?: (xp: number, message: string) => void;
 }
 
 export const SectionView: React.FC<SectionViewProps> = ({
@@ -49,6 +51,7 @@ export const SectionView: React.FC<SectionViewProps> = ({
   lifetimeStats,
   budgetState,
   onBudgetChange,
+  onRewardEarned,
 }) => {
   const { authUser, isAuthenticated, openAuthModal, signOut, isActionLoading } = useAuth();
   const [soundEnabled, setSoundEnabled] = useState(() => soundFx.enabled);
@@ -61,6 +64,22 @@ export const SectionView: React.FC<SectionViewProps> = ({
       soundFx.playCrystalChime(880);
     }
   };
+
+  if (tab === 'challenges') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <ChallengesDashboard
+          habits={habits}
+          onRewardEarned={onRewardEarned}
+          onGoToDashboard={onGoToDashboard}
+        />
+      </motion.div>
+    );
+  }
 
   if (tab === 'budget') {
     return (

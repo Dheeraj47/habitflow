@@ -150,18 +150,17 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  if (!isAuthModalOpen) return null;
-
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.18 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto"
-        onClick={closeAuthModal}
-      >
+      {isAuthModalOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto"
+          onClick={closeAuthModal}
+        >
         <motion.div
           role="dialog"
           aria-modal="true"
@@ -527,6 +526,7 @@ export const AuthModal: React.FC = () => {
           </div>
         </motion.div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 };

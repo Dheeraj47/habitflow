@@ -75,6 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems: NavItemConfig[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'habits', label: 'Habits', icon: CheckSquare, badge: '6' },
+    { id: 'challenges', label: '21-Day Challenges', icon: Flame, badge: 'New' },
     { id: 'budget', label: 'Budget Tracker', icon: Wallet },
     { 
       id: 'debts', 

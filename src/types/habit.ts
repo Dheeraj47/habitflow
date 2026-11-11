@@ -40,6 +40,7 @@ export interface AICoachMessage {
 export type ActiveTab = 
   | 'dashboard'
   | 'habits'
+  | 'challenges'
   | 'budget'
   | 'debts'
   | 'calendar'
