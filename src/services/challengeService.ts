@@ -145,9 +145,8 @@ export const challengeService = {
         .order('start_date', { ascending: false });
 
       if (fetchErr) {
-        // Fallback gracefully if table not yet migrated in SQL Editor
-        console.warn('Supabase challenges table not queryable, using local store:', fetchErr.message);
-        return loadGuestChallenges();
+        console.warn('[HabitFlow] Supabase challenges query failed:', fetchErr.message);
+        return [];
       }
 
       if (!challengesData || challengesData.length === 0) {
@@ -207,8 +206,8 @@ export const challengeService = {
         };
       });
     } catch (err) {
-      console.warn('Error fetching challenges from Supabase:', err);
-      return loadGuestChallenges();
+      console.warn('[HabitFlow] Error fetching challenges from Supabase:', err);
+      return [];
     }
   },
 
@@ -279,18 +278,16 @@ export const challengeService = {
         .single();
 
       if (error) {
-        // Fallback to local guest storage if Supabase table is not yet migrated
-        console.warn('Supabase challenges table missing, saving locally:', error.message);
-        return this.createChallenge(null, params);
+        return {
+          success: false,
+          error:
+            error.code === '42P01' || error.code === 'PGRST205'
+              ? 'Supabase challenge tables are not migrated yet. Please apply the SQL migration in your Supabase Dashboard.'
+              : error.message,
+        };
       }
 
-      // Automatically add creator to challenge_participants
-      await supabase.from('challenge_participants').insert({
-        challenge_id: data.id,
-        user_id: user.id,
-        role: 'creator',
-        participation_status: 'active',
-      });
+      // Note: Creator is registered automatically in challenge_participants by the on_challenge_created DB trigger.
 
       // If linked to an existing habit, record link
       if (params.linkedHabitId) {
@@ -455,50 +452,15 @@ export const challengeService = {
       });
 
       if (rpcError) {
-        // Fallback to client-side insert if RPC not applied yet
-        console.warn('RPC checkin failed, falling back to direct insert:', rpcError.message);
-        
-        // Direct insert
-        const { error: insErr } = await supabase.from('challenge_checkins').insert({
-          challenge_id: challenge.id,
-          user_id: user.id,
-          challenge_day: dayNumber,
-          local_date: todayIST,
-          source,
-        });
-
-        if (insErr && insErr.code === '23505') {
-          // Unique constraint violation = already checked in
-          return {
-            success: true,
-            status: 'already_checked_in',
-            challengeDay: dayNumber,
-            totalCheckins: (challenge.myCheckinsCount || 0),
-            xpAwarded: 0,
-            milestonesAwarded: [],
-            message: `Already checked in for Day ${dayNumber}!`,
-          };
-        }
-
-        // Add daily reward
-        const dailyKey = `${challenge.id}:${user.id}:daily:${dayNumber}`;
-        await supabase.from('challenge_rewards').insert({
-          challenge_id: challenge.id,
-          user_id: user.id,
-          reward_type: 'daily',
-          xp_amount: 10,
-          idempotency_key: dailyKey,
-        });
-
-        const newTotal = (challenge.myCheckinsCount || 0) + 1;
+        console.error('[HabitFlow] Check-in RPC failed:', rpcError.message);
         return {
-          success: true,
-          status: 'success',
+          success: false,
+          status: 'error',
           challengeDay: dayNumber,
-          totalCheckins: newTotal,
-          xpAwarded: 10,
+          totalCheckins: challenge.myCheckinsCount || 0,
+          xpAwarded: 0,
           milestonesAwarded: [],
-          message: `Day ${dayNumber} Check-In Recorded! +10 XP`,
+          message: rpcError.message || 'Check-in failed on server',
         };
       }
 
@@ -565,52 +527,8 @@ export const challengeService = {
       });
 
       if (error) {
-        console.warn('Leaderboard RPC error, using direct query:', error.message);
-        // Direct query fallback
-        const { data: participants } = await supabase
-          .from('challenge_participants')
-          .select(`
-            user_id,
-            role,
-            participation_status,
-            profiles:user_id (display_name, avatar_url)
-          `)
-          .eq('challenge_id', challengeId);
-
-        if (!participants) return [];
-
-        const { data: allCheckins } = await supabase
-          .from('challenge_checkins')
-          .select('user_id, completed_at')
-          .eq('challenge_id', challengeId);
-
-        const checkinCountMap = new Map<string, { count: number; lastTime: string }>();
-        (allCheckins || []).forEach((ck) => {
-          const entry = checkinCountMap.get(ck.user_id) || { count: 0, lastTime: ck.completed_at };
-          entry.count += 1;
-          if (ck.completed_at > entry.lastTime) entry.lastTime = ck.completed_at;
-          checkinCountMap.set(ck.user_id, entry);
-        });
-
-        const list: LeaderboardEntry[] = participants.map((p) => {
-          const prof = (p.profiles as unknown as { display_name?: string; avatar_url?: string }) || {};
-          const stats = checkinCountMap.get(p.user_id) || { count: 0, lastTime: '' };
-          return {
-            userId: p.user_id,
-            displayName: prof.display_name || 'HabitFlow Member',
-            avatarUrl: prof.avatar_url,
-            role: p.role,
-            participationStatus: p.participation_status,
-            completedDays: stats.count,
-            elapsedDays: 1,
-            consistencyPct: calculateConsistencyPct(stats.count, 1),
-            lastCheckinAt: stats.lastTime || undefined,
-            rank: 1,
-            isCurrentUser: p.user_id === user.id,
-          };
-        });
-
-        return list.sort((a, b) => b.completedDays - a.completedDays);
+        console.warn('[HabitFlow] Leaderboard RPC failed:', error.message);
+        return [];
       }
 
       return (data || []).map((row: {
@@ -644,44 +562,32 @@ export const challengeService = {
   },
 
   /**
-   * Creates an invitation for a Friends Challenge.
+   * Creates an invitation for a Friends Challenge via server-side CSPRNG & SHA-256 hashing.
    */
   async createInvitation(
     user: ChallengeUser,
     challengeId: string,
     inviteeEmail?: string
-  ): Promise<{ success: boolean; inviteLink?: string; tokenHash?: string; error?: string }> {
+  ): Promise<{ success: boolean; inviteLink?: string; error?: string }> {
     if (!user || !supabase) {
       return { success: false, error: 'Sign in to invite friends to challenges' };
     }
 
     try {
-      // Generate secure 32-character hex token
-      const array = new Uint8Array(16);
-      crypto.getRandomValues(array);
-      const tokenHash = Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('');
-
-      // Expires in 7 days
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
-
-      const { error } = await supabase.from('challenge_invitations').insert({
-        challenge_id: challengeId,
-        inviter_id: user.id,
-        invitee_email: inviteeEmail?.trim() || null,
-        token_hash: tokenHash,
-        status: 'pending',
-        expires_at: expiresAt.toISOString(),
+      const { data, error } = await supabase.rpc('fn_create_challenge_invitation', {
+        p_challenge_id: challengeId,
+        p_invitee_email: inviteeEmail?.trim() || null,
       });
 
       if (error) {
         return { success: false, error: error.message };
       }
 
+      const res = data as { raw_token: string };
       const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-      const inviteLink = `${origin}/#join-challenge?token=${tokenHash}`;
+      const inviteLink = `${origin}/#join-challenge?token=${res.raw_token}`;
 
-      return { success: true, inviteLink, tokenHash };
+      return { success: true, inviteLink };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to generate invitation';
       return { success: false, error: msg };
@@ -693,7 +599,7 @@ export const challengeService = {
    */
   async joinByToken(
     user: ChallengeUser,
-    tokenHash: string
+    rawToken: string
   ): Promise<{ success: boolean; message: string; challengeId?: string }> {
     if (!user || !supabase) {
       return { success: false, message: 'Please sign in to accept this challenge invitation' };
@@ -701,7 +607,7 @@ export const challengeService = {
 
     try {
       const { data, error } = await supabase.rpc('fn_join_challenge_by_token', {
-        p_token_hash: tokenHash,
+        p_token: rawToken,
       });
 
       if (error) {

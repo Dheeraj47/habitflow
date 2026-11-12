@@ -2,11 +2,11 @@
 -- HABITFLOW: 21 DAYS CHALLENGE & MULTI-USER CORE BACKEND SCHEMA
 -- Migration: 20261109000000_habitflow_challenges_schema.sql
 -- Timezone Standard: Asia/Kolkata (IST, UTC+05:30)
--- Security: Full Row Level Security (RLS) on all tables
+-- Security: Least-Privilege RLS + Server-Authoritative Triggers & RPCs
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
--- 1. PROFILES TABLE & AUTH TRIGGER
+-- 1. PROFILES TABLE & AUTH TRIGGER (Scoped Privacy — No Public Scraping)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "profiles_select_public" 
-  ON public.profiles FOR SELECT 
-  USING (true);
+-- Revoke anonymous and unauthenticated reads so user profiles cannot be scraped
+REVOKE ALL ON public.profiles FROM PUBLIC, anon;
+GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
 
 CREATE POLICY "profiles_insert_own" 
   ON public.profiles FOR INSERT 
@@ -31,7 +31,7 @@ CREATE POLICY "profiles_update_own"
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
--- Automatic profile creation trigger when a user registers
+-- Automatic profile creation trigger when a user registers (never exposes email)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER 
 LANGUAGE plpgsql 
@@ -42,9 +42,8 @@ DECLARE
   v_display_name TEXT;
 BEGIN
   v_display_name := COALESCE(
-    NEW.raw_user_meta_data->>'full_name',
-    NEW.raw_user_meta_data->>'name',
-    split_part(NEW.email, '@', 1),
+    NULLIF(trim(NEW.raw_user_meta_data->>'full_name'), ''),
+    NULLIF(trim(NEW.raw_user_meta_data->>'name'), ''),
     'HabitFlow Explorer'
   );
 
@@ -70,7 +69,7 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- ------------------------------------------------------------------------------
--- 2. CHALLENGES TABLE (21 Days Solo & Friends)
+-- 2. CHALLENGES TABLE (21 Days Solo & Friends + Configuration Lock)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.challenges (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -83,10 +82,10 @@ CREATE TABLE IF NOT EXISTS public.challenges (
   end_date DATE NOT NULL,
   timezone TEXT NOT NULL DEFAULT 'Asia/Kolkata',
   target_days INT NOT NULL DEFAULT 21 CHECK (target_days = 21),
-  status TEXT NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'active', 'finished_perfect', 'finished_not_completed', 'abandoned')),
+  status TEXT NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming', 'active', 'completed', 'finished_perfect', 'finished_not_completed', 'abandoned')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc', now()),
-  CONSTRAINT chk_21_days_duration CHECK (end_date = start_date + INTERVAL '20 days')
+  CONSTRAINT chk_21_days_duration CHECK (end_date = start_date + 20)
 );
 
 CREATE INDEX IF NOT EXISTS idx_challenges_creator ON public.challenges(creator_id);
@@ -96,8 +95,12 @@ CREATE INDEX IF NOT EXISTS idx_challenges_mode ON public.challenges(mode);
 
 ALTER TABLE public.challenges ENABLE ROW LEVEL SECURITY;
 
+-- Direct client UPDATE on challenges is revoked; lifecycle updates happen solely via trusted RPCs.
+REVOKE ALL ON public.challenges FROM PUBLIC, anon;
+GRANT SELECT, INSERT, DELETE ON public.challenges TO authenticated;
+
 -- ------------------------------------------------------------------------------
--- 3. CHALLENGE PARTICIPANTS TABLE
+-- 3. CHALLENGE PARTICIPANTS TABLE (Server-Controlled Membership Only)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.challenge_participants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -115,29 +118,149 @@ CREATE INDEX IF NOT EXISTS idx_challenge_participants_user ON public.challenge_p
 
 ALTER TABLE public.challenge_participants ENABLE ROW LEVEL SECURITY;
 
+-- Strict least-privilege: Clients can ONLY SELECT authorized rosters.
+-- Direct INSERT, UPDATE, and DELETE are completely revoked. Creators are added via trigger;
+-- friends join solely via fn_join_challenge_by_token; abandoning happens via fn_abandon_challenge.
+REVOKE ALL ON public.challenge_participants FROM PUBLIC, anon;
+REVOKE INSERT, UPDATE, DELETE ON public.challenge_participants FROM authenticated;
+GRANT SELECT ON public.challenge_participants TO authenticated;
+
+-- ------------------------------------------------------------------------------
+-- 3A. SAFE MEMBERSHIP & PROFILE SCOPING HELPERS (No RLS Recursion)
+-- ------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.is_challenge_member(p_challenge_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 
+    FROM public.challenge_participants cp
+    WHERE cp.challenge_id = p_challenge_id 
+      AND cp.user_id = auth.uid()
+  ) OR EXISTS (
+    SELECT 1
+    FROM public.challenges c
+    WHERE c.id = p_challenge_id
+      AND c.creator_id = auth.uid()
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_challenge_member(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_challenge_member(UUID) TO authenticated;
+
+-- Profile privacy helper: TRUE only if caller shares a challenge with p_other_user_id
+CREATE OR REPLACE FUNCTION public.shares_challenge_with(p_other_user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.challenge_participants cp_self
+    JOIN public.challenge_participants cp_other
+      ON cp_self.challenge_id = cp_other.challenge_id
+    WHERE cp_self.user_id = auth.uid()
+      AND cp_other.user_id = p_other_user_id
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.shares_challenge_with(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.shares_challenge_with(UUID) TO authenticated;
+
+-- Scoped Profiles SELECT policy (Own profile OR shared-challenge co-participants only)
+CREATE POLICY "profiles_select_scoped"
+  ON public.profiles FOR SELECT
+  USING (
+    auth.uid() = id OR
+    public.shares_challenge_with(id)
+  );
+
+-- Trigger: Automatically register challenge creator as 'creator' participant
+CREATE OR REPLACE FUNCTION public.handle_new_challenge()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.challenge_participants (
+    challenge_id, user_id, role, participation_status
+  )
+  VALUES (
+    NEW.id, NEW.creator_id, 'creator', 'active'
+  )
+  ON CONFLICT (challenge_id, user_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_challenge_created ON public.challenges;
+CREATE TRIGGER on_challenge_created
+  AFTER INSERT ON public.challenges
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_challenge();
+
+-- Trigger: Enforce Challenge Configuration Lock once Day 1 begins (and protect creator_id always)
+CREATE OR REPLACE FUNCTION public.fn_enforce_challenge_lock()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_today_ist DATE;
+BEGIN
+  IF NEW.creator_id IS DISTINCT FROM OLD.creator_id THEN
+    RAISE EXCEPTION 'Challenge creator cannot be modified';
+  END IF;
+
+  v_today_ist := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE;
+
+  IF v_today_ist >= OLD.start_date THEN
+    IF NEW.title IS DISTINCT FROM OLD.title
+      OR NEW.description IS DISTINCT FROM OLD.description
+      OR NEW.category IS DISTINCT FROM OLD.category
+      OR NEW.mode IS DISTINCT FROM OLD.mode
+      OR NEW.start_date IS DISTINCT FROM OLD.start_date
+      OR NEW.end_date IS DISTINCT FROM OLD.end_date
+      OR NEW.timezone IS DISTINCT FROM OLD.timezone
+      OR NEW.target_days IS DISTINCT FROM OLD.target_days
+    THEN
+      RAISE EXCEPTION 'Challenge configuration is immutable once Day 1 has started (%)', OLD.start_date;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_lock_challenge_after_start ON public.challenges;
+CREATE TRIGGER trg_lock_challenge_after_start
+  BEFORE UPDATE ON public.challenges
+  FOR EACH ROW EXECUTE FUNCTION public.fn_enforce_challenge_lock();
+
 -- Challenges Policies
 CREATE POLICY "challenges_select_accessible"
   ON public.challenges FOR SELECT
   USING (
-    (mode = 'solo' AND creator_id = auth.uid())
-    OR
-    (mode = 'friends' AND (
-      creator_id = auth.uid() OR
-      EXISTS (
-        SELECT 1 FROM public.challenge_participants cp
-        WHERE cp.challenge_id = id AND cp.user_id = auth.uid()
-      )
-    ))
+    creator_id = auth.uid() OR
+    (mode = 'friends' AND public.is_challenge_member(id))
   );
 
 CREATE POLICY "challenges_insert_creator"
   ON public.challenges FOR INSERT
-  WITH CHECK (auth.uid() = creator_id);
-
-CREATE POLICY "challenges_update_creator"
-  ON public.challenges FOR UPDATE
-  USING (auth.uid() = creator_id)
-  WITH CHECK (auth.uid() = creator_id);
+  WITH CHECK (
+    auth.uid() = creator_id
+    AND start_date >= (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE
+    AND status IN ('upcoming', 'active')
+    AND timezone = 'Asia/Kolkata'
+    AND target_days = 21
+  );
 
 CREATE POLICY "challenges_delete_creator"
   ON public.challenges FOR DELETE
@@ -146,30 +269,16 @@ CREATE POLICY "challenges_delete_creator"
     AND (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE < start_date
   );
 
--- Challenge Participants Policies
+-- Challenge Participants Policies (Read-only for clients, zero recursion)
 CREATE POLICY "challenge_participants_select"
   ON public.challenge_participants FOR SELECT
   USING (
     user_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM public.challenge_participants cp_me
-      WHERE cp_me.challenge_id = challenge_id AND cp_me.user_id = auth.uid()
-    )
+    public.is_challenge_member(challenge_id)
   );
-
-CREATE POLICY "challenge_participants_insert"
-  ON public.challenge_participants FOR INSERT
-  WITH CHECK (
-    auth.uid() = user_id
-  );
-
-CREATE POLICY "challenge_participants_update_own"
-  ON public.challenge_participants FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
 
 -- ------------------------------------------------------------------------------
--- 4. CHALLENGE CHECK-INS TABLE
+-- 4. CHALLENGE CHECK-INS TABLE (RPC-Only Writes)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.challenge_checkins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -191,30 +300,21 @@ CREATE INDEX IF NOT EXISTS idx_challenge_checkins_date
 
 ALTER TABLE public.challenge_checkins ENABLE ROW LEVEL SECURITY;
 
+-- Strict integrity: Direct client INSERT/UPDATE/DELETE are completely revoked.
+-- Check-ins are validated and recorded EXCLUSIVELY by fn_record_challenge_checkin().
+REVOKE ALL ON public.challenge_checkins FROM PUBLIC, anon;
+REVOKE INSERT, UPDATE, DELETE ON public.challenge_checkins FROM authenticated;
+GRANT SELECT ON public.challenge_checkins TO authenticated;
+
 CREATE POLICY "challenge_checkins_select"
   ON public.challenge_checkins FOR SELECT
   USING (
     user_id = auth.uid() OR
-    EXISTS (
-      SELECT 1 FROM public.challenge_participants cp
-      WHERE cp.challenge_id = challenge_id AND cp.user_id = auth.uid()
-    )
-  );
-
-CREATE POLICY "challenge_checkins_insert"
-  ON public.challenge_checkins FOR INSERT
-  WITH CHECK (
-    auth.uid() = user_id AND
-    EXISTS (
-      SELECT 1 FROM public.challenge_participants cp
-      WHERE cp.challenge_id = challenge_id 
-        AND cp.user_id = auth.uid() 
-        AND cp.participation_status = 'active'
-    )
+    public.is_challenge_member(challenge_id)
   );
 
 -- ------------------------------------------------------------------------------
--- 5. CHALLENGE REWARDS TABLE (XP Ledger with Idempotency)
+-- 5. CHALLENGE REWARDS TABLE (XP Ledger with Idempotency — RPC-Only Writes)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.challenge_rewards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -231,16 +331,17 @@ CREATE INDEX IF NOT EXISTS idx_challenge_rewards_challenge ON public.challenge_r
 
 ALTER TABLE public.challenge_rewards ENABLE ROW LEVEL SECURITY;
 
+-- Clients can only READ their own rewards. Direct INSERT, UPDATE, DELETE are revoked.
+REVOKE ALL ON public.challenge_rewards FROM PUBLIC, anon;
+REVOKE INSERT, UPDATE, DELETE ON public.challenge_rewards FROM authenticated;
+GRANT SELECT ON public.challenge_rewards TO authenticated;
+
 CREATE POLICY "challenge_rewards_select_own"
   ON public.challenge_rewards FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "challenge_rewards_insert_own"
-  ON public.challenge_rewards FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
 -- ------------------------------------------------------------------------------
--- 6. CHALLENGE INVITATIONS TABLE (Secure Token-Based Invitations)
+-- 6. CHALLENGE INVITATIONS TABLE (Server-Hashed Tokens, Creator-Only Controls)
 -- ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.challenge_invitations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -258,23 +359,19 @@ CREATE INDEX IF NOT EXISTS idx_challenge_invitations_challenge ON public.challen
 
 ALTER TABLE public.challenge_invitations ENABLE ROW LEVEL SECURITY;
 
+-- Invitation creation and status transitions happen solely via trusted RPCs.
+-- Creators may read their own invitation metadata (SHA-256 hashes only; raw tokens never stored) or delete pending invites.
+REVOKE ALL ON public.challenge_invitations FROM PUBLIC, anon;
+REVOKE INSERT, UPDATE ON public.challenge_invitations FROM authenticated;
+GRANT SELECT, DELETE ON public.challenge_invitations TO authenticated;
+
 CREATE POLICY "challenge_invitations_select"
   ON public.challenge_invitations FOR SELECT
-  USING (
-    inviter_id = auth.uid() OR
-    status = 'pending'
-  );
+  USING (inviter_id = auth.uid());
 
-CREATE POLICY "challenge_invitations_insert_inviter"
-  ON public.challenge_invitations FOR INSERT
-  WITH CHECK (auth.uid() = inviter_id);
-
-CREATE POLICY "challenge_invitations_update"
-  ON public.challenge_invitations FOR UPDATE
-  USING (
-    inviter_id = auth.uid() OR
-    (status = 'pending' AND expires_at > timezone('utc', now()))
-  );
+CREATE POLICY "challenge_invitations_delete_inviter"
+  ON public.challenge_invitations FOR DELETE
+  USING (inviter_id = auth.uid() AND status = 'pending');
 
 -- ------------------------------------------------------------------------------
 -- 7. USER HABIT LINKS (Optional Linking of Local Habits to Challenges)
@@ -290,14 +387,89 @@ CREATE TABLE IF NOT EXISTS public.user_habit_links (
 
 ALTER TABLE public.user_habit_links ENABLE ROW LEVEL SECURITY;
 
+REVOKE ALL ON public.user_habit_links FROM PUBLIC, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_habit_links TO authenticated;
+
 CREATE POLICY "user_habit_links_all_own"
   ON public.user_habit_links FOR ALL
   USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (
+    auth.uid() = user_id AND
+    public.is_challenge_member(challenge_id)
+  );
 
 -- ------------------------------------------------------------------------------
 -- 8. SECURE STORED FUNCTIONS & RPCs
 -- ------------------------------------------------------------------------------
+
+-- RPC: Create Secure Cryptographically Hashed Invitation (Creator-Only, Before Day 1)
+CREATE OR REPLACE FUNCTION public.fn_create_challenge_invitation(
+  p_challenge_id UUID,
+  p_invitee_email TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id UUID;
+  v_challenge public.challenges%ROWTYPE;
+  v_today_ist DATE;
+  v_raw_token TEXT;
+  v_token_hash TEXT;
+  v_expires_at TIMESTAMPTZ;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+
+  SELECT * INTO v_challenge FROM public.challenges WHERE id = p_challenge_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Challenge not found';
+  END IF;
+
+  IF v_challenge.creator_id <> v_user_id THEN
+    RAISE EXCEPTION 'Only the challenge creator can invite friends';
+  END IF;
+
+  IF v_challenge.mode <> 'friends' THEN
+    RAISE EXCEPTION 'Invitations can only be created for multiplayer Friends challenges';
+  END IF;
+
+  v_today_ist := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE;
+  IF v_today_ist >= v_challenge.start_date THEN
+    RAISE EXCEPTION 'Invitations cannot be sent on or after Day 1 (%)', v_challenge.start_date;
+  END IF;
+
+  -- Generate 256-bit random raw token using PostgreSQL CSPRNG UUIDs
+  v_raw_token := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+  -- Store strictly the SHA-256 hex digest in the database; raw token is never persisted
+  v_token_hash := encode(sha256(convert_to(v_raw_token, 'UTF8')), 'hex');
+
+  v_expires_at := LEAST(
+    timezone('utc', now()) + INTERVAL '7 days',
+    (v_challenge.start_date::TIMESTAMP AT TIME ZONE 'Asia/Kolkata')
+  );
+
+  INSERT INTO public.challenge_invitations (
+    challenge_id, inviter_id, invitee_email, token_hash, status, expires_at
+  )
+  VALUES (
+    p_challenge_id, v_user_id, NULLIF(trim(p_invitee_email), ''), v_token_hash, 'pending', v_expires_at
+  );
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'raw_token', v_raw_token,
+    'expires_at', v_expires_at
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.fn_create_challenge_invitation(UUID, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fn_create_challenge_invitation(UUID, TEXT) TO authenticated;
 
 -- RPC: Record Challenge Check-in with Timezone & Reward Calculation
 CREATE OR REPLACE FUNCTION public.fn_record_challenge_checkin(
@@ -387,7 +559,7 @@ BEGIN
   FROM public.challenge_checkins 
   WHERE challenge_id = p_challenge_id AND user_id = v_user_id;
 
-  -- 6. Award Daily XP (+10 XP)
+  -- 6. Award Daily XP (+10 XP) idempotently
   v_daily_key := p_challenge_id || ':' || v_user_id || ':daily:' || v_day;
   INSERT INTO public.challenge_rewards (
     challenge_id, user_id, reward_type, xp_amount, idempotency_key
@@ -396,10 +568,11 @@ BEGIN
     p_challenge_id, v_user_id, 'daily', 10, v_daily_key
   )
   ON CONFLICT (idempotency_key) DO NOTHING;
-  
-  v_xp_awarded := v_xp_awarded + 10;
+  IF FOUND THEN
+    v_xp_awarded := v_xp_awarded + 10;
+  END IF;
 
-  -- 7. Day 7 Milestone Reward (+25 XP)
+  -- 7. Day 7 Milestone Reward (+25 XP) idempotently
   IF v_total_checkins = 7 THEN
     v_m7_key := p_challenge_id || ':' || v_user_id || ':day_7';
     INSERT INTO public.challenge_rewards (
@@ -415,7 +588,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- 8. Day 14 Milestone Reward (+40 XP)
+  -- 8. Day 14 Milestone Reward (+40 XP) idempotently
   IF v_total_checkins = 14 THEN
     v_m14_key := p_challenge_id || ':' || v_user_id || ':day_14';
     INSERT INTO public.challenge_rewards (
@@ -431,7 +604,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- 9. Perfect 21/21 Bonus (+100 XP)
+  -- 9. Perfect 21/21 Bonus (+100 XP) idempotently
   IF v_day = 21 AND v_total_checkins = 21 THEN
     v_p21_key := p_challenge_id || ':' || v_user_id || ':perfect_21';
     INSERT INTO public.challenge_rewards (
@@ -446,7 +619,6 @@ BEGIN
       v_milestone_awarded := 'perfect_21';
     END IF;
 
-    -- Update challenge status if solo
     IF v_challenge.mode = 'solo' THEN
       UPDATE public.challenges SET status = 'finished_perfect', updated_at = timezone('utc', now())
       WHERE id = p_challenge_id;
@@ -471,9 +643,12 @@ BEGIN
 END;
 $$;
 
--- RPC: Join Friends Challenge By Secure Invitation Token
+REVOKE ALL ON FUNCTION public.fn_record_challenge_checkin(UUID, TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fn_record_challenge_checkin(UUID, TEXT) TO authenticated;
+
+-- RPC: Join Friends Challenge By Secure Raw Invitation Token (Hashed Lookup + Day 1 Cutoff)
 CREATE OR REPLACE FUNCTION public.fn_join_challenge_by_token(
-  p_token_hash TEXT
+  p_token TEXT
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -482,6 +657,7 @@ SET search_path = public
 AS $$
 DECLARE
   v_user_id UUID;
+  v_token_hash TEXT;
   v_invitation public.challenge_invitations%ROWTYPE;
   v_challenge public.challenges%ROWTYPE;
   v_today_ist DATE;
@@ -491,10 +667,18 @@ BEGIN
     RAISE EXCEPTION 'Not authenticated';
   END IF;
 
-  -- 1. Find invitation
+  IF p_token IS NULL OR length(trim(p_token)) < 16 THEN
+    RAISE EXCEPTION 'Invalid invitation token format';
+  END IF;
+
+  -- Compute SHA-256 hash of submitted raw token for database lookup
+  v_token_hash := encode(sha256(convert_to(trim(p_token), 'UTF8')), 'hex');
+
+  -- 1. Find pending invitation with row lock for strict one-time consumption
   SELECT * INTO v_invitation 
   FROM public.challenge_invitations 
-  WHERE token_hash = p_token_hash AND status = 'pending';
+  WHERE token_hash = v_token_hash AND status = 'pending'
+  FOR UPDATE;
   
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Invalid or already accepted invitation';
@@ -505,8 +689,19 @@ BEGIN
     RAISE EXCEPTION 'Invitation has expired';
   END IF;
 
-  -- 2. Verify challenge start date has not passed in IST
+  IF v_invitation.invitee_email IS NOT NULL THEN
+    IF lower(COALESCE(auth.jwt() ->> 'email', '')) <> lower(v_invitation.invitee_email) THEN
+      RAISE EXCEPTION 'This invitation was issued for a different email address';
+    END IF;
+  END IF;
+
+  -- 2. Verify challenge eligibility and Day 1 cutoff in IST (CRITICAL PRODUCT RULE)
+  -- Friends can join ONLY BEFORE Day 1 starts. Joining on or after Day 1 is blocked.
   SELECT * INTO v_challenge FROM public.challenges WHERE id = v_invitation.challenge_id;
+  IF NOT FOUND OR v_challenge.mode <> 'friends' THEN
+    RAISE EXCEPTION 'Challenge is unavailable or does not permit friends';
+  END IF;
+
   v_today_ist := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::DATE;
 
   IF v_today_ist >= v_challenge.start_date THEN
@@ -523,7 +718,7 @@ BEGIN
   ON CONFLICT (challenge_id, user_id) DO UPDATE
   SET participation_status = 'active', abandoned_at = NULL;
 
-  -- 4. Mark invitation accepted
+  -- 4. Mark invitation accepted (one-time use)
   UPDATE public.challenge_invitations 
   SET status = 'accepted' 
   WHERE id = v_invitation.id;
@@ -537,6 +732,9 @@ BEGIN
   );
 END;
 $$;
+
+REVOKE ALL ON FUNCTION public.fn_join_challenge_by_token(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fn_join_challenge_by_token(TEXT) TO authenticated;
 
 -- RPC: Abandon Challenge
 CREATE OR REPLACE FUNCTION public.fn_abandon_challenge(
@@ -580,6 +778,9 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.fn_abandon_challenge(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fn_abandon_challenge(UUID) TO authenticated;
+
 -- RPC: Get Friends Challenge Leaderboard with Real-Time Tie-Breakers
 CREATE OR REPLACE FUNCTION public.fn_get_challenge_leaderboard(
   p_challenge_id UUID
@@ -605,6 +806,11 @@ DECLARE
   v_today_ist DATE;
   v_elapsed INT;
 BEGIN
+  -- Strict privacy: Only challenge members can view the leaderboard
+  IF NOT public.is_challenge_member(p_challenge_id) THEN
+    RAISE EXCEPTION 'Access denied: You are not a participant in this challenge';
+  END IF;
+
   SELECT * INTO v_challenge FROM public.challenges WHERE id = p_challenge_id;
   IF NOT FOUND THEN
     RETURN;
@@ -661,3 +867,5 @@ BEGIN
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.fn_get_challenge_leaderboard(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fn_get_challenge_leaderboard(UUID) TO authenticated;

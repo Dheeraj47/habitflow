@@ -148,6 +148,8 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
       });
       await loadData();
       setSelectedChallenge(result.challenge);
+    } else {
+      throw new Error(result.error || 'Failed to create challenge');
     }
   };
 
