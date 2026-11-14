@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DailyFocusCard } from './components/Dashboard/DailyFocusCard';
+import { DayRatingModal } from './components/Rating/DayRatingModal';
 import { HabitList } from './components/HabitList';
 import { StatsAndCharts } from './components/StatsAndCharts';
 import { AICoachCard } from './components/AICoachCard';
@@ -18,6 +19,7 @@ import type { ToastItem } from './components/Toast/ToastContainer';
 import type { Habit, ActiveTab, SanctuaryLifetimeStats } from './types/habit';
 import type { BudgetTrackerState } from './types/budget';
 import { loadBudgetTrackerState, saveBudgetTrackerState } from './utils/budgetStorage';
+import { calculateDayRating, saveDayRating } from './utils/dayRating';
 import {
   loadSanctuaryStats,
   saveSanctuaryStats,
@@ -309,6 +311,37 @@ export function App() {
   );
   const dailyBudgetLimit = Number(budgetState.dailyLimit) || 1;
 
+  // Football-inspired Matchday Player Rating State
+  const [isDayRatingModalOpen, setIsDayRatingModalOpen] = useState(false);
+  const todayDateStr = getTodayDateString();
+
+  const todayRating = useMemo(() => {
+    let hasChallengeCheckin = false;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem('habitflow_guest_checkins_v1');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.some((c: { localDate?: string }) => c.localDate === todayDateStr)) {
+            hasChallengeCheckin = true;
+          }
+        }
+      }
+    } catch {
+      // Safe fallback
+    }
+
+    const calculated = calculateDayRating({
+      habits,
+      budgetState,
+      challengesCheckedInToday: hasChallengeCheckin,
+      dateStr: todayDateStr,
+    });
+    // Persist to safe, isolated key habitflow_day_ratings_v1
+    saveDayRating(calculated);
+    return calculated;
+  }, [habits, budgetState, todayDateStr]);
+
   // Toggle habit completion with Undo Toast and streak tracking
   const handleToggleHabit = (id: string) => {
     const target = habits.find((h) => h.id === id);
@@ -479,6 +512,8 @@ export function App() {
           onNavigateToDebts={handleNavigateToDebts}
           pendingDebtsCount={pendingDebtsCount}
           onNavigateToSettings={() => setActiveTab('settings')}
+          dayRating={todayRating.rating}
+          onOpenDayRating={() => setIsDayRatingModalOpen(true)}
         />
 
         {/* Main Content Body */}
@@ -686,6 +721,13 @@ export function App() {
 
       {/* Modals */}
       <AuthModal />
+
+      <DayRatingModal
+        isOpen={isDayRatingModalOpen}
+        onClose={() => setIsDayRatingModalOpen(false)}
+        rating={todayRating}
+        onAddToast={addToast}
+      />
 
       <AddHabitModal
         isOpen={isAddModalOpen}

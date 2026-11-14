@@ -30,6 +30,7 @@ import type { BudgetTrackerState, ExpenseCategory, ExpenseItem } from '../../typ
 import { CATEGORY_METADATA } from '../../types/budget';
 import { loadBudgetTrackerState, formatCurrency, ensureRecordItems } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
+import { getDayRating, calculateDayRating } from '../../utils/dayRating';
 
 interface RitualCalendarProps {
   habits: Habit[];
@@ -352,6 +353,38 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
   }, [selectedDateObj]);
 
   const isSelectedDateToday = selectedDate === getTodayString();
+
+  const selectedDayRating = useMemo(() => {
+    const stored = getDayRating(selectedDate);
+    if (stored) return stored;
+
+    if (isSelectedDateToday) {
+      return calculateDayRating({
+        habits,
+        budgetState: activeBudgetState,
+        dateStr: selectedDate,
+      });
+    }
+
+    if (selectedStats.count > 0 || selectedSpend.hasRecord) {
+      const pastHabits = habits.map((h, idx) => ({
+        ...h,
+        completed: idx < selectedStats.count,
+      }));
+      return calculateDayRating({
+        habits: pastHabits,
+        budgetState: {
+          currencySymbol: activeBudgetState.currencySymbol,
+          dailyLimit: selectedSpend.dailyLimit,
+          expenses: selectedSpend.items,
+          debts: [],
+        },
+        dateStr: selectedDate,
+      });
+    }
+
+    return null;
+  }, [selectedDate, isSelectedDateToday, habits, activeBudgetState, selectedStats.count, selectedSpend]);
 
   const renderHabitIcon = (iconName: string, color: string) => {
     const props = { className: 'w-3.5 h-3.5', style: { color } };
@@ -679,6 +712,36 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               {selectedStats.count} of {habits.length} rituals completed on this day.
             </p>
           </div>
+
+          {/* Day Performance Rating Badge */}
+          {selectedDayRating && (
+            <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-transparent border border-amber-500/25 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300 font-black text-sm tracking-tight shadow-sm">
+                  {selectedDayRating.rating.toFixed(1)}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>Performance Rating</span>
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
+                      {selectedDayRating.tierLabel}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-300 font-medium">
+                    {selectedDayRating.isUnderBudget ? 'Budget Maintained' : 'Budget Exceeded'} • {selectedDayRating.habitsCompleted}/{selectedDayRating.totalHabits} Habits
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-mono font-bold text-amber-300 block">
+                  {selectedDayRating.rating.toFixed(1)}/10
+                </span>
+                <span className="text-[10px] font-medium text-slate-400">
+                  {selectedDayRating.completionRate}% Done
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Daily Spend on Selected Date */}
           <div className="p-3 sm:p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.07] space-y-2.5">

@@ -10,7 +10,8 @@ import {
   VolumeX,
   Compass,
   CheckCircle2,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Star
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { soundFx } from '../utils/sound';
@@ -28,6 +29,8 @@ interface HeaderProps {
   onNavigateToDebts?: () => void;
   pendingDebtsCount?: number;
   onNavigateToSettings?: () => void;
+  dayRating?: number;
+  onOpenDayRating?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -42,6 +45,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateToDebts,
   pendingDebtsCount = 0,
   onNavigateToSettings,
+  dayRating,
+  onOpenDayRating,
 }) => {
   const [formattedDate] = React.useState(() =>
     new Intl.DateTimeFormat('en-US', {
@@ -150,6 +155,20 @@ export const Header: React.FC<HeaderProps> = ({
                   {pendingDebtsCount}
                 </span>
               )}
+            </button>
+          )}
+
+          {/* Day Rating Section on Top Bar */}
+          {dayRating !== undefined && (
+            <button
+              onClick={onOpenDayRating}
+              className="flex items-center gap-1.5 h-8.5 px-2.5 sm:px-3 rounded-lg bg-gradient-to-r from-amber-500/15 via-yellow-400/10 to-amber-500/15 hover:from-amber-500/25 hover:to-amber-500/25 border border-amber-400/30 text-amber-300 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-98"
+              title="Today's Performance Rating (Click to view breakdown)"
+              aria-label="Today's Performance Rating"
+            >
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="tabular-nums font-black">{dayRating.toFixed(1)}</span>
+              <span className="hidden sm:inline text-[10px] text-amber-400/80 font-semibold">/10 Rating</span>
             </button>
           )}
 
