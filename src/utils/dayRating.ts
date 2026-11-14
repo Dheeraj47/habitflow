@@ -1,19 +1,24 @@
 /**
- * HABITFLOW: DAILY RATING ENGINE
+ * HABITFLOW: DAILY RATING ENGINE (RIGOROUS & REWARDING)
  * Computes an end-of-day performance rating (1.0 to 10.0) based on execution:
- * - Habit Completion Rate (up to +2.5 pts)
- * - Budget Adherence & Savings (up to +0.6 pts)
- * - Momentum & Streak Longevity (up to +0.4 pts)
- * - 21-Day Challenge Check-in (up to +0.5 pts)
+ * - Habit Completion Rate (up to +3.5 pts)
+ * - Daily Budget Discipline & Savings (up to +1.0 pt, with penalties down to -1.8 pts)
+ * - Momentum & Streak Longevity (up to +0.5 pts)
+ * - 21-Day Challenge Check-in (up to +0.4 pts)
  * - Morning Discipline (up to +0.3 pts)
+ *
+ * CRITICAL RULE:
+ * Lend and Borrow (Debts) records are STRICTLY EXCLUDED from tallying the day rating.
+ * Only daily expenses against the daily budget limit are evaluated.
  */
 
 import type { Habit } from '../types/habit';
-import type { BudgetTrackerState } from '../types/budget';
+import type { BudgetTrackerState, ExpenseCategory } from '../types/budget';
 import type { 
   DayRating, 
   DayRatingMap, 
   DayRatingBreakdown, 
+  DayBudgetInsights,
   RatingTier 
 } from '../types/rating';
 
@@ -80,7 +85,8 @@ export function getRatingTier(rating: number): {
 }
 
 /**
- * Pure calculation function for the daily rating score.
+ * Pure calculation function for the daily rating score and budget insights.
+ * Explicitly excludes lend & borrow (debts) from the calculation.
  */
 export function calculateDayRating({
   habits,
@@ -88,9 +94,10 @@ export function calculateDayRating({
   challengesCheckedInToday = false,
   dateStr = getRatingDateString(),
 }: CalculateRatingInput): DayRating {
-  const baseRating = 6.0;
+  // Rigorous baseline: an unstarted day begins at 4.5
+  const baseRating = 4.5;
 
-  // 1. Habit Completion Rate
+  // 1. Habit Completion Rate (Weight: -1.5 to +3.5)
   const totalHabits = habits.length;
   const habitsCompleted = habits.filter((h) => h.completed).length;
   const completionRatio = totalHabits > 0 ? habitsCompleted / totalHabits : 0;
@@ -100,74 +107,139 @@ export function calculateDayRating({
   if (totalHabits === 0) {
     habitsImpact = 0;
   } else if (completionRatio === 1) {
-    habitsImpact = 2.5; // Perfect execution
-  } else if (completionRatio >= 0.8) {
-    habitsImpact = 1.9;
-  } else if (completionRatio >= 0.6) {
-    habitsImpact = 1.2;
-  } else if (completionRatio >= 0.4) {
-    habitsImpact = 0.5;
+    habitsImpact = 3.5; // Flawless completion
+  } else if (completionRatio >= 0.9) {
+    habitsImpact = 2.6; // High execution
+  } else if (completionRatio >= 0.75) {
+    habitsImpact = 1.8; // Good execution
+  } else if (completionRatio >= 0.5) {
+    habitsImpact = 0.8; // Passing mark
+  } else if (completionRatio >= 0.25) {
+    habitsImpact = -0.4; // Low effort
   } else if (completionRatio > 0) {
-    habitsImpact = 0.1;
+    habitsImpact = -1.0; // Incomplete routine
   } else {
-    habitsImpact = -1.2; // No habits completed
+    habitsImpact = -1.5; // Zero habits performed
   }
 
-  // 2. Budget Control & Savings
-  let budgetImpact = 0.2;
-  let isUnderBudget = true;
+  // 2. Daily Budget Discipline & Insights (Strictly excluding debts/lend/borrow)
+  const currencySymbol = budgetState?.currencySymbol || '₹';
+  const todayExpenses = (budgetState?.expenses || []).filter(
+    (item) => !item.dateStr || item.dateStr === dateStr
+  );
+  const totalSpent = todayExpenses.reduce(
+    (sum, item) => sum + (Number(item.amount) || 0),
+    0
+  );
+  const limit = Number(budgetState?.dailyLimit) || 0;
 
-  if (budgetState) {
-    const todayExpenses = (budgetState.expenses || []).reduce(
-      (sum, item) => sum + (Number(item.amount) || 0),
-      0
-    );
-    const limit = Number(budgetState.dailyLimit) || 0;
+  // Find top spending category if any
+  const categoryTotals: Partial<Record<ExpenseCategory, number>> = {};
+  todayExpenses.forEach((exp) => {
+    categoryTotals[exp.category] = (categoryTotals[exp.category] || 0) + (Number(exp.amount) || 0);
+  });
 
-    if (limit > 0) {
-      if (todayExpenses === 0) {
-        isUnderBudget = true;
-        budgetImpact = 0.6; // Zero spend bonus
-      } else if (todayExpenses <= limit) {
-        isUnderBudget = true;
-        budgetImpact = 0.4; // Within budget
-      } else {
-        isUnderBudget = false;
-        const overrunRatio = (todayExpenses - limit) / limit;
-        budgetImpact = overrunRatio <= 0.2 ? -0.3 : -0.8;
-      }
-    } else if (todayExpenses === 0) {
-      isUnderBudget = true;
+  let topCategory: string | undefined = undefined;
+  let topCategoryAmount = 0;
+  for (const [cat, amt] of Object.entries(categoryTotals)) {
+    if (amt && amt > topCategoryAmount) {
+      topCategory = cat;
+      topCategoryAmount = amt;
     }
   }
 
-  // 3. Momentum & Streaks
+  let budgetImpact = 0.2;
+  let isUnderBudget = true;
+  let budgetStatus: DayBudgetInsights['status'] = 'no_limit';
+  let statusLabel = 'No Daily Limit Configured';
+  let insightMessage = 'Configure a daily budget limit in Budget Tracker to earn financial discipline points.';
+
+  const savings = Math.max(0, limit - totalSpent);
+  const spentPercentage = limit > 0 ? Math.round((totalSpent / limit) * 100) : 0;
+
+  if (limit > 0) {
+    if (totalSpent === 0) {
+      isUnderBudget = true;
+      budgetImpact = 1.0; // Zero spend bonus
+      budgetStatus = 'zero_spend';
+      statusLabel = 'Zero Spend Day';
+      insightMessage = `Zero Spend: You preserved 100% of your ${currencySymbol}${limit} daily limit.`;
+    } else if (totalSpent <= limit * 0.5) {
+      isUnderBudget = true;
+      budgetImpact = 0.8; // Under 50% of limit
+      budgetStatus = 'under_budget';
+      statusLabel = `Saved ${100 - spentPercentage}% of Allowance`;
+      insightMessage = `High Efficiency: Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit} (${spentPercentage}%), saving ${currencySymbol}${savings}.`;
+    } else if (totalSpent <= limit * 0.8) {
+      isUnderBudget = true;
+      budgetImpact = 0.5; // Under 80% of limit
+      budgetStatus = 'under_budget';
+      statusLabel = `Saved ${100 - spentPercentage}% of Allowance`;
+      insightMessage = `Under Budget: Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit} (${spentPercentage}%), maintaining ${currencySymbol}${savings} in reserve.`;
+    } else if (totalSpent <= limit) {
+      isUnderBudget = true;
+      budgetImpact = 0.2; // On budget boundary
+      budgetStatus = 'under_budget';
+      statusLabel = 'Within Limit';
+      insightMessage = `Budget Maintained: Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit} (${spentPercentage}%).`;
+    } else {
+      isUnderBudget = false;
+      budgetStatus = 'over_budget';
+      const overspent = totalSpent - limit;
+      const overrunRatio = (totalSpent - limit) / limit;
+      if (overrunRatio <= 0.25) {
+        budgetImpact = -1.0; // Moderate overspend
+        statusLabel = `Over Budget by ${currencySymbol}${overspent}`;
+        insightMessage = `Budget Alert: Exceeded daily limit by ${currencySymbol}${overspent} (${spentPercentage}% used). Deducted 1.0 pt.`;
+      } else {
+        budgetImpact = -1.8; // Heavy deficit
+        statusLabel = `Over Budget by ${currencySymbol}${overspent}`;
+        insightMessage = `Deficit Warning: Heavy overspending of ${currencySymbol}${overspent} (${spentPercentage}% used). Deducted 1.8 pts.`;
+      }
+    }
+  }
+
+  const budgetInsights: DayBudgetInsights = {
+    dailyLimit: limit,
+    totalSpent,
+    savings,
+    spentPercentage,
+    currencySymbol,
+    status: budgetStatus,
+    statusLabel,
+    insightMessage,
+    expenseCount: todayExpenses.length,
+    topCategory,
+    topCategoryAmount: topCategoryAmount > 0 ? topCategoryAmount : undefined,
+  };
+
+  // 3. Momentum & Streaks (Weight: 0 to +0.5)
   const highestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.streak), 0) : 0;
   let streakImpact = 0;
-  if (highestStreak >= 10) {
-    streakImpact = 0.4;
-  } else if (highestStreak >= 5) {
-    streakImpact = 0.3;
-  } else if (highestStreak >= 2) {
-    streakImpact = 0.2;
+  if (highestStreak >= 14) {
+    streakImpact = 0.5; // Master streak
+  } else if (highestStreak >= 7) {
+    streakImpact = 0.4; // Strong weekly consistency
+  } else if (highestStreak >= 3) {
+    streakImpact = 0.2; // Growing momentum
   } else if (highestStreak >= 1) {
     streakImpact = 0.1;
   }
 
-  // 4. Challenge Consistency
+  // 4. Challenge Consistency (Weight: 0 to +0.4)
   let challengeImpact = 0;
   if (challengesCheckedInToday) {
-    challengeImpact = 0.5;
+    challengeImpact = 0.4;
   }
 
-  // 5. Morning & Physical Discipline
+  // 5. Morning & Physical Discipline (Weight: 0 to +0.3)
   const morningHabits = habits.filter((h) => h.timeOfDay === 'morning');
   const morningDone = morningHabits.filter((h) => h.completed).length;
   let disciplineImpact = 0;
   if (morningHabits.length > 0 && morningDone === morningHabits.length) {
-    disciplineImpact = 0.3;
+    disciplineImpact = 0.3; // Morning sweep
   } else if (morningDone > 0) {
-    disciplineImpact = 0.15;
+    disciplineImpact = 0.1;
   }
 
   // Composite score clamped strictly between 1.0 and 10.0
@@ -195,45 +267,49 @@ export function calculateDayRating({
   // Clean, productivity-focused highlights
   const highlights: string[] = [];
   if (completionRate === 100 && totalHabits > 0) {
-    highlights.push('Completed 100% of scheduled habits today');
+    highlights.push('Flawless Execution: Completed 100% of scheduled habits today');
   } else if (completionRate >= 75) {
-    highlights.push(`Completed ${habitsCompleted} of ${totalHabits} habits (${completionRate}%)`);
+    highlights.push(`High Discipline: Finished ${habitsCompleted} of ${totalHabits} habits (${completionRate}%)`);
   } else if (habitsCompleted > 0) {
-    highlights.push(`Completed ${habitsCompleted} daily habits`);
+    highlights.push(`Progress Made: Completed ${habitsCompleted} daily habits`);
   } else {
     highlights.push('No habits marked completed yet today');
   }
 
-  if (isUnderBudget) {
-    highlights.push('Expenses remained within daily budget limit');
-  } else {
-    highlights.push('Exceeded daily spending budget');
+  if (limit > 0) {
+    if (totalSpent === 0) {
+      highlights.push(`Clean Financial Day: Zero spending against ${currencySymbol}${limit} limit`);
+    } else if (isUnderBudget) {
+      highlights.push(`Budget Defense: Kept spending within limit (Saved ${currencySymbol}${savings})`);
+    } else {
+      highlights.push(`Budget Warning: Overspent daily limit by ${currencySymbol}${totalSpent - limit}`);
+    }
   }
 
-  if (highestStreak >= 3) {
-    highlights.push(`Active momentum streak: ${highestStreak} days`);
+  if (highestStreak >= 5) {
+    highlights.push(`Momentum Active: Maintained a ${highestStreak}-day streak`);
   }
 
   if (challengesCheckedInToday) {
-    highlights.push('Completed 21-Day Challenge daily check-in');
+    highlights.push('Challenge Recorded: Checked in to 21-Day Challenge');
   }
 
   if (morningHabits.length > 0 && morningDone === morningHabits.length) {
-    highlights.push('All morning rituals finished early');
+    highlights.push('Morning Kickoff: Swept all morning rituals');
   }
 
-  // Simple, clean summary
+  // Summary verdict
   let summary = '';
   if (clampedRating >= 9.5) {
-    summary = `Flawless execution! You earned a ${clampedRating}/10 rating by completing your habits and staying within budget.`;
+    summary = `Exceptional day (${clampedRating}/10)! Perfect habit execution and rock-solid financial discipline earned you an elite score.`;
   } else if (clampedRating >= 8.5) {
-    summary = `Great momentum! A strong ${clampedRating}/10 rating driven by consistent daily execution.`;
+    summary = `Great momentum (${clampedRating}/10)! High habit completion and strong budget defense propelled your performance.`;
   } else if (clampedRating >= 7.5) {
-    summary = `Solid progress today (${clampedRating}/10). Keep this steady pace going tomorrow.`;
+    summary = `Solid progress (${clampedRating}/10). Good execution today—closing remaining habits will push you into the elite tier.`;
   } else if (clampedRating >= 6.0) {
-    summary = `A steady shift put in (${clampedRating}/10). Good foundation to build upon tomorrow.`;
+    summary = `Steady shift (${clampedRating}/10). You completed foundational rituals; raise execution tomorrow to elevate your rating.`;
   } else {
-    summary = `A recovery day (${clampedRating}/10). Take time to rest, reset, and start fresh tomorrow.`;
+    summary = `Challenging day (${clampedRating}/10). Review incomplete rituals, reset your daily budget, and bounce back strong tomorrow.`;
   }
 
   return {
@@ -249,6 +325,7 @@ export function calculateDayRating({
     habitsCompleted,
     totalHabits,
     completionRate,
+    budgetInsights,
     calculatedAt: new Date().toISOString(),
   };
 }

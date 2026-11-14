@@ -37,7 +37,8 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
     const text = `⭐ HabitFlow Daily Rating (${rating.date})\n` +
       `Score: ${rating.rating.toFixed(1)}/10 [${rating.tierLabel}]\n` +
       `Habits: ${rating.habitsCompleted}/${rating.totalHabits} completed (${rating.completionRate}%)\n` +
-      `Summary: ${rating.summary}`;
+      `Budget: ${rating.budgetInsights.statusLabel} (Spent ${rating.budgetInsights.currencySymbol}${rating.budgetInsights.totalSpent})\n` +
+      `Verdict: ${rating.summary}`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
@@ -47,7 +48,7 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
         onAddToast({
           type: 'success',
           message: 'Rating Copied!',
-          subtext: 'Daily rating summary copied to clipboard',
+          subtext: 'Daily performance summary copied to clipboard',
         });
       }
     }
@@ -84,7 +85,7 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
                   Day Rating Breakdown
                 </h2>
                 <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
-                  <Calendar className="w-3.5 h-3.5" /> {rating.date} • End of Day Performance
+                  <Calendar className="w-3.5 h-3.5" /> {rating.date} • Rigorous Daily Performance
                 </p>
               </div>
             </div>
@@ -118,6 +119,93 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
               </p>
             </div>
 
+            {/* Daily Budget Insights Section */}
+            <div className="p-4 rounded-xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/[0.08] space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 flex-shrink-0">
+                    <Wallet className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white tracking-tight">Daily Budget Insights</span>
+                    <p className="text-[10px] text-slate-400">Financial discipline &amp; savings</p>
+                  </div>
+                </div>
+
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${
+                  rating.budgetInsights.status === 'zero_spend'
+                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    : rating.budgetInsights.status === 'under_budget'
+                    ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                    : rating.budgetInsights.status === 'over_budget'
+                    ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                    : 'bg-white/[0.05] text-slate-300 border-white/[0.08]'
+                }`}>
+                  {rating.budgetInsights.statusLabel}
+                </span>
+              </div>
+
+              {/* Budget Progress Bar */}
+              {rating.budgetInsights.dailyLimit > 0 && (
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                    <span className="text-slate-400">Daily Allowance Usage</span>
+                    <span className="font-mono font-bold">
+                      {rating.budgetInsights.spentPercentage}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-slate-800/80 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 rounded-full ${
+                        rating.budgetInsights.status === 'over_budget'
+                          ? 'bg-rose-500'
+                          : rating.budgetInsights.spentPercentage > 80
+                          ? 'bg-amber-400'
+                          : 'bg-emerald-400'
+                      }`}
+                      style={{ width: `${Math.min(100, rating.budgetInsights.spentPercentage)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Financial Metrics Grid */}
+              <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+                  <span className="text-[10px] text-slate-400 block">Daily Limit</span>
+                  <span className="text-xs font-mono font-bold text-white">
+                    {rating.budgetInsights.dailyLimit > 0
+                      ? `${rating.budgetInsights.currencySymbol}${rating.budgetInsights.dailyLimit}`
+                      : 'None'}
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+                  <span className="text-[10px] text-slate-400 block">Total Spent</span>
+                  <span className="text-xs font-mono font-bold text-white">
+                    {rating.budgetInsights.currencySymbol}{rating.budgetInsights.totalSpent}
+                  </span>
+                </div>
+                <div className="p-2 rounded-lg bg-white/[0.02] border border-white/[0.05]">
+                  <span className="text-[10px] text-slate-400 block">Saved Today</span>
+                  <span className={`text-xs font-mono font-bold ${
+                    rating.budgetInsights.savings > 0 ? 'text-emerald-400' : 'text-slate-400'
+                  }`}>
+                    {rating.budgetInsights.currencySymbol}{rating.budgetInsights.savings}
+                  </span>
+                </div>
+              </div>
+
+              {/* Insight Text & Exclusion Footnote */}
+              <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.05] space-y-1">
+                <p className="text-[11px] text-slate-300 leading-snug">
+                  {rating.budgetInsights.insightMessage}
+                </p>
+                <p className="text-[10px] text-slate-500 italic">
+                  Note: Lend &amp; borrow records are strictly excluded from rating calculations.
+                </p>
+              </div>
+            </div>
+
             {/* Point Composition Breakdown */}
             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
@@ -128,7 +216,7 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
                   <span className="flex items-center gap-2 text-slate-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-500" /> Base Shift
                   </span>
-                  <span className="font-mono font-bold text-white">6.0 pts</span>
+                  <span className="font-mono font-bold text-white">4.5 pts</span>
                 </div>
 
                 <div className="flex items-center justify-between text-slate-300">
@@ -142,7 +230,7 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
 
                 <div className="flex items-center justify-between text-slate-300">
                   <span className="flex items-center gap-2 text-slate-400">
-                    <Wallet className="w-3.5 h-3.5 text-amber-400" /> Budget Discipline
+                    <Wallet className="w-3.5 h-3.5 text-amber-400" /> Budget Discipline &amp; Savings
                   </span>
                   <span className={`font-mono font-bold ${rating.breakdown.budgetImpact >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {rating.breakdown.budgetImpact >= 0 ? `+${rating.breakdown.budgetImpact}` : rating.breakdown.budgetImpact} pts
