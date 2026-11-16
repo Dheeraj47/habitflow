@@ -49,6 +49,27 @@ export interface DayRating {
   completionRate: number;
   budgetInsights: DayBudgetInsights; // Daily budget insights (excluding lend & borrow)
   calculatedAt: string;
+  isVerified?: boolean;       // Genuine recorded rating (true for live or saved records)
+  isEstimated?: boolean;      // True if reconstructed via calendar historical heuristic
+  calculationVersion?: number;// Rating engine version (1 = current football-inspired engine)
 }
 
 export type DayRatingMap = Record<string, DayRating>;
+
+export type LeaderboardTimeframe = 'daily' | 'weekly' | 'monthly' | 'all_time';
+
+export interface FriendsLeaderboardEntry {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  performanceScore: number;    // 10.0 - 100.0 (Single source of truth: DayRating * 10)
+  dayRating: number;           // 1.0 - 10.0 average
+  tier: RatingTier;
+  tierLabel: string;
+  scoredDaysCount: number;     // Number of verified scored days in period
+  totalPeriodDays: number;     // Total days in period (1 for daily, 7 for weekly, 30 for monthly)
+  coveragePct: number;         // (scoredDaysCount / totalPeriodDays) * 100
+  userXP: number;              // Verified XP as secondary stat & tie-breaker
+  rank: number;
+  isCurrentUser: boolean;
+}

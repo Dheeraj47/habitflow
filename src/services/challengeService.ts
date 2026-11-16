@@ -21,6 +21,19 @@ export type ChallengeUser = AuthUser | User | { id: string } | null;
 const GUEST_CHALLENGES_KEY = 'habitflow_guest_challenges_v1';
 const GUEST_CHECKINS_KEY = 'habitflow_guest_checkins_v1';
 const GUEST_REWARDS_KEY = 'habitflow_guest_rewards_v1';
+export const AUTH_CHECKIN_CACHE_KEY = 'habitflow_auth_checkin_dates_v1';
+
+export function markAuthCheckinDate(dateStr: string): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const raw = localStorage.getItem(AUTH_CHECKIN_CACHE_KEY);
+    const list: string[] = raw ? JSON.parse(raw) : [];
+    if (!list.includes(dateStr)) {
+      list.push(dateStr);
+      localStorage.setItem(AUTH_CHECKIN_CACHE_KEY, JSON.stringify(list));
+    }
+  } catch {}
+}
 
 // ------------------------------------------------------------------------------
 // Local Guest Storage Helpers
@@ -183,6 +196,9 @@ export const challengeService = {
         const progress = getChallengeDayProgress(startDate, endDate, todayIST);
         const myCheckins = checkinsByChallenge.get(row.id) || [];
         const isCheckedInToday = myCheckins.some((ck) => ck.localDate === todayIST);
+        if (isCheckedInToday) {
+          markAuthCheckinDate(todayIST);
+        }
 
         return {
           id: row.id,
@@ -433,6 +449,10 @@ export const challengeService = {
       };
       saveGuestRewards([...guestRewards, newReward]);
 
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('habitflow_challenge_checkin', { detail: { date: todayIST } }));
+      }
+
       return {
         success: true,
         status: 'success',
@@ -472,6 +492,12 @@ export const challengeService = {
         milestone_awarded?: 'day_7' | 'day_14' | 'perfect_21';
         message: string;
       };
+
+      markAuthCheckinDate(todayIST);
+
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('habitflow_challenge_checkin', { detail: { date: todayIST } }));
+      }
 
       return {
         success: true,
@@ -663,5 +689,58 @@ export const challengeService = {
     } catch {
       return 0;
     }
+  },
+
+  /**
+   * Synchronously checks whether the user has checked in to any challenge today.
+   * Unifies guest localStorage check-ins and authenticated check-ins.
+   */
+  hasCheckedInToday(dateStr: string = getTodayDateStringIST()): boolean {
+    if (typeof window === 'undefined' || !window.localStorage) return false;
+    try {
+      // 1. Guest checkins
+      const rawGuest = localStorage.getItem(GUEST_CHECKINS_KEY);
+      if (rawGuest) {
+        const parsed = JSON.parse(rawGuest);
+        if (Array.isArray(parsed) && parsed.some((c: { localDate?: string }) => c.localDate === dateStr)) {
+          return true;
+        }
+      }
+      // 2. Authenticated checkins local cache
+      const rawAuth = localStorage.getItem(AUTH_CHECKIN_CACHE_KEY);
+      if (rawAuth) {
+        const parsed = JSON.parse(rawAuth);
+        if (Array.isArray(parsed) && parsed.includes(dateStr)) {
+          return true;
+        }
+      }
+    } catch {}
+    return false;
+  },
+
+  /**
+   * Asynchronously verifies check-in status from Supabase for authenticated users,
+   * caching the result locally if confirmed.
+   */
+  async checkUserTodayCheckin(user: ChallengeUser, dateStr: string = getTodayDateStringIST()): Promise<boolean> {
+    if (!user || !supabase) {
+      return this.hasCheckedInToday(dateStr);
+    }
+    try {
+      const { data, error } = await supabase
+        .from('challenge_checkins')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('local_date', dateStr)
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        markAuthCheckinDate(dateStr);
+        return true;
+      }
+    } catch (e) {
+      console.warn('[HabitFlow] Error checking Supabase check-in status:', e);
+    }
+    return this.hasCheckedInToday(dateStr);
   },
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   Users, 
@@ -8,7 +8,6 @@ import {
   Clock, 
   ShieldCheck, 
   Award, 
-  Flame, 
   Bell, 
   Palette,
   Volume2,
@@ -17,10 +16,15 @@ import {
   LogOut,
   AlertCircle,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Crown,
+  Medal,
+  Info
 } from 'lucide-react';
 import type { ActiveTab, Habit, SanctuaryLifetimeStats } from '../../types/habit';
 import type { BudgetTrackerState } from '../../types/budget';
+import type { DayRating, LeaderboardTimeframe, FriendsLeaderboardEntry } from '../../types/rating';
+import { ratingService } from '../../services/ratingService';
 import { motion } from 'motion/react';
 import { RitualCalendar } from '../Calendar/RitualCalendar';
 import { DailyBudgetTracker } from '../Budget/DailyBudgetTracker';
@@ -39,6 +43,8 @@ interface SectionViewProps {
   budgetState?: BudgetTrackerState;
   onBudgetChange?: (state: BudgetTrackerState) => void;
   onRewardEarned?: (xp: number, message: string) => void;
+  todayRating?: DayRating;
+  userXP?: number;
 }
 
 export const SectionView: React.FC<SectionViewProps> = ({
@@ -52,10 +58,30 @@ export const SectionView: React.FC<SectionViewProps> = ({
   budgetState,
   onBudgetChange,
   onRewardEarned,
+  todayRating,
+  userXP = 0,
 }) => {
   const { authUser, isAuthenticated, openAuthModal, signOut, isActionLoading } = useAuth();
   const [soundEnabled, setSoundEnabled] = useState(() => soundFx.enabled);
   const [inviteSent, setInviteSent] = useState(false);
+  const [leaderboardTimeframe, setLeaderboardTimeframe] = useState<LeaderboardTimeframe>('daily');
+  const [leaderboardEntries, setLeaderboardEntries] = useState<FriendsLeaderboardEntry[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+
+  // Sync Friends Leaderboard when tab or timeframe changes
+  useEffect(() => {
+    if (tab === 'friends') {
+      setIsLoadingLeaderboard(true);
+      ratingService
+        .getFriendsLeaderboard(leaderboardTimeframe, undefined, authUser, todayRating, userXP)
+        .then((entries) => {
+          setLeaderboardEntries(entries);
+        })
+        .finally(() => {
+          setIsLoadingLeaderboard(false);
+        });
+    }
+  }, [tab, leaderboardTimeframe, authUser, todayRating, userXP]);
 
   const handleToggleSound = (checked: boolean) => {
     soundFx.setEnabled(checked);
@@ -196,6 +222,13 @@ export const SectionView: React.FC<SectionViewProps> = ({
   }
 
   if (tab === 'friends') {
+    const timeframes: { id: LeaderboardTimeframe; label: string }[] = [
+      { id: 'daily', label: 'Daily' },
+      { id: 'weekly', label: 'Weekly (7d)' },
+      { id: 'monthly', label: 'Monthly (30d)' },
+      { id: 'all_time', label: 'All-Time' },
+    ];
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -204,65 +237,145 @@ export const SectionView: React.FC<SectionViewProps> = ({
         className="space-y-4"
       >
         <div className="p-6 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl">
+          {/* Header Row */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.06]">
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                 <Users className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Accountability Circles</h3>
-                <p className="text-xs text-slate-400">Peer consistency tracking and mutual habit momentum</p>
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  Friends Accountability Leaderboard
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Daily Performance Score powered by HabitFlow Day Rating engine (Score = Rating × 10)
+                </p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setInviteSent(true);
-                setTimeout(() => setInviteSent(false), 2500);
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer self-start sm:self-auto"
-            >
-              <span>{inviteSent ? 'Invite Link Copied!' : 'Copy Invite Link'}</span>
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setInviteSent(true);
+                  setTimeout(() => setInviteSent(false), 2500);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer self-start sm:self-auto"
+              >
+                <span>{inviteSent ? 'Invite Link Copied!' : 'Copy Invite Link'}</span>
+              </button>
+            </div>
           </div>
 
-          {/* Friend Leaderboard */}
-          <div className="space-y-2">
-            {[
-              { name: 'Alex Rivera (You)', streak: 14, score: 92, avatar: 'AR', isUser: true },
-              { name: 'Maya Lin', streak: 19, score: 96, avatar: 'ML', isUser: false },
-              { name: 'David Chen', streak: 11, score: 88, avatar: 'DC', isUser: false },
-              { name: 'Elena Rostova', streak: 15, score: 90, avatar: 'ER', isUser: false },
-            ].map((f, idx) => (
-              <div
-                key={f.name}
-                className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
-                  f.isUser
-                    ? 'bg-indigo-950/20 border-indigo-500/30'
-                    : 'bg-white/[0.02] border-white/[0.05]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-slate-500 w-4">#{idx + 1}</span>
-                  <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300">
-                    {f.avatar}
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-slate-200">{f.name}</span>
-                    <div className="text-[10px] text-slate-400">Habit Partner</div>
-                  </div>
-                </div>
+          {/* Timeframe Switcher Bar */}
+          <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              {timeframes.map((tf) => (
+                <button
+                  key={tf.id}
+                  onClick={() => {
+                    soundFx.playCrystalChime(850);
+                    setLeaderboardTimeframe(tf.id);
+                  }}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    leaderboardTimeframe === tf.id
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {tf.label}
+                </button>
+              ))}
+            </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1 text-xs font-semibold text-amber-400 tabular-nums">
-                    <Flame className="w-3.5 h-3.5 fill-amber-400/80" />
-                    <span>{f.streak}d streak</span>
+            <span className="text-[11px] text-slate-400 flex items-center gap-1">
+              <Info className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Tie-breaker: Verified User XP</span>
+            </span>
+          </div>
+
+          {/* Leaderboard Table / Rows */}
+          {isLoadingLeaderboard ? (
+            <div className="p-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+              <span>Calculating verified leaderboard standings...</span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {leaderboardEntries.map((f) => (
+                <div
+                  key={f.userId}
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl border transition-colors gap-3 ${
+                    f.isCurrentUser
+                      ? 'bg-indigo-950/25 border-indigo-500/40 ring-1 ring-indigo-500/20 shadow-sm'
+                      : 'bg-white/[0.02] border-white/[0.05]'
+                  }`}
+                >
+                  {/* Left: Rank, Avatar, Name & Tier */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 flex items-center justify-center">
+                      {f.rank === 1 ? (
+                        <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center font-bold text-xs shadow-xs">
+                          <Crown className="w-3.5 h-3.5" />
+                        </div>
+                      ) : f.rank === 2 ? (
+                        <div className="w-6 h-6 rounded-full bg-slate-300/20 text-slate-200 border border-slate-300/40 flex items-center justify-center font-bold text-xs">
+                          <Medal className="w-3.5 h-3.5" />
+                        </div>
+                      ) : f.rank === 3 ? (
+                        <div className="w-6 h-6 rounded-full bg-amber-700/20 text-amber-500 border border-amber-700/40 flex items-center justify-center font-bold text-xs">
+                          <Medal className="w-3.5 h-3.5" />
+                        </div>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-500">#{f.rank}</span>
+                      )}
+                    </div>
+
+                    <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300 flex-shrink-0">
+                      {f.displayName.slice(0, 2).toUpperCase()}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-100 truncate">
+                          {f.displayName}
+                        </span>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-400/15 text-amber-300 border border-amber-400/25 uppercase tracking-wider">
+                          {f.tierLabel}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                        <span>Coverage: {f.scoredDaysCount}/{f.totalPeriodDays}d ({f.coveragePct}%)</span>
+                        <span>•</span>
+                        <span className="text-indigo-300 font-semibold">{f.userXP.toLocaleString()} XP</span>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-xs font-semibold text-slate-300 bg-white/[0.04] px-2 py-0.5 rounded border border-white/[0.08] tabular-nums">
-                    {f.score}% Adherence
-                  </span>
+
+                  {/* Right: Daily Performance Score */}
+                  <div className="flex items-center justify-between sm:justify-end gap-4 self-end sm:self-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-white/[0.05] w-full sm:w-auto">
+                    <div className="text-left sm:text-right">
+                      <div className="flex items-baseline gap-1 sm:justify-end">
+                        <span className="text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-400 tabular-nums">
+                          {f.performanceScore.toFixed(1)}
+                        </span>
+                        <span className="text-[11px] font-bold text-slate-400">/ 100</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium block">
+                        Rating: {f.dayRating.toFixed(1)}/10
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+
+          {/* Architecture Footnote */}
+          <div className="mt-5 p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-start gap-2 text-[11px] text-slate-400">
+            <Info className="w-4 h-4 text-indigo-400 flex-shrink-0 mt-0.5" />
+            <p className="leading-relaxed">
+              <strong>Single Source of Truth:</strong> Daily score is directly derived from the HabitFlow Day Rating engine (<code className="text-indigo-300">Rating × 10</code>). Weekly, Monthly, and All-Time scores average all verified daily ratings. Missing days are transparently marked as unscored rather than distorting averages.
+            </p>
           </div>
         </div>
       </motion.div>

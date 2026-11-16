@@ -109,9 +109,16 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
                 <span className="text-sm font-bold text-slate-400 self-end mb-2">/10</span>
               </div>
 
-              <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-black tracking-wider uppercase">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>{rating.tierLabel}</span>
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-black tracking-wider uppercase">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{rating.tierLabel}</span>
+                </div>
+                {rating.isEstimated && (
+                  <span className="text-[10px] text-slate-400 bg-white/[0.05] border border-white/[0.1] border-dashed px-2.5 py-0.5 rounded-full font-medium">
+                    Unverified Historical Estimate
+                  </span>
+                )}
               </div>
 
               <p className="mt-3 text-xs sm:text-sm text-slate-300 max-w-sm mx-auto leading-relaxed">

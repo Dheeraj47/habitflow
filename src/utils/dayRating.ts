@@ -33,12 +33,36 @@ export interface CalculateRatingInput {
   budgetState?: Partial<BudgetTrackerState>;
   challengesCheckedInToday?: boolean;
   dateStr?: string; // YYYY-MM-DD
+  isEstimated?: boolean; // True if calculated as unverified historical estimate
 }
 
 /**
- * Returns today's date in local 'YYYY-MM-DD' format.
+ * Returns today's date formatted as YYYY-MM-DD aligned with Asia/Kolkata (IST).
+ * Guarantees date parity across ratings, 21-day challenges, and server leaderboards.
  */
 export function getRatingDateString(d: Date = new Date()): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.formatToParts(d);
+    let year = '';
+    let month = '';
+    let day = '';
+    for (const part of parts) {
+      if (part.type === 'year') year = part.value;
+      if (part.type === 'month') month = part.value;
+      if (part.type === 'day') day = part.value;
+    }
+    if (year && month && day) {
+      return `${year}-${month}-${day}`;
+    }
+  } catch {
+    // Fallback if environment doesn't support Intl timeZone
+  }
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -97,6 +121,7 @@ export function calculateDayRating({
   budgetState,
   challengesCheckedInToday = false,
   dateStr = getRatingDateString(),
+  isEstimated = false,
 }: CalculateRatingInput): DayRating {
   // Baseline for a normal day
   const baseRating = 5.0;
@@ -336,6 +361,74 @@ export function calculateDayRating({
     completionRate,
     budgetInsights,
     calculatedAt: new Date().toISOString(),
+    isVerified: !isEstimated,
+    isEstimated: Boolean(isEstimated),
+    calculationVersion: 1,
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Friends Leaderboard Score Derivations (Single Source of Truth)
+// -----------------------------------------------------------------------------
+
+/**
+ * Computes Friends Leaderboard Daily Score from existing DayRating.
+ * Formula: DayRating.rating * 10 (range: 10.0 to 100.0).
+ */
+export function calculateDailyPerformanceScore(rating: number): number {
+  const score = Math.round(rating * 100) / 10;
+  return Math.min(100.0, Math.max(10.0, score));
+}
+
+/**
+ * Computes period leaderboard score (weekly, monthly, all-time) by averaging available verified ratings.
+ * Strictly excludes unverified historical estimates.
+ * Distinguishes genuine low scores from missing/unscored days.
+ */
+export function calculatePeriodLeaderboardScore(
+  ratings: (number | DayRating)[],
+  totalPeriodDays: number
+): {
+  performanceScore: number;
+  dayRating: number;
+  scoredDaysCount: number;
+  coveragePct: number;
+} {
+  const verifiedRatings: number[] = [];
+
+  for (const item of ratings) {
+    if (typeof item === 'number') {
+      if (item >= 1.0 && item <= 10.0) {
+        verifiedRatings.push(item);
+      }
+    } else if (item && typeof item.rating === 'number') {
+      // Exclude unverified reconstructed estimates from leaderboard averages
+      if (!item.isEstimated && item.isVerified !== false) {
+        verifiedRatings.push(item.rating);
+      }
+    }
+  }
+
+  const scoredDaysCount = verifiedRatings.length;
+  if (scoredDaysCount === 0) {
+    return {
+      performanceScore: 0,
+      dayRating: 0,
+      scoredDaysCount: 0,
+      coveragePct: 0,
+    };
+  }
+
+  const sum = verifiedRatings.reduce((acc, r) => acc + r, 0);
+  const avgRating = Math.round((sum / scoredDaysCount) * 10) / 10;
+  const performanceScore = calculateDailyPerformanceScore(avgRating);
+  const coveragePct = Math.round((scoredDaysCount / Math.max(totalPeriodDays, 1)) * 100);
+
+  return {
+    performanceScore,
+    dayRating: avgRating,
+    scoredDaysCount,
+    coveragePct,
   };
 }
 

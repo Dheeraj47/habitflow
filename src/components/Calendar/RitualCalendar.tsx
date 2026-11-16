@@ -449,6 +449,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
           debts: [],
         },
         dateStr: selectedDate,
+        isEstimated: true,
       });
     }
 
@@ -497,6 +498,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             debts: [],
           },
           dateStr,
+          isEstimated: true,
         });
       } else {
         map[dateStr] = null;
@@ -770,8 +772,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                           soundFx.playCrystalChime(950);
                           setInspectRating(dayCellRating);
                         }}
-                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-black tabular-nums border leading-none shadow-xs transition-transform hover:scale-110 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text}`}
-                        title={`Day Rating: ${dayCellRating.rating.toFixed(1)}/10 (${dayCellRating.tierLabel}) • Click for full breakdown`}
+                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-black tabular-nums border leading-none shadow-xs transition-transform hover:scale-110 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-80' : ''}`}
+                        title={`Day Rating: ${dayCellRating.rating.toFixed(1)}/10 ${dayCellRating.isEstimated ? '(Estimated Unverified)' : `(${dayCellRating.tierLabel})`} • Click for full breakdown`}
                         aria-label={`Rating for ${dateStr}: ${dayCellRating.rating.toFixed(1)}`}
                       >
                         <Star className={`w-2 h-2 sm:w-2.5 sm:h-2.5 ${badgeStyle.star}`} />
@@ -881,12 +883,18 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                 <div>
                   <div className="text-xs font-bold text-white flex items-center gap-1.5">
                     <span>Performance Rating</span>
-                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase tracking-wider">
-                      {selectedDayRating.tierLabel}
+                    <span className={`text-[9px] font-black px-1.5 py-0.2 rounded border uppercase tracking-wider ${
+                      selectedDayRating.isEstimated
+                        ? 'bg-slate-500/20 text-slate-400 border-slate-500/30 border-dashed'
+                        : 'bg-amber-400/20 text-amber-300 border-amber-400/30'
+                    }`}>
+                      {selectedDayRating.isEstimated ? 'Estimated (Unverified)' : selectedDayRating.tierLabel}
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-300 font-medium">
-                    {selectedDayRating.isUnderBudget ? 'Budget Maintained' : 'Budget Exceeded'} • {selectedDayRating.habitsCompleted}/{selectedDayRating.totalHabits} Habits
+                    {selectedDayRating.isEstimated
+                      ? 'Reconstructed from past completion count'
+                      : (selectedDayRating.isUnderBudget ? 'Budget Maintained' : 'Budget Exceeded')} • {selectedDayRating.habitsCompleted}/{selectedDayRating.totalHabits} Habits
                   </div>
                 </div>
               </div>

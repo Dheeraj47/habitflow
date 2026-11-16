@@ -19,7 +19,7 @@ import type { ToastItem } from './components/Toast/ToastContainer';
 import type { Habit, ActiveTab, SanctuaryLifetimeStats } from './types/habit';
 import type { BudgetTrackerState } from './types/budget';
 import { loadBudgetTrackerState, saveBudgetTrackerState } from './utils/budgetStorage';
-import { calculateDayRating, saveDayRating } from './utils/dayRating';
+import { calculateDayRating, saveDayRating, getRatingDateString } from './utils/dayRating';
 import {
   loadSanctuaryStats,
   saveSanctuaryStats,
@@ -35,6 +35,7 @@ import confetti from 'canvas-confetti';
 import { soundFx } from './utils/sound';
 import { useAuth } from './context/AuthContext';
 import { challengeService } from './services/challengeService';
+import { ratingService } from './services/ratingService';
 
 const STORAGE_KEY = 'habitflow_habits_v1';
 const XP_STORAGE_KEY = 'habitflow_user_xp_v1';
@@ -313,23 +314,29 @@ export function App() {
 
   // Football-inspired Matchday Player Rating State
   const [isDayRatingModalOpen, setIsDayRatingModalOpen] = useState(false);
-  const todayDateStr = getTodayDateString();
+  const [challengeCheckinRevision, setChallengeCheckinRevision] = useState(0);
+  const todayDateStr = getRatingDateString();
+
+  // Synchronize challenge check-in events across guest and authenticated sessions
+  useEffect(() => {
+    const handleCheckinEvent = () => setChallengeCheckinRevision((v) => v + 1);
+    window.addEventListener('habitflow_challenge_checkin', handleCheckinEvent);
+    return () => window.removeEventListener('habitflow_challenge_checkin', handleCheckinEvent);
+  }, []);
+
+  // When authUser changes or on mount, check authenticated challenge check-in status from Supabase
+  useEffect(() => {
+    if (authUser) {
+      challengeService.checkUserTodayCheckin(authUser, todayDateStr).then((hasCheckin) => {
+        if (hasCheckin) {
+          setChallengeCheckinRevision((v) => v + 1);
+        }
+      });
+    }
+  }, [authUser, todayDateStr]);
 
   const todayRating = useMemo(() => {
-    let hasChallengeCheckin = false;
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const raw = localStorage.getItem('habitflow_guest_checkins_v1');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.some((c: { localDate?: string }) => c.localDate === todayDateStr)) {
-            hasChallengeCheckin = true;
-          }
-        }
-      }
-    } catch {
-      // Safe fallback
-    }
+    const hasChallengeCheckin = challengeService.hasCheckedInToday(todayDateStr);
 
     const calculated = calculateDayRating({
       habits,
@@ -340,7 +347,22 @@ export function App() {
     // Persist to safe, isolated key habitflow_day_ratings_v1
     saveDayRating(calculated);
     return calculated;
-  }, [habits, budgetState, todayDateStr]);
+  }, [habits, budgetState, todayDateStr, challengeCheckinRevision]);
+
+  // Synchronize verified rating to Supabase for authenticated accounts
+  useEffect(() => {
+    if (authUser && todayRating) {
+      const morningHabits = habits.filter((h) => h.timeOfDay === 'morning');
+      const morningDone = morningHabits.filter((h) => h.completed).length;
+
+      ratingService.recordDailyRating({
+        user: authUser,
+        rating: todayRating,
+        morningTotal: morningHabits.length,
+        morningCompleted: morningDone,
+      });
+    }
+  }, [authUser, todayRating, habits]);
 
   // Toggle habit completion with Undo Toast and streak tracking
   const handleToggleHabit = (id: string) => {
@@ -679,6 +701,8 @@ export function App() {
                   budgetState={budgetState}
                   onBudgetChange={handleBudgetChange}
                   onRewardEarned={handleChallengeReward}
+                  todayRating={todayRating}
+                  userXP={userXP}
                 />
               </motion.div>
             )}
