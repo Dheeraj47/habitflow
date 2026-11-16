@@ -73,14 +73,16 @@ test('calculateDayRating: 100% habit completion + savings yields Exceptional tie
     dateStr: '2026-11-13',
   });
 
-  // Base 4.5 + 3.5 (100% habits) + 0.8 (under 50% budget) + 0.4 (streak 7) + 0.4 (challenge) + 0.3 (morning done) = 9.9
+  // Base 5.0 + 3.8 (100% habits) + 0.4 (saved >= 50% budget) + 0.4 (streak 7) + 0.4 (challenge) + 0.3 (morning done) = 10.3 -> clamped to 10.0
   assert.ok(result.rating >= 9.5, `Expected >= 9.5, got ${result.rating}`);
+  assert.equal(result.breakdown.baseRating, 5.0);
   assert.equal(result.tier, 'exceptional');
   assert.equal(result.tierLabel, 'EXCEPTIONAL DAY');
   assert.equal(result.isUnderBudget, true);
   assert.equal(result.habitsCompleted, 3);
   assert.equal(result.totalHabits, 3);
   assert.equal(result.completionRate, 100);
+  assert.equal(result.breakdown.budgetImpact, 0.4);
   assert.equal(result.budgetInsights.status, 'under_budget');
   assert.equal(result.budgetInsights.savings, 550);
   assert.equal(result.budgetInsights.totalSpent, 450);
@@ -95,53 +97,121 @@ test('calculateDayRating: rigorous scoring gives low rating (<= 3.5) for 0% comp
     dateStr: '2026-11-13',
   });
 
-  // Base 4.5 - 1.5 (0% habits) + 0.2 (neutral budget) = 3.2
+  // Base 5.0 - 1.8 (0% habits) + 0.0 (no limit/neutral budget) = 3.2 <= 3.5
   assert.ok(result.rating <= 3.5, `Expected <= 3.5, got ${result.rating}`);
+  assert.equal(result.breakdown.baseRating, 5.0);
   assert.equal(result.tier, 'reset');
   assert.equal(result.completionRate, 0);
+  assert.equal(result.breakdown.budgetImpact, 0.0);
 });
 
-test('calculateDayRating: budget savings bonus & insights when zero expenses logged', () => {
+test('calculateDayRating: saves >= 50% of budget yields +0.4 points in rating', () => {
+  // Zero spend saves 100% of budget (>= 50%) -> +0.4 pts
   const zeroExpenseBudget: BudgetTrackerState = {
     ...SAMPLE_BUDGET,
+    dailyLimit: 1000,
     expenses: [],
   };
 
-  const result = calculateDayRating({
+  const resultZero = calculateDayRating({
     habits: SAMPLE_HABITS,
     budgetState: zeroExpenseBudget,
     challengesCheckedInToday: false,
     dateStr: '2026-11-13',
   });
 
-  assert.equal(result.isUnderBudget, true);
-  assert.equal(result.budgetInsights.status, 'zero_spend');
-  assert.equal(result.budgetInsights.savings, 1000);
-  assert.equal(result.budgetInsights.totalSpent, 0);
-  assert.equal(result.breakdown.budgetImpact, 1.0);
+  assert.equal(resultZero.isUnderBudget, true);
+  assert.equal(resultZero.budgetInsights.status, 'zero_spend');
+  assert.equal(resultZero.budgetInsights.savings, 1000);
+  assert.equal(resultZero.budgetInsights.totalSpent, 0);
+  assert.equal(resultZero.breakdown.budgetImpact, 0.4);
+
+  // Partial spend of 400 with 1000 limit saves 600 (60% >= 50%) -> +0.4 pts
+  const partialSpendBudget: BudgetTrackerState = {
+    ...SAMPLE_BUDGET,
+    dailyLimit: 1000,
+    expenses: [
+      { id: '1', title: 'Groceries', amount: 400, category: 'food', date: '2026-11-13' },
+    ],
+  };
+
+  const resultPartial = calculateDayRating({
+    habits: SAMPLE_HABITS,
+    budgetState: partialSpendBudget,
+    challengesCheckedInToday: false,
+    dateStr: '2026-11-13',
+  });
+
+  assert.equal(resultPartial.isUnderBudget, true);
+  assert.equal(resultPartial.breakdown.budgetImpact, 0.4);
 });
 
-test('calculateDayRating: overspending penalizes rating and provides deficit insights', () => {
-  const overspentBudget: BudgetTrackerState = {
+test('calculateDayRating: rest till under limit (spends 50% - 100%) yields +0.2 points', () => {
+  // Spend 750 of 1000 limit (75% used, under limit but saves < 50%) -> +0.2 pts
+  const moderateSpendBudget: BudgetTrackerState = {
     ...SAMPLE_BUDGET,
-    dailyLimit: 500,
+    dailyLimit: 1000,
     expenses: [
-      { id: '1', title: 'Expensive dinner', amount: 900, category: 'food', date: '2026-11-13' },
+      { id: '1', title: 'Shopping', amount: 750, category: 'shopping', date: '2026-11-13' },
     ],
   };
 
   const result = calculateDayRating({
     habits: SAMPLE_HABITS,
-    budgetState: overspentBudget,
+    budgetState: moderateSpendBudget,
+    challengesCheckedInToday: false,
+    dateStr: '2026-11-13',
+  });
+
+  assert.equal(result.isUnderBudget, true);
+  assert.equal(result.budgetInsights.status, 'under_budget');
+  assert.equal(result.breakdown.budgetImpact, 0.2);
+});
+
+test('calculateDayRating: budget exceeded under 100% reduces rating by -0.6 pts', () => {
+  // Limit 500, spent 750 (overspent 250 = 50% excess, which is <= 100% excess) -> -0.6 pts
+  const moderateOverspendState: BudgetTrackerState = {
+    ...SAMPLE_BUDGET,
+    dailyLimit: 500,
+    expenses: [
+      { id: '1', title: 'Dinner & Taxi', amount: 750, category: 'food', date: '2026-11-13' },
+    ],
+  };
+
+  const result = calculateDayRating({
+    habits: SAMPLE_HABITS,
+    budgetState: moderateOverspendState,
     challengesCheckedInToday: false,
     dateStr: '2026-11-13',
   });
 
   assert.equal(result.isUnderBudget, false);
+  assert.equal(result.breakdown.budgetImpact, -0.6);
   assert.equal(result.budgetInsights.status, 'over_budget');
-  assert.equal(result.budgetInsights.totalSpent, 900);
-  assert.ok(result.breakdown.budgetImpact <= -1.0);
-  assert.ok(result.budgetInsights.insightMessage.includes('Deficit') || result.budgetInsights.insightMessage.includes('Alert'));
+  assert.equal(result.budgetInsights.totalSpent, 750);
+});
+
+test('calculateDayRating: budget exceeded by more than 100% reduces rating by -1.0 pt', () => {
+  // Limit 500, spent 1200 (overspent 700 = 140% excess, which is > 100% excess) -> -1.0 pt
+  const heavyOverspendState: BudgetTrackerState = {
+    ...SAMPLE_BUDGET,
+    dailyLimit: 500,
+    expenses: [
+      { id: '2', title: 'Luxury Hotel', amount: 1200, category: 'shopping', date: '2026-11-13' },
+    ],
+  };
+
+  const result = calculateDayRating({
+    habits: SAMPLE_HABITS,
+    budgetState: heavyOverspendState,
+    challengesCheckedInToday: false,
+    dateStr: '2026-11-13',
+  });
+
+  assert.equal(result.isUnderBudget, false);
+  assert.equal(result.breakdown.budgetImpact, -1.0);
+  assert.equal(result.budgetInsights.status, 'over_budget');
+  assert.equal(result.budgetInsights.totalSpent, 1200);
 });
 
 test('calculateDayRating: strictly excludes lend and borrow (debts) from rating tally', () => {
@@ -228,4 +298,37 @@ test('DAY_RATINGS_STORAGE_KEY is distinct and does not collide with original key
   ];
   assert.ok(!forbiddenOriginalKeys.includes(DAY_RATINGS_STORAGE_KEY));
   assert.equal(DAY_RATINGS_STORAGE_KEY, 'habitflow_day_ratings_v1');
+});
+
+test('Calendar day rating corner badge: rating produces formatted 1-decimal string', () => {
+  const rating = calculateDayRating({
+    habits: SAMPLE_HABITS,
+    budgetState: SAMPLE_BUDGET,
+    dateStr: '2026-11-15',
+  });
+  const formatted = rating.rating.toFixed(1);
+  assert.match(formatted, /^\d+\.\d$/, 'Expected single decimal format (e.g. 9.8)');
+  assert.ok(Number(formatted) >= 1.0 && Number(formatted) <= 10.0);
+});
+
+test('Calendar day rating corner badge: tiers properly map to rating bands', () => {
+  const exceptional = getRatingTier(9.8);
+  assert.equal(exceptional.tier, 'exceptional');
+  assert.match(exceptional.tierColor, /amber/);
+
+  const great = getRatingTier(8.8);
+  assert.equal(great.tier, 'great');
+  assert.match(great.tierColor, /purple/);
+
+  const good = getRatingTier(7.8);
+  assert.equal(good.tier, 'good');
+  assert.match(good.tierColor, /emerald/);
+
+  const steady = getRatingTier(6.5);
+  assert.equal(steady.tier, 'steady');
+  assert.match(steady.tierColor, /blue/);
+
+  const reset = getRatingTier(4.5);
+  assert.equal(reset.tier, 'reset');
+  assert.match(reset.tierColor, /rose/);
 });

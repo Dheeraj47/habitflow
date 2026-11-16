@@ -216,7 +216,7 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
                   <span className="flex items-center gap-2 text-slate-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-500" /> Base Shift
                   </span>
-                  <span className="font-mono font-bold text-white">4.5 pts</span>
+                  <span className="font-mono font-bold text-white">{rating.breakdown.baseRating} pts</span>
                 </div>
 
                 <div className="flex items-center justify-between text-slate-300">
@@ -230,10 +230,20 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
 
                 <div className="flex items-center justify-between text-slate-300">
                   <span className="flex items-center gap-2 text-slate-400">
-                    <Wallet className="w-3.5 h-3.5 text-amber-400" /> Budget Discipline &amp; Savings
+                    <Wallet className="w-3.5 h-3.5 text-amber-400" /> Daily Budget Check
                   </span>
-                  <span className={`font-mono font-bold ${rating.breakdown.budgetImpact >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                    {rating.breakdown.budgetImpact >= 0 ? `+${rating.breakdown.budgetImpact}` : rating.breakdown.budgetImpact} pts
+                  <span className={`font-mono font-bold ${
+                    rating.breakdown.budgetImpact > 0 
+                      ? 'text-emerald-400' 
+                      : rating.breakdown.budgetImpact === 0 
+                      ? 'text-slate-400' 
+                      : 'text-rose-400'
+                  }`}>
+                    {rating.breakdown.budgetImpact > 0 
+                      ? `+${rating.breakdown.budgetImpact} pts` 
+                      : rating.breakdown.budgetImpact === 0 
+                      ? '0.0 pts' 
+                      : `${rating.breakdown.budgetImpact} pt (Over limit)`}
                   </span>
                 </div>
 

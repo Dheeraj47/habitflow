@@ -23,14 +23,17 @@ import {
   Car,
   ShoppingBag,
   HeartPulse,
-  Film
+  Film,
+  Star
 } from 'lucide-react';
 import type { Habit, SanctuaryLifetimeStats, TimeOfDay, HabitCategory } from '../../types/habit';
 import type { BudgetTrackerState, ExpenseCategory, ExpenseItem } from '../../types/budget';
 import { CATEGORY_METADATA } from '../../types/budget';
 import { loadBudgetTrackerState, formatCurrency, ensureRecordItems } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
-import { getDayRating, calculateDayRating } from '../../utils/dayRating';
+import { getDayRating, calculateDayRating, loadDayRatings } from '../../utils/dayRating';
+import type { DayRating, DayRatingMap } from '../../types/rating';
+import { DayRatingModal } from '../Rating/DayRatingModal';
 
 interface RitualCalendarProps {
   habits: Habit[];
@@ -67,6 +70,50 @@ function getTodayString(): string {
   return `${y}-${m}-${d}`;
 }
 
+/**
+ * Returns micro-badge color classes for corner rating based on performance tier.
+ */
+function getRatingBadgeStyle(rating: number) {
+  if (rating >= 9.5) {
+    return {
+      bg: 'bg-amber-400/15 hover:bg-amber-400/25',
+      border: 'border-amber-400/40',
+      text: 'text-amber-300',
+      star: 'text-amber-400 fill-amber-400',
+    };
+  }
+  if (rating >= 8.5) {
+    return {
+      bg: 'bg-purple-500/15 hover:bg-purple-500/25',
+      border: 'border-purple-400/40',
+      text: 'text-purple-300',
+      star: 'text-purple-400 fill-purple-400',
+    };
+  }
+  if (rating >= 7.5) {
+    return {
+      bg: 'bg-emerald-500/15 hover:bg-emerald-500/25',
+      border: 'border-emerald-400/40',
+      text: 'text-emerald-300',
+      star: 'text-emerald-400 fill-emerald-400',
+    };
+  }
+  if (rating >= 6.0) {
+    return {
+      bg: 'bg-blue-500/15 hover:bg-blue-500/25',
+      border: 'border-blue-400/40',
+      text: 'text-blue-300',
+      star: 'text-blue-400 fill-blue-400',
+    };
+  }
+  return {
+    bg: 'bg-rose-500/15 hover:bg-rose-500/25',
+    border: 'border-rose-400/40',
+    text: 'text-rose-300',
+    star: 'text-rose-400 fill-rose-400',
+  };
+}
+
 export const RitualCalendar: React.FC<RitualCalendarProps> = ({
   habits,
   onToggleHabit,
@@ -78,11 +125,33 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth());
   const [selectedDate, setSelectedDate] = useState(getTodayString);
+  const [inspectRating, setInspectRating] = useState<DayRating | null>(null);
+  const [savedRatings, setSavedRatings] = useState<DayRatingMap>(() => loadDayRatings());
+
+  // Listen for storage changes to keep day ratings map synchronized
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'habitflow_day_ratings_v1') {
+        setSavedRatings(loadDayRatings());
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   // Active budget tracker state (passed from App or fallback loaded from localStorage)
   const activeBudgetState = useMemo(() => {
     return budgetState ?? loadBudgetTrackerState();
   }, [budgetState]);
+
+  // Real-time calculated rating for today based on live habits & budget
+  const todayRating = useMemo(() => {
+    return calculateDayRating({
+      habits,
+      budgetState: activeBudgetState,
+      dateStr: getTodayString(),
+    });
+  }, [habits, activeBudgetState]);
 
   // Retrieve spend metrics and itemized transactions for any specific date
   const getDaySpendInfo = useCallback(
@@ -386,6 +455,57 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
     return null;
   }, [selectedDate, isSelectedDateToday, habits, activeBudgetState, selectedStats.count, selectedSpend]);
 
+  // Precomputed map of daily ratings across all calendar days
+  const calendarRatingsMap = useMemo(() => {
+    const map: Record<string, DayRating | null> = {};
+    const todayStr = getTodayString();
+
+    calendarGrid.forEach(({ dateStr, isCurrentMonth }) => {
+      if (!isCurrentMonth) {
+        map[dateStr] = null;
+        return;
+      }
+
+      const stats = getDayStats(dateStr);
+      if (stats.isFuture) {
+        map[dateStr] = null;
+        return;
+      }
+
+      if (dateStr === todayStr) {
+        map[dateStr] = todayRating;
+        return;
+      }
+
+      if (savedRatings[dateStr]) {
+        map[dateStr] = savedRatings[dateStr];
+        return;
+      }
+
+      const daySpend = getDaySpendInfo(dateStr);
+      if (stats.count > 0 || daySpend.hasRecord) {
+        const pastHabits = habits.map((h, idx) => ({
+          ...h,
+          completed: idx < stats.count,
+        }));
+        map[dateStr] = calculateDayRating({
+          habits: pastHabits,
+          budgetState: {
+            currencySymbol: activeBudgetState.currencySymbol,
+            dailyLimit: daySpend.dailyLimit,
+            expenses: daySpend.items,
+            debts: [],
+          },
+          dateStr,
+        });
+      } else {
+        map[dateStr] = null;
+      }
+    });
+
+    return map;
+  }, [calendarGrid, getDayStats, getDaySpendInfo, todayRating, savedRatings, habits, activeBudgetState]);
+
   const renderHabitIcon = (iconName: string, color: string) => {
     const props = { className: 'w-3.5 h-3.5', style: { color } };
     switch (iconName) {
@@ -594,6 +714,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               const isToday = stats.isToday;
 
               const daySpend = getDaySpendInfo(dateStr);
+              const dayCellRating = calendarRatingsMap[dateStr];
+              const badgeStyle = dayCellRating ? getRatingBadgeStyle(dayCellRating.rating) : null;
 
               let heatStyles = 'bg-white/[0.02] border-white/[0.05] text-slate-400';
               if (!isCurrentMonth) {
@@ -617,23 +739,44 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(800 + dayNum * 4);
                     setSelectedDate(dateStr);
                   }}
-                  className={`p-1.5 sm:p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col justify-between min-h-[58px] sm:min-h-[72px] ${heatStyles} ${
+                  className={`p-1.5 sm:p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col justify-between min-h-[58px] sm:min-h-[72px] relative group ${heatStyles} ${
                     isSelected
                       ? 'ring-2 ring-indigo-500 border-transparent z-10'
                       : 'hover:border-white/[0.12]'
                   }`}
                 >
-                  {/* Top Day Number & Today Pill */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-xs font-semibold tabular-nums ${
-                        isToday ? 'text-indigo-400 font-bold' : ''
-                      }`}
-                    >
-                      {dayNum}
-                    </span>
-                    {isToday && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                  {/* Top Header: Day Number (Left) & Corner Day Rating Badge (Right) */}
+                  <div className="flex items-center justify-between gap-1 leading-none">
+                    <div className="flex items-center gap-1 min-w-0">
+                      <span
+                        className={`text-xs font-semibold tabular-nums ${
+                          isToday ? 'text-indigo-400 font-bold' : ''
+                        }`}
+                      >
+                        {dayNum}
+                      </span>
+                      {isToday && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse flex-shrink-0" title="Today" />
+                      )}
+                    </div>
+
+                    {/* Corner Day Rating Badge */}
+                    {badgeStyle && dayCellRating && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDate(dateStr);
+                          soundFx.playCrystalChime(950);
+                          setInspectRating(dayCellRating);
+                        }}
+                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-black tabular-nums border leading-none shadow-xs transition-transform hover:scale-110 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text}`}
+                        title={`Day Rating: ${dayCellRating.rating.toFixed(1)}/10 (${dayCellRating.tierLabel}) • Click for full breakdown`}
+                        aria-label={`Rating for ${dateStr}: ${dayCellRating.rating.toFixed(1)}`}
+                      >
+                        <Star className={`w-2 h-2 sm:w-2.5 sm:h-2.5 ${badgeStyle.star}`} />
+                        <span>{dayCellRating.rating.toFixed(1)}</span>
+                      </button>
                     )}
                   </div>
 
@@ -677,10 +820,18 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             })}
           </div>
 
-          {/* Adherence Scale Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/[0.06] text-xs text-slate-400">
-            <span className="text-[11px] text-slate-500">Adherence Intensity:</span>
+          {/* Adherence Scale Legend & Rating Corner Pill Legend */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-white/[0.06] text-xs text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-slate-500">Day Rating:</span>
+              <div className="inline-flex items-center gap-1 text-[10px] text-amber-300 font-bold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/25">
+                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                <span>Corner Score (1.0 - 10.0)</span>
+              </div>
+            </div>
+
             <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-slate-500 mr-1">Habit Adherence:</span>
               <span className="text-[10px] text-slate-500">0%</span>
               <div className="w-3 h-3 rounded bg-white/[0.02] border border-white/[0.05]" />
               <div className="w-3 h-3 rounded bg-indigo-950/20 border border-indigo-500/20" />
@@ -715,7 +866,14 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
 
           {/* Day Performance Rating Badge */}
           {selectedDayRating && (
-            <div className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-transparent border border-amber-500/25 flex items-center justify-between shadow-sm">
+            <div
+              onClick={() => {
+                soundFx.playCrystalChime(920);
+                setInspectRating(selectedDayRating);
+              }}
+              className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-transparent border border-amber-500/25 hover:border-amber-400/40 flex items-center justify-between shadow-sm cursor-pointer transition-all hover:scale-[1.01] active:scale-99"
+              title="Click to view complete performance breakdown modal"
+            >
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300 font-black text-sm tracking-tight shadow-sm">
                   {selectedDayRating.rating.toFixed(1)}
@@ -996,6 +1154,15 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Day Rating Breakdown Modal Popup */}
+      {inspectRating && (
+        <DayRatingModal
+          isOpen={Boolean(inspectRating)}
+          onClose={() => setInspectRating(null)}
+          rating={inspectRating}
+        />
+      )}
     </div>
   );
 };

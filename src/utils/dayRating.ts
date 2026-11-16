@@ -1,11 +1,15 @@
 /**
  * HABITFLOW: DAILY RATING ENGINE (RIGOROUS & REWARDING)
  * Computes an end-of-day performance rating (1.0 to 10.0) based on execution:
- * - Habit Completion Rate (up to +3.5 pts)
- * - Daily Budget Discipline & Savings (up to +1.0 pt, with penalties down to -1.8 pts)
+ * - Habit Completion Rate (up to +3.8 pts)
  * - Momentum & Streak Longevity (up to +0.5 pts)
  * - 21-Day Challenge Check-in (up to +0.4 pts)
  * - Morning Discipline (up to +0.3 pts)
+ * - Daily Budget Condition:
+ *     - If saves >= 50% of set budget: +0.4 pts
+ *     - For the rest till under the limit (50% - 100% used): +0.2 pts
+ *     - If budget exceeded is under 100% (total spent <= 2x limit): -0.6 pts penalty
+ *     - If budget exceeded by more than 100% (total spent > 2x limit): -1.0 pt penalty
  *
  * CRITICAL RULE:
  * Lend and Borrow (Debts) records are STRICTLY EXCLUDED from tallying the day rating.
@@ -94,10 +98,10 @@ export function calculateDayRating({
   challengesCheckedInToday = false,
   dateStr = getRatingDateString(),
 }: CalculateRatingInput): DayRating {
-  // Rigorous baseline: an unstarted day begins at 4.5
-  const baseRating = 4.5;
+  // Baseline for a normal day
+  const baseRating = 5.0;
 
-  // 1. Habit Completion Rate (Weight: -1.5 to +3.5)
+  // 1. Habit Completion Rate (Weight: -1.8 to +3.8)
   const totalHabits = habits.length;
   const habitsCompleted = habits.filter((h) => h.completed).length;
   const completionRatio = totalHabits > 0 ? habitsCompleted / totalHabits : 0;
@@ -107,22 +111,27 @@ export function calculateDayRating({
   if (totalHabits === 0) {
     habitsImpact = 0;
   } else if (completionRatio === 1) {
-    habitsImpact = 3.5; // Flawless completion
+    habitsImpact = 3.8; // Flawless completion
   } else if (completionRatio >= 0.9) {
-    habitsImpact = 2.6; // High execution
+    habitsImpact = 2.8; // High execution
   } else if (completionRatio >= 0.75) {
-    habitsImpact = 1.8; // Good execution
+    habitsImpact = 2.0; // Good execution
   } else if (completionRatio >= 0.5) {
-    habitsImpact = 0.8; // Passing mark
+    habitsImpact = 1.0; // Passing mark
   } else if (completionRatio >= 0.25) {
     habitsImpact = -0.4; // Low effort
   } else if (completionRatio > 0) {
     habitsImpact = -1.0; // Incomplete routine
   } else {
-    habitsImpact = -1.5; // Zero habits performed
+    habitsImpact = -1.8; // Zero habits performed
   }
 
   // 2. Daily Budget Discipline & Insights (Strictly excluding debts/lend/borrow)
+  // RULE:
+  // - If saves >= 50% of set budget: +0.4 pts
+  // - For the rest till under the limit (spent between 50% and 100%): +0.2 pts
+  // - If over daily limit: -1.0 pt strictly deducted from current rating
+  // - If no limit configured: 0.0 pts
   const currencySymbol = budgetState?.currencySymbol || '₹';
   const todayExpenses = (budgetState?.expenses || []).filter(
     (item) => !item.dateStr || item.dateStr === dateStr
@@ -148,7 +157,7 @@ export function calculateDayRating({
     }
   }
 
-  let budgetImpact = 0.2;
+  let budgetImpact = 0.0;
   let isUnderBudget = true;
   let budgetStatus: DayBudgetInsights['status'] = 'no_limit';
   let statusLabel = 'No Daily Limit Configured';
@@ -160,41 +169,37 @@ export function calculateDayRating({
   if (limit > 0) {
     if (totalSpent === 0) {
       isUnderBudget = true;
-      budgetImpact = 1.0; // Zero spend bonus
+      budgetImpact = 0.4; // Zero spend (100% saved >= 50% limit): +0.4 pts
       budgetStatus = 'zero_spend';
       statusLabel = 'Zero Spend Day';
-      insightMessage = `Zero Spend: You preserved 100% of your ${currencySymbol}${limit} daily limit.`;
+      insightMessage = `Zero Spend (+0.4 pts): You preserved 100% of your ${currencySymbol}${limit} daily limit.`;
     } else if (totalSpent <= limit * 0.5) {
       isUnderBudget = true;
-      budgetImpact = 0.8; // Under 50% of limit
+      budgetImpact = 0.4; // Saved >= 50% of budget: +0.4 pts
       budgetStatus = 'under_budget';
       statusLabel = `Saved ${100 - spentPercentage}% of Allowance`;
-      insightMessage = `High Efficiency: Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit} (${spentPercentage}%), saving ${currencySymbol}${savings}.`;
-    } else if (totalSpent <= limit * 0.8) {
-      isUnderBudget = true;
-      budgetImpact = 0.5; // Under 80% of limit
-      budgetStatus = 'under_budget';
-      statusLabel = `Saved ${100 - spentPercentage}% of Allowance`;
-      insightMessage = `Under Budget: Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit} (${spentPercentage}%), maintaining ${currencySymbol}${savings} in reserve.`;
+      insightMessage = `High Efficiency (+0.4 pts): Saved 50%+ of your daily allowance (Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit}).`;
     } else if (totalSpent <= limit) {
       isUnderBudget = true;
-      budgetImpact = 0.2; // On budget boundary
+      budgetImpact = 0.2; // Rest till under limit: +0.2 pts
       budgetStatus = 'under_budget';
-      statusLabel = 'Within Limit';
-      insightMessage = `Budget Maintained: Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit} (${spentPercentage}%).`;
+      statusLabel = `Within Limit (${spentPercentage}%)`;
+      insightMessage = `Under Budget (+0.2 pts): Maintained daily spending within limit (Spent ${currencySymbol}${totalSpent} of ${currencySymbol}${limit}).`;
     } else {
       isUnderBudget = false;
       budgetStatus = 'over_budget';
       const overspent = totalSpent - limit;
-      const overrunRatio = (totalSpent - limit) / limit;
-      if (overrunRatio <= 0.25) {
-        budgetImpact = -1.0; // Moderate overspend
-        statusLabel = `Over Budget by ${currencySymbol}${overspent}`;
-        insightMessage = `Budget Alert: Exceeded daily limit by ${currencySymbol}${overspent} (${spentPercentage}% used). Deducted 1.0 pt.`;
+      const overrunPercentage = Math.round((overspent / limit) * 100);
+      statusLabel = `Over Budget by ${currencySymbol}${overspent}`;
+
+      if (overspent > limit) {
+        // Exceeded by more than 100% of daily budget limit (> 2x limit)
+        budgetImpact = -1.0;
+        insightMessage = `Budget Exceeded (-1.0 pt): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 1.0 pt.`;
       } else {
-        budgetImpact = -1.8; // Heavy deficit
-        statusLabel = `Over Budget by ${currencySymbol}${overspent}`;
-        insightMessage = `Deficit Warning: Heavy overspending of ${currencySymbol}${overspent} (${spentPercentage}% used). Deducted 1.8 pts.`;
+        // Exceeded but under 100% excess (<= 2x limit)
+        budgetImpact = -0.6;
+        insightMessage = `Budget Exceeded (-0.6 pts): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 0.6 pts.`;
       }
     }
   }
@@ -278,11 +283,15 @@ export function calculateDayRating({
 
   if (limit > 0) {
     if (totalSpent === 0) {
-      highlights.push(`Clean Financial Day: Zero spending against ${currencySymbol}${limit} limit`);
+      highlights.push(`Clean Financial Day: Zero spending against ${currencySymbol}${limit} limit (+0.4 pts)`);
+    } else if (totalSpent <= limit * 0.5) {
+      highlights.push(`High Savings: Preserved ${100 - spentPercentage}% of daily allowance (+0.4 pts)`);
     } else if (isUnderBudget) {
-      highlights.push(`Budget Defense: Kept spending within limit (Saved ${currencySymbol}${savings})`);
+      highlights.push(`Budget Defense: Kept spending within ${currencySymbol}${limit} limit (+0.2 pts)`);
+    } else if (totalSpent > limit * 2) {
+      highlights.push(`Heavy Deficit: Exceeded daily limit by more than 100% (-1.0 pt rating penalty)`);
     } else {
-      highlights.push(`Budget Warning: Overspent daily limit by ${currencySymbol}${totalSpent - limit}`);
+      highlights.push(`Budget Warning: Exceeded daily limit by ${currencySymbol}${totalSpent - limit} (-0.6 pts rating penalty)`);
     }
   }
 
