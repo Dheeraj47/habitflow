@@ -119,7 +119,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
     }
   }, [defaultSubTab]);
 
-  // Expanded date in 7-Day History for full breakdown (starts closed by default)
+  // Expanded date in 7-Day History for full breakdown
   const [expandedDateStr, setExpandedDateStr] = useState<string | null>(null);
 
   const toggleExpandDate = (dateStr: string) => {
@@ -138,22 +138,26 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   const updateStateAndPersist = (newState: BudgetTrackerState) => {
     setInternalState(newState);
     saveBudgetTrackerState(newState);
-    if (onBudgetChange) onBudgetChange(newState);
-    if (onStateChange) onStateChange(newState);
+    if (onBudgetChange) {
+      onBudgetChange(newState);
+    }
+    if (onStateChange) {
+      onStateChange(newState);
+    }
   };
 
   // Add Expense Handler
-  const handleAddExpense = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const amountNum = parseFloat(expenseAmount);
-    if (isNaN(amountNum) || amountNum <= 0) return;
+  const handleAddExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amountVal = parseFloat(expenseAmount);
+    if (isNaN(amountVal) || amountVal <= 0) return;
 
-    soundFx.playCrystalChime(1046.5);
+    soundFx.playCrystalChime(950);
 
     const newExpense: ExpenseItem = {
       id: generateUniqueExpenseId(),
-      title: expenseTitle.trim() || `${CATEGORY_METADATA[selectedCategory].label} Expense`,
-      amount: amountNum,
+      title: expenseTitle.trim() || CATEGORY_METADATA[selectedCategory].label,
+      amount: amountVal,
       category: selectedCategory,
       timestamp: getTimeString(),
       dateStr: getTodayDateString(),
@@ -161,12 +165,6 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
     };
 
     const newExpenses = [newExpense, ...state.expenses];
-    const newTotal = newExpenses.reduce((sum, item) => sum + item.amount, 0);
-
-    if (newTotal > state.dailyLimit && todaySpent <= state.dailyLimit) {
-      soundFx.playSingingBowl();
-    }
-
     const newState: BudgetTrackerState = {
       ...state,
       expenses: newExpenses,
@@ -177,18 +175,18 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
     setExpenseAmount('');
   };
 
-  // Quick Preset Helper
-  const handleQuickAddPreset = (presetAmount: number) => {
+  // Quick preset button handler
+  const handleQuickAddPreset = (amountVal: number) => {
     soundFx.playCrystalChime(950);
 
     const newExpense: ExpenseItem = {
       id: generateUniqueExpenseId(),
-      title: `Quick ${CATEGORY_METADATA[selectedCategory].label}`,
-      amount: presetAmount,
+      title: `${CATEGORY_METADATA[selectedCategory].label}`,
+      amount: amountVal,
       category: selectedCategory,
       timestamp: getTimeString(),
       dateStr: getTodayDateString(),
-      paymentMethod: 'online',
+      paymentMethod: 'card',
     };
 
     const newExpenses = [newExpense, ...state.expenses];
@@ -196,6 +194,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
       ...state,
       expenses: newExpenses,
     };
+
     updateStateAndPersist(newState);
   };
 
@@ -252,24 +251,24 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   );
 
   return (
-    <div className="w-full rounded-2xl bg-[#0d1019] border border-white/[0.07] shadow-xl p-5 sm:p-6 md:p-7 space-y-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]">
+    <div className="w-full rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm p-5 sm:p-6 md:p-7 space-y-5">
       {/* 1. Header Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
             <Wallet className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+              <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">
                 Daily Budget &amp; Expense Tracker
               </h2>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              <span className="text-xs font-medium px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Active
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Set spending thresholds, track daily purchases, and monitor savings momentum
+              Set spending thresholds, track daily purchases, and monitor savings
             </p>
           </div>
         </div>
@@ -280,15 +279,15 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowCurrencyPicker(!showCurrencyPicker)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 transition-colors cursor-pointer"
               title="Change currency"
             >
               <span className="text-emerald-400 font-bold">{state.currencySymbol}</span>
-              <span className="text-[11px] text-slate-400">Currency</span>
+              <span className="text-xs text-slate-400">Currency</span>
             </button>
 
             {showCurrencyPicker && (
-              <div className="absolute right-0 top-full mt-1.5 z-50 p-1.5 rounded-lg bg-[#141824] border border-white/10 shadow-xl flex gap-1">
+              <div className="absolute right-0 top-full mt-1.5 z-50 p-1.5 rounded-lg bg-slate-900 border border-slate-750 shadow-xl flex gap-1">
                 {CURRENCY_OPTIONS.map((sym) => (
                   <button
                     key={sym}
@@ -296,7 +295,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                     className={`w-7 h-7 rounded text-xs font-bold transition-colors cursor-pointer ${
                       state.currencySymbol === sym
                         ? 'bg-emerald-500 text-slate-950'
-                        : 'text-slate-300 hover:bg-white/10'
+                        : 'text-slate-300 hover:bg-slate-800'
                     }`}
                   >
                     {sym}
@@ -315,16 +314,16 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
       </div>
 
       {/* 2. Primary Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
         {/* Left Card: Spending Progress & Limit */}
-        <div className="md:col-span-6 p-4 sm:p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex flex-col justify-between space-y-3.5">
+        <div className="md:col-span-6 p-5 rounded-lg bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-400">Today&apos;s Spending Pace</span>
 
             {/* Editable Daily Limit */}
             <div className="flex items-center gap-1.5">
               {isEditingLimit ? (
-                <div className="flex items-center gap-1 bg-[#121522] px-2 py-0.5 rounded border border-emerald-500/50">
+                <div className="flex items-center gap-1 bg-slate-950 px-2 py-0.5 rounded border border-emerald-500/50">
                   <span className="text-xs text-emerald-400 font-bold">{state.currencySymbol}</span>
                   <input
                     type="number"
@@ -353,11 +352,11 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                     setCustomLimitInput(String(state.dailyLimit));
                     setIsEditingLimit(true);
                   }}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/[0.04] hover:bg-white/[0.08] text-xs font-medium text-slate-300 border border-white/[0.07] transition-colors cursor-pointer group"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-750 text-xs font-medium text-slate-300 border border-slate-700 transition-colors cursor-pointer group"
                   title="Click to edit daily spending limit"
                 >
                   <span>Limit: <strong className="text-white tabular-nums">{formatCurrency(state.dailyLimit, state.currencySymbol)}</strong></span>
-                  <Edit3 className="w-3 h-3 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                  <Edit3 className="w-3 h-3 text-slate-400 group-hover:text-emerald-400 transition-colors" />
                 </button>
               )}
             </div>
@@ -387,7 +386,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                 }`}
               />
             </div>
-            <div className="flex justify-between items-center text-[11px] text-slate-500 pt-1.5 tabular-nums">
+            <div className="flex justify-between items-center text-xs text-slate-400 pt-1.5 tabular-nums">
               <span>{spentPercentage}% of limit utilized</span>
               <span>{state.expenses.length} transaction{state.expenses.length === 1 ? '' : 's'} today</span>
             </div>
@@ -396,50 +395,42 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
 
         {/* Right Card: Realized Savings or Warning */}
         <div 
-          className={`md:col-span-6 p-4 sm:p-5 rounded-xl border flex flex-col justify-between transition-colors ${
+          className={`md:col-span-6 p-5 rounded-lg border flex flex-col justify-between transition-colors ${
             isUnderBudget
-              ? 'bg-emerald-950/20 border-emerald-500/20'
+              ? 'bg-emerald-950/20 border-emerald-500/25'
               : 'bg-rose-950/20 border-rose-500/25'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium flex items-center gap-1.5">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-300">
+                {isUnderBudget ? 'Remaining Allowance' : 'Daily Allowance Exceeded'}
+              </span>
               {isUnderBudget ? (
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
               ) : (
                 <AlertTriangle className="w-4 h-4 text-rose-400" />
               )}
-              <span className={isUnderBudget ? 'text-emerald-300' : 'text-rose-300'}>
-                {isUnderBudget ? 'Daily Budget Preserved' : 'Limit Exceeded'}
-              </span>
-            </span>
+            </div>
 
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-              isUnderBudget ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'
-            }`}>
-              {isUnderBudget ? 'Under Budget' : 'Over Limit'}
-            </span>
-          </div>
-
-          <div className="py-2">
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 mt-2">
               <span className={`text-3xl sm:text-4xl font-bold tracking-tight tabular-nums ${
                 isUnderBudget ? 'text-emerald-400' : 'text-rose-400'
               }`}>
                 {isUnderBudget ? '+' : '-'}{formatCurrency(Math.abs(savings), state.currencySymbol)}
               </span>
               <span className="text-xs text-slate-400">
-                {isUnderBudget ? 'remaining in budget' : 'above daily ceiling'}
+                {isUnderBudget ? 'remaining in budget' : 'above daily limit'}
               </span>
             </div>
             <p className="text-xs text-slate-400 pt-1 leading-relaxed">
               {isUnderBudget
                 ? `You have preserved ${(100 - spentPercentage).toFixed(0)}% of your allowance today.`
-                : `You have exceeded your daily target by ${formatCurrency(Math.abs(savings), state.currencySymbol)}. Curb discretionary spend.`}
+                : `You have exceeded your daily target by ${formatCurrency(Math.abs(savings), state.currencySymbol)}.`}
             </p>
           </div>
 
-          <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-slate-400">
+          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
             <span>Cumulative Saved (7 Days):</span>
             <span className="font-semibold text-emerald-400 tabular-nums">
               +{formatCurrency(Math.max(cumulativeSavings, 0), state.currencySymbol)}
@@ -449,7 +440,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
       </div>
 
       {/* 3. Expense Logger Form */}
-      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+      <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
             <Plus className="w-3.5 h-3.5 text-indigo-400" />
@@ -458,13 +449,13 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
 
           {/* Quick Presets */}
           <div className="hidden sm:flex items-center gap-1.5">
-            <span className="text-[11px] text-slate-500">Quick:</span>
+            <span className="text-xs text-slate-500">Quick:</span>
             {[5, 10, 20, 50].map((preset) => (
               <button
                 key={preset}
                 type="button"
                 onClick={() => handleQuickAddPreset(preset)}
-                className="px-2 py-0.5 rounded bg-white/[0.04] hover:bg-white/[0.08] text-[11px] font-medium text-slate-300 border border-white/[0.06] transition-colors cursor-pointer tabular-nums"
+                className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition-colors cursor-pointer tabular-nums"
               >
                 +{state.currencySymbol}{preset}
               </button>
@@ -480,7 +471,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
               placeholder="Expense title (e.g., Coffee, Lunch, Transit...)"
               value={expenseTitle}
               onChange={(e) => setExpenseTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-[#111420] border border-white/[0.08] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
 
@@ -497,7 +488,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
               placeholder="0.00"
               value={expenseAmount}
               onChange={(e) => setExpenseAmount(e.target.value)}
-              className="w-full pl-6 pr-3 py-2 rounded-lg bg-[#111420] border border-white/[0.08] text-white placeholder-slate-500 text-xs font-semibold tabular-nums focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full pl-6 pr-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs font-semibold tabular-nums focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
 
@@ -506,10 +497,10 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as ExpenseCategory)}
-              className="w-full px-2.5 py-2 rounded-lg bg-[#111420] border border-white/[0.08] text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+              className="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
             >
               {(Object.keys(CATEGORY_METADATA) as ExpenseCategory[]).map((cat) => (
-                <option key={cat} value={cat} className="bg-[#141824] text-white">
+                <option key={cat} value={cat} className="bg-slate-900 text-white">
                   {CATEGORY_METADATA[cat].label}
                 </option>
               ))}
@@ -520,7 +511,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           <div className="sm:col-span-2">
             <button
               type="submit"
-              className="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Log Expense</span>
@@ -529,7 +520,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
         </form>
 
         {/* Category Pills Row */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 no-scrollbar">
           {(Object.keys(CATEGORY_METADATA) as ExpenseCategory[]).map((cat) => {
             const meta = CATEGORY_METADATA[cat];
             const Icon = CATEGORY_ICONS[cat];
@@ -539,10 +530,10 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
                   isSelected
-                    ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/30'
-                    : 'bg-white/[0.03] text-slate-400 hover:text-slate-200 border border-transparent'
+                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                    : 'bg-slate-950 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800'
                 }`}
               >
                 <Icon className="w-3 h-3" />
@@ -554,7 +545,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
       </div>
 
       {/* 4. Sub-Navigation Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 border-b border-slate-800/80 pb-2 overflow-x-auto no-scrollbar">
         <button
           onClick={() => {
             setActiveSubTab('today');
@@ -563,13 +554,13 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
             activeSubTab === 'today'
-              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
           }`}
         >
           <Wallet className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
           <span>Today&apos;s Expenses</span>
-          <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold tabular-nums bg-white/[0.08] text-slate-300">
+          <span className="text-xs px-1.5 py-0.2 rounded font-semibold tabular-nums bg-slate-800 text-slate-300">
             {state.expenses.length}
           </span>
         </button>
@@ -582,8 +573,8 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
             activeSubTab === 'history'
-              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
           }`}
         >
           <CalendarCheck2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
@@ -598,11 +589,11 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
             activeSubTab === 'categories'
-              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
           }`}
         >
-          <PieChart className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+          <PieChart className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
           <span>Category Breakdown</span>
         </button>
 
@@ -614,14 +605,14 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           }}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
             activeSubTab === 'debts'
-              ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
-              : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+              : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
           }`}
         >
           <ArrowLeftRight className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
           <span>Lend &amp; Borrow</span>
           {pendingDebtsCount > 0 && (
-            <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold tabular-nums bg-amber-500/15 text-amber-300 border border-amber-500/25">
+            <span className="text-xs px-1.5 py-0.2 rounded font-semibold tabular-nums bg-amber-500/15 text-amber-300 border border-amber-500/25">
               {pendingDebtsCount}
             </span>
           )}
@@ -634,10 +625,10 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
         {activeSubTab === 'today' && (
           <div className="space-y-2">
             {state.expenses.length === 0 ? (
-              <div className="p-6 text-center rounded-xl bg-white/[0.01] border border-dashed border-white/[0.07]">
+              <div className="p-8 text-center rounded-xl bg-slate-900/60 border border-dashed border-slate-800">
                 <ShieldCheck className="w-6 h-6 text-emerald-400 mx-auto mb-1.5 opacity-80" />
                 <p className="text-xs font-semibold text-slate-300">No expenses logged today</p>
-                <p className="text-[11px] text-slate-500 pt-0.5">
+                <p className="text-xs text-slate-400 pt-0.5">
                   Your full {formatCurrency(state.dailyLimit, state.currencySymbol)} limit is currently intact.
                 </p>
               </div>
@@ -654,17 +645,17 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96 }}
-                        className="p-2.5 sm:p-3 rounded-lg bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] flex items-center justify-between gap-2.5 transition-colors"
+                        className="p-3 rounded-lg bg-slate-900/60 hover:bg-slate-850 border border-slate-800 flex items-center justify-between gap-2.5 transition-colors"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="p-1.5 rounded bg-white/[0.05] text-slate-300 flex-shrink-0">
+                          <div className="p-1.5 rounded bg-slate-800 text-slate-300 flex-shrink-0">
                             <Icon className="w-3.5 h-3.5" />
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-semibold text-white truncate">
                               {item.title}
                             </p>
-                            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 pt-0.5">
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400 pt-0.5">
                               <span>{meta.label}</span>
                               <span>•</span>
                               <span>{item.timestamp}</span>
@@ -682,7 +673,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                             title="Delete this expense"
                             aria-label={`Delete ${item.title}`}
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </motion.div>
@@ -698,26 +689,26 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
         {activeSubTab === 'history' && (
           <div className="space-y-3.5">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]">
-                <span className="text-[10px] text-slate-400 block">7-Day Net Savings</span>
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                <span className="text-xs text-slate-400 block">7-Day Net Savings</span>
                 <span className="text-lg font-bold text-emerald-400 tabular-nums">
                   +{formatCurrency(Math.max(cumulativeSavings, 0), state.currencySymbol)}
                 </span>
               </div>
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]">
-                <span className="text-[10px] text-slate-400 block">Frugality Streak</span>
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                <span className="text-xs text-slate-400 block">Frugality Streak</span>
                 <span className="text-lg font-bold text-amber-400 tabular-nums">
                   {state.savingStreak} Days Under
                 </span>
               </div>
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]">
-                <span className="text-[10px] text-slate-400 block">Daily Limit Target</span>
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                <span className="text-xs text-slate-400 block">Daily Limit Target</span>
                 <span className="text-lg font-bold text-indigo-400 tabular-nums">
                   {formatCurrency(state.dailyLimit, state.currencySymbol)}
                 </span>
               </div>
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]">
-                <span className="text-[10px] text-slate-400 block">Days Recorded</span>
+              <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                <span className="text-xs text-slate-400 block">Days Recorded</span>
                 <span className="text-lg font-bold text-slate-200 tabular-nums">
                   {Object.keys(state.historyByDate).length + 1} Days
                 </span>
@@ -726,23 +717,23 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
 
             {/* Daily Bars */}
             <div className="space-y-1.5">
-              <span className="text-[11px] font-medium text-slate-400 block">Daily Records:</span>
+              <span className="text-xs font-medium text-slate-400 block">Daily Records:</span>
               <div className="space-y-1">
                 {/* Include Today */}
-                <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] overflow-hidden transition-all">
+                <div className="rounded-lg border border-slate-800 bg-slate-900/60 overflow-hidden transition-colors">
                   <button
                     type="button"
                     onClick={() => toggleExpandDate('today')}
-                    className="w-full p-2.5 flex items-center justify-between text-xs hover:bg-white/[0.05] transition-colors cursor-pointer text-left"
+                    className="w-full p-2.5 flex items-center justify-between text-xs hover:bg-slate-850 transition-colors cursor-pointer text-left"
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-white">Today ({getTodayDateString()})</span>
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
-                        isUnderBudget ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25' : 'bg-rose-500/15 text-rose-300 border-rose-500/25'
+                      <span className={`text-xs font-medium px-1.5 py-0.2 rounded border ${
+                        isUnderBudget ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                       }`}>
                         {isUnderBudget ? 'Under' : 'Over'}
                       </span>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-xs text-slate-500">
                         ({state.expenses.length} txn{state.expenses.length === 1 ? '' : 's'})
                       </span>
                     </div>
@@ -766,20 +757,20 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="p-3 sm:p-4 bg-[#0a0d14] border-t border-white/[0.06] space-y-3 overflow-hidden"
+                        transition={{ duration: 0.18 }}
+                        className="p-3 sm:p-4 bg-slate-950/80 border-t border-slate-800 space-y-3 overflow-hidden"
                       >
-                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/[0.05]">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-850">
                           <div>
-                            <span className="text-xs font-bold text-white block">Today&apos;s Live Breakdown</span>
-                            <span className="text-[11px] text-slate-400">
+                            <span className="text-xs font-semibold text-white block">Today&apos;s Live Breakdown</span>
+                            <span className="text-xs text-slate-400">
                               {isUnderBudget 
                                 ? `${formatCurrency(savings, state.currencySymbol)} remaining of your ${formatCurrency(dailyLimit, state.currencySymbol)} limit.` 
                                 : `Exceeded target by ${formatCurrency(Math.abs(savings), state.currencySymbol)}.`}
                             </span>
                           </div>
                           <div className="text-right text-xs tabular-nums">
-                            <span className="text-slate-400 text-[10px] block">Spent Today</span>
+                            <span className="text-slate-400 text-xs block">Spent Today</span>
                             <span className={`font-bold ${isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {formatCurrency(todaySpent, state.currencySymbol)}
                             </span>
@@ -788,7 +779,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
 
                         {/* Today Items */}
                         <div className="space-y-1.5">
-                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
                             Today&apos;s Transactions ({state.expenses.length})
                           </span>
                           {state.expenses.length === 0 ? (
@@ -801,7 +792,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                                 return (
                                   <div
                                     key={item.id}
-                                    className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                                    className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800"
                                   >
                                     <div className="flex items-center gap-2 min-w-0">
                                       <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
@@ -809,7 +800,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                                       </div>
                                       <div className="min-w-0">
                                         <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
-                                        <div className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                                        <div className="text-xs text-slate-500 flex items-center gap-1.5">
                                           <span>{meta?.label || item.category}</span>
                                           <span>•</span>
                                           <span>{item.timestamp || 'Recorded'}</span>
@@ -838,23 +829,23 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                   return (
                     <div
                       key={record.dateStr}
-                      className="rounded-xl border border-white/[0.05] bg-white/[0.02] overflow-hidden transition-all"
+                      className="rounded-lg border border-slate-800 bg-slate-900/60 overflow-hidden transition-colors"
                     >
                       <button
                         type="button"
                         onClick={() => toggleExpandDate(record.dateStr)}
-                        className="w-full p-2.5 flex items-center justify-between text-xs hover:bg-white/[0.04] transition-colors cursor-pointer text-left"
+                        className="w-full p-2.5 flex items-center justify-between text-xs hover:bg-slate-850 transition-colors cursor-pointer text-left"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-slate-200 font-medium">{record.dateStr}</span>
-                          <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border ${
+                          <span className={`text-xs font-medium px-1.5 py-0.2 rounded border ${
                             record.isUnderBudget 
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' 
-                              : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                              : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                           }`}>
                             {record.isUnderBudget ? 'Under' : 'Over'}
                           </span>
-                          <span className="text-[10px] text-slate-500">
+                          <span className="text-xs text-slate-500">
                             ({items.length} txn{items.length === 1 ? '' : 's'})
                           </span>
                         </div>
@@ -879,26 +870,26 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="p-3 sm:p-4 bg-[#0a0d14] border-t border-white/[0.06] space-y-3 overflow-hidden"
+                            transition={{ duration: 0.18 }}
+                            className="p-3 sm:p-4 bg-slate-950/80 border-t border-slate-800 space-y-3 overflow-hidden"
                           >
                             {/* Overview banner */}
-                            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/[0.05]">
+                            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-850">
                               <div>
-                                <span className="text-xs font-bold text-white block">Day Breakdown ({record.dateStr})</span>
-                                <span className="text-[11px] text-slate-400">
+                                <span className="text-xs font-semibold text-white block">Day Breakdown ({record.dateStr})</span>
+                                <span className="text-xs text-slate-400">
                                   {record.isUnderBudget 
-                                    ? `Saved ${formatCurrency(record.savings, state.currencySymbol)} below the ${formatCurrency(record.dailyLimit, state.currencySymbol)} daily limit.` 
-                                    : `Exceeded the ${formatCurrency(record.dailyLimit, state.currencySymbol)} daily limit by ${formatCurrency(Math.abs(record.savings), state.currencySymbol)}.`}
+                                    ? `Saved ${formatCurrency(record.savings, state.currencySymbol)} below the ${formatCurrency(record.dailyLimit, state.currencySymbol)} limit.` 
+                                    : `Exceeded the ${formatCurrency(record.dailyLimit, state.currencySymbol)} limit by ${formatCurrency(Math.abs(record.savings), state.currencySymbol)}.`}
                                 </span>
                               </div>
                               <div className="flex items-center gap-3 text-xs tabular-nums">
                                 <div className="text-right">
-                                  <span className="text-slate-400 text-[10px] block">Daily Limit</span>
+                                  <span className="text-slate-400 text-xs block">Daily Limit</span>
                                   <span className="font-semibold text-white">{formatCurrency(record.dailyLimit, state.currencySymbol)}</span>
                                 </div>
                                 <div className="text-right">
-                                  <span className="text-slate-400 text-[10px] block">Total Spent</span>
+                                  <span className="text-slate-400 text-xs block">Total Spent</span>
                                   <span className={`font-bold ${record.isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
                                     {formatCurrency(record.totalSpent, state.currencySymbol)}
                                   </span>
@@ -908,7 +899,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
 
                             {/* Itemized Transactions */}
                             <div className="space-y-1.5">
-                              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
                                 Itemized Expenses ({items.length})
                               </span>
                               {items.length === 0 ? (
@@ -921,7 +912,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                                     return (
                                       <div
                                         key={item.id}
-                                        className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                                        className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800"
                                       >
                                         <div className="flex items-center gap-2 min-w-0">
                                           <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
@@ -929,7 +920,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                                           </div>
                                           <div className="min-w-0">
                                             <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
-                                            <div className="text-[10px] text-slate-500 flex items-center gap-1.5">
+                                            <div className="text-xs text-slate-500 flex items-center gap-1.5">
                                               <span>{meta?.label || item.category}</span>
                                               <span>•</span>
                                               <span>{item.timestamp || 'Recorded'}</span>
@@ -998,15 +989,15 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                     return (
                       <div
                         key={cat}
-                        className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center justify-between"
+                        className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between"
                       >
                         <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded bg-white/[0.04] text-slate-300">
-                            <Icon className="w-3 h-3" />
+                          <div className="p-1.5 rounded bg-slate-800 text-slate-300">
+                            <Icon className="w-3.5 h-3.5" />
                           </div>
                           <div>
                             <span className="text-xs font-semibold text-white block">{meta.label}</span>
-                            <span className="text-[10px] text-slate-400 tabular-nums">{pct}% of today</span>
+                            <span className="text-xs text-slate-400 tabular-nums">{pct}% of today</span>
                           </div>
                         </div>
                         <span className="text-xs font-bold text-white tabular-nums">

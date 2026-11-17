@@ -133,10 +133,10 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="relative w-full max-w-2xl h-[600px] max-h-[88vh] rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-2xl flex flex-col overflow-hidden"
+            className="relative w-full max-w-2xl h-[600px] max-h-[88vh] rounded-2xl bg-[#11141f] border border-slate-800 shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="p-4 sm:p-5 border-b border-white/[0.06] bg-[#0f121d] flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
                   <Bot className="w-5 h-5 text-indigo-400" />
@@ -146,7 +146,7 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
                     <h3 id="ai-coach-modal-title" className="text-sm sm:text-base font-bold text-white tracking-tight">
                       AI Habit Advisor
                     </h3>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
                       Behavioral Science
                     </span>
                   </div>
@@ -159,7 +159,7 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
                 aria-label="Close dialog"
               >
                 <X className="w-4 h-4" />
@@ -167,7 +167,7 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
             </div>
 
             {/* Chat History Messages */}
-            <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5">
+            <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-3.5 bg-[#0b0d14]/40">
               {messages.map((msg) => {
                 const isAI = msg.sender === 'ai';
                 return (
@@ -184,23 +184,23 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
                     <div
                       className={`max-w-[82%] rounded-xl p-3.5 text-xs sm:text-sm leading-relaxed ${
                         isAI
-                          ? 'bg-[#121522] text-slate-200 border border-white/[0.06]'
+                          ? 'bg-slate-900 text-slate-200 border border-slate-800'
                           : 'bg-indigo-600 text-white'
                       }`}
                     >
                       <p>{msg.text}</p>
                       <div
-                        className={`mt-1.5 text-[10px] flex items-center gap-1 ${
+                        className={`mt-1.5 text-xs flex items-center gap-1 ${
                           isAI ? 'text-slate-500' : 'text-indigo-200'
                         }`}
                       >
-                        <Clock className="w-2.5 h-2.5" />
+                        <Clock className="w-3 h-3" />
                         <span>{msg.timestamp}</span>
                       </div>
                     </div>
 
                     {!isAI && (
-                      <div className="w-7 h-7 rounded-lg bg-white/[0.08] flex items-center justify-center flex-shrink-0 text-slate-300 mt-0.5">
+                      <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center flex-shrink-0 text-slate-300 mt-0.5">
                         <User className="w-3.5 h-3.5" />
                       </div>
                     )}
@@ -214,7 +214,7 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
                   <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
                     <Bot className="w-3.5 h-3.5" />
                   </div>
-                  <div className="px-3.5 py-2.5 rounded-xl bg-[#121522] border border-white/[0.06] flex items-center gap-1.5 text-xs text-slate-400">
+                  <div className="px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-1.5 text-xs text-slate-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" />
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.2s]" />
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.4s]" />
@@ -227,16 +227,16 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
             </div>
 
             {/* Suggestion Chips */}
-            <div className="px-4 py-2 bg-[#090b12] border-t border-white/[0.06] flex gap-1.5 overflow-x-auto no-scrollbar">
-              <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 pl-1 whitespace-nowrap">
-                <Lightbulb className="w-3 h-3 text-amber-400" />
+            <div className="px-4 py-2.5 bg-slate-950/80 border-t border-slate-800 flex gap-2 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1 text-xs font-medium text-slate-400 pl-1 whitespace-nowrap">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
                 <span>Suggested:</span>
               </div>
               {AI_SUGGESTIONS.map((suggestion, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(suggestion)}
-                  className="text-[11px] px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.07] text-slate-300 hover:text-white hover:bg-white/[0.07] whitespace-nowrap transition-colors cursor-pointer"
+                  className="text-xs px-2.5 py-1 rounded-md bg-slate-900 border border-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-800 whitespace-nowrap transition-colors cursor-pointer"
                 >
                   {suggestion}
                 </button>
@@ -244,14 +244,14 @@ export const AICoachModal: React.FC<AICoachModalProps> = ({
             </div>
 
             {/* Message Input Box */}
-            <div className="p-3.5 bg-[#0f121d] border-t border-white/[0.06] flex items-center gap-2">
+            <div className="p-3.5 bg-slate-900/60 border-t border-slate-800 flex items-center gap-2">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Ask about habit consistency, streak protection, or routine stacks..."
-                className="flex-1 bg-[#121522] border border-white/[0.08] rounded-lg px-3.5 py-2 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="flex-1 bg-slate-950/80 border border-slate-700 rounded-lg px-3.5 py-2 text-xs sm:text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
               <button
                 onClick={() => handleSendMessage()}

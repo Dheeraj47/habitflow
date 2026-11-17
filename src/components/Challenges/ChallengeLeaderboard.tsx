@@ -72,7 +72,7 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
       );
     }
     return (
-      <div className="w-7 h-7 rounded-full bg-white/[0.04] text-slate-400 border border-white/[0.06] flex items-center justify-center font-semibold text-xs">
+      <div className="w-7 h-7 rounded-full bg-slate-900 text-slate-400 border border-slate-800 flex items-center justify-center font-semibold text-xs">
         {rank}
       </div>
     );
@@ -81,7 +81,7 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Invite Header Bar */}
-      <div className="p-6 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-[#11141f] border border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-5 h-5 text-indigo-400" />
@@ -100,7 +100,7 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
               type="button"
               onClick={onRefresh}
               disabled={isLoading}
-              className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white border border-white/[0.08] transition-colors cursor-pointer disabled:opacity-50"
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/80 transition-colors cursor-pointer disabled:opacity-50"
               title="Refresh Leaderboard"
             >
               <RotateCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -112,7 +112,7 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
               type="button"
               onClick={handleCopyInvite}
               disabled={isGenerating}
-              className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all cursor-pointer active:scale-95"
+              className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 shadow-sm transition-all cursor-pointer active:scale-95"
             >
               {copied ? (
                 <>
@@ -140,8 +140,8 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
       )}
 
       {/* Leaderboard Table / Cards */}
-      <div className="p-6 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] text-xs font-semibold text-slate-400 uppercase tracking-wider">
+      <div className="p-6 rounded-2xl bg-[#11141f] border border-slate-800 shadow-sm space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
           <div className="flex items-center gap-3">
             <span className="w-7 text-center">Rank</span>
             <span>Participant</span>
@@ -168,10 +168,10 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
                     entry.isCurrentUser
-                      ? 'bg-indigo-600/15 border-indigo-500/40 text-white'
+                      ? 'bg-indigo-950/40 border-indigo-500/40 text-white'
                       : isLead
-                      ? 'bg-amber-500/[0.07] border-amber-500/25 text-white'
-                      : 'bg-white/[0.02] border-white/[0.06] text-slate-300'
+                      ? 'bg-amber-950/20 border-amber-500/30 text-white'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-300'
                   }`}
                 >
                   {/* Left: Rank & Profile */}
@@ -183,7 +183,7 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
                         <img
                           src={entry.avatarUrl}
                           alt={entry.displayName}
-                          className="w-8 h-8 rounded-full object-cover border border-white/10"
+                          className="w-8 h-8 rounded-full object-cover border border-slate-700"
                         />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-indigo-600/25 border border-indigo-500/30 flex items-center justify-center font-bold text-xs text-indigo-300">
@@ -195,17 +195,17 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
                         <div className="text-xs font-bold text-white flex items-center gap-1.5">
                           <span>{entry.displayName}</span>
                           {entry.isCurrentUser && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                            <span className="px-1.5 py-0.2 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                               You
                             </span>
                           )}
                           {entry.role === 'creator' && (
-                            <span className="text-[10px] text-amber-400 font-medium">
+                            <span className="text-xs text-amber-400 font-medium">
                               Host
                             </span>
                           )}
                         </div>
-                        <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                        <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                           {entry.participationStatus === 'abandoned' ? (
                             <span className="text-rose-400">Abandoned</span>
                           ) : (
@@ -222,17 +222,17 @@ export const ChallengeLeaderboard: React.FC<ChallengeLeaderboardProps> = ({
                       <div className="text-xs font-bold text-white">
                         {entry.completedDays} / 21
                       </div>
-                      <div className="text-[10px] text-slate-500">Days Logged</div>
+                      <div className="text-xs text-slate-500">Days Logged</div>
                     </div>
 
                     <div className="text-right min-w-[70px]">
-                      <div className="text-xs font-black text-indigo-400 flex items-center justify-end gap-1">
+                      <div className="text-xs font-bold text-indigo-400 flex items-center justify-end gap-1">
                         <TrendingUp className="w-3 h-3" />
                         <span>{entry.consistencyPct}%</span>
                       </div>
-                      <div className="h-1.5 w-16 bg-black/40 rounded-full overflow-hidden mt-1 ml-auto">
+                      <div className="h-1.5 w-16 bg-slate-800 rounded-full overflow-hidden mt-1 ml-auto">
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full"
+                          className="h-full bg-indigo-500 rounded-full"
                           style={{ width: `${Math.min(100, entry.consistencyPct)}%` }}
                         />
                       </div>

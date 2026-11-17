@@ -489,20 +489,14 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#08090e] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-indigo-500/25 selection:text-indigo-200">
+    <div className="min-h-screen bg-[#0b0d14] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-indigo-500/25 selection:text-indigo-200">
       {/* 1. Global Scroll Progress Indicator */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-[2px] bg-indigo-500 origin-left z-50 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-indigo-500 origin-left z-50"
         style={{ scaleX }}
       />
 
-      {/* 2. Executive Dark Precision Grid & Subtle Ambient Mesh */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(99,102,241,0.08),rgba(0,0,0,0))]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.012)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.012)_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_70%_50%_at_50%_0%,#000_60%,transparent_100%)] opacity-35" />
-      </div>
-
-      {/* 3. Left Navigation Sidebar Drawer */}
+      {/* 2. Left Navigation Sidebar Drawer */}
       <Sidebar
         activeTab={activeTab}
         onSelectTab={(tab) => {
@@ -519,7 +513,7 @@ export function App() {
         pendingDebtsCount={pendingDebtsCount}
       />
 
-      {/* 4. Main Page Container */}
+      {/* 3. Main Page Container */}
       <div className="flex-1 flex flex-col min-h-screen min-w-0 z-10">
         {/* Sticky Header */}
         <Header
@@ -710,7 +704,7 @@ export function App() {
         </main>
 
         {/* Clean Executive Footer */}
-        <footer className="border-t border-white/[0.06] py-6 px-4 sm:px-8 text-xs text-slate-500 mt-16 bg-[#07080c]">
+        <footer className="border-t border-slate-800/80 py-6 px-4 sm:px-8 text-xs text-slate-400 mt-16 bg-[#0e111a]">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-md bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
@@ -720,7 +714,7 @@ export function App() {
               <span className="text-slate-600">•</span>
               <span>Habit Tracker &amp; Personal Productivity Engine</span>
             </div>
-            <div className="text-[11px] text-slate-500 flex items-center gap-3">
+            <div className="text-xs text-slate-500 flex items-center gap-3">
               <span>Local Storage Encrypted</span>
               <span>•</span>
               <span>Offline Ready</span>

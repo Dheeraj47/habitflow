@@ -11,10 +11,10 @@ import {
   Check, 
   RotateCcw,
   Sparkles,
-  Clock,
+  Clock, 
   AlertCircle
 } from 'lucide-react';
-import type { DebtRecord, DebtType, DebtStatus, BudgetTrackerState } from '../../types/budget';
+import type { DebtRecord, DebtType, BudgetTrackerState } from '../../types/budget';
 import { formatCurrency, generateUniqueDebtId, getTodayDateString } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
 import confetti from 'canvas-confetti';
@@ -65,7 +65,6 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
   // Filtered List
   const filteredDebts = useMemo(() => {
     return debts.filter((d) => {
-      // Type / Status filter
       if (filter === 'lend') {
         if (d.type !== 'lend' || d.status !== 'pending') return false;
       } else if (filter === 'borrow') {
@@ -74,7 +73,6 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
         if (d.status !== 'settled') return false;
       }
 
-      // Search query filter
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesName = d.personName.toLowerCase().includes(query);
@@ -86,7 +84,6 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
     });
   }, [debts, filter, searchQuery]);
 
-  // Handlers
   const handleAddRecord = (e: React.FormEvent) => {
     e.preventDefault();
     const amountNum = parseFloat(amount);
@@ -111,7 +108,6 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
       debts: nextDebts,
     });
 
-    // Reset Form
     setPersonName('');
     setAmount('');
     setNote('');
@@ -127,8 +123,8 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
     if (willBeSettled) {
       soundFx.playCrystalChime(1046.5);
       confetti({
-        particleCount: 35,
-        spread: 60,
+        particleCount: 25,
+        spread: 55,
         origin: { y: 0.7 },
         colors: ['#10b981', '#34d399', '#f59e0b', '#6366f1'],
       });
@@ -138,11 +134,10 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
 
     const nextDebts = debts.map((d) => {
       if (d.id === id) {
-        const isPending = d.status === 'pending';
         return {
           ...d,
-          status: (isPending ? 'settled' : 'pending') as DebtStatus,
-          settledAt: isPending ? todayStr : undefined,
+          status: (willBeSettled ? 'settled' : 'pending') as DebtRecord['status'],
+          settledAt: willBeSettled ? todayStr : undefined,
         };
       }
       return d;
@@ -168,10 +163,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
       {/* 1. Executive Summary Cards: Lent, Borrowed & Net Balance */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Card 1: You Lent (To Collect) */}
-        <motion.div
-          whileHover={{ y: -3, transition: { duration: 0.15 } }}
-          className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] hover:border-emerald-500/25 shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between transition-colors"
-        >
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1.5 mb-1.5">
             <span className="text-xs font-medium text-slate-400 whitespace-nowrap">You Lent (To Collect)</span>
             <div className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -179,21 +171,18 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-extrabold tracking-tight text-emerald-400 tabular-nums whitespace-nowrap">
+            <span className="text-2xl font-bold tracking-tight text-emerald-400 tabular-nums whitespace-nowrap">
               +{formatCurrency(pendingLent, currencySymbol)}
             </span>
-            <span className="text-[11px] font-semibold text-emerald-300/80 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">
+            <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 whitespace-nowrap">
               {pendingLentCount} pending
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Money others owe to you</p>
-        </motion.div>
+          <p className="text-xs text-slate-400 mt-1">Money others owe to you</p>
+        </div>
 
         {/* Card 2: You Borrowed (To Pay) */}
-        <motion.div
-          whileHover={{ y: -3, transition: { duration: 0.15 } }}
-          className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] hover:border-rose-500/25 shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between transition-colors"
-        >
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1.5 mb-1.5">
             <span className="text-xs font-medium text-slate-400 whitespace-nowrap">You Borrowed (To Pay)</span>
             <div className="w-6 h-6 rounded-md bg-rose-500/10 border border-rose-500/20 flex items-center justify-center flex-shrink-0">
@@ -201,21 +190,18 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className="text-2xl font-extrabold tracking-tight text-rose-400 tabular-nums whitespace-nowrap">
+            <span className="text-2xl font-bold tracking-tight text-rose-400 tabular-nums whitespace-nowrap">
               -{formatCurrency(pendingBorrowed, currencySymbol)}
             </span>
-            <span className="text-[11px] font-semibold text-rose-300/80 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 whitespace-nowrap">
+            <span className="text-xs font-medium text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 whitespace-nowrap">
               {pendingBorrowedCount} pending
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">Money you owe to others</p>
-        </motion.div>
+          <p className="text-xs text-slate-400 mt-1">Money you owe to others</p>
+        </div>
 
         {/* Card 3: Net Outstanding Balance */}
-        <motion.div
-          whileHover={{ y: -3, transition: { duration: 0.15 } }}
-          className="p-4 rounded-xl bg-[#0d1019] border border-white/[0.07] hover:border-indigo-500/25 shadow-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] flex flex-col justify-between transition-colors"
-        >
+        <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
           <div className="flex items-center justify-between gap-1.5 mb-1.5">
             <span className="text-xs font-medium text-slate-400 whitespace-nowrap">Net Position</span>
             <div className="w-6 h-6 rounded-md bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
@@ -223,25 +209,25 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-2 mt-1">
-            <span className={`text-2xl font-extrabold tracking-tight tabular-nums whitespace-nowrap ${
+            <span className={`text-2xl font-bold tracking-tight tabular-nums whitespace-nowrap ${
               netBalance > 0 ? 'text-emerald-400' : netBalance < 0 ? 'text-rose-400' : 'text-slate-200'
             }`}>
               {netBalance >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netBalance), currencySymbol)}
             </span>
-            <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded border whitespace-nowrap ${
+            <span className={`text-xs font-medium px-2 py-0.5 rounded border whitespace-nowrap ${
               netBalance > 0 
-                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' 
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                 : netBalance < 0 
-                ? 'bg-rose-500/10 text-rose-300 border-rose-500/20' 
-                : 'bg-white/[0.05] text-slate-400 border-white/[0.08]'
+                ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' 
+                : 'bg-slate-800 text-slate-400 border-slate-700'
             }`}>
               {netBalance > 0 ? 'Net Receivable' : netBalance < 0 ? 'Net Payable' : 'Settled'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             {netBalance >= 0 ? 'You will collect more than you owe' : 'You owe more than you are to collect'}
           </p>
-        </motion.div>
+        </div>
       </div>
 
       {/* 2. Action Bar & Add Form Trigger */}
@@ -252,8 +238,8 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
               filter === 'all'
-                ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
             }`}
           >
             <span>All ({debts.length})</span>
@@ -261,10 +247,10 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
 
           <button
             onClick={() => setFilter('lend')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
               filter === 'lend'
-                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
             }`}
           >
             <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
@@ -273,10 +259,10 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
 
           <button
             onClick={() => setFilter('borrow')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
               filter === 'borrow'
-                ? 'bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
             }`}
           >
             <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" />
@@ -285,10 +271,10 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
 
           <button
             onClick={() => setFilter('settled')}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors cursor-pointer border ${
               filter === 'settled'
-                ? 'bg-white/[0.08] text-white border-white/[0.12] shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 border-transparent hover:bg-white/[0.03]'
+                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 border-slate-800 bg-slate-900/60'
             }`}
           >
             <Check className="w-3.5 h-3.5 text-slate-400" />
@@ -302,10 +288,10 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             soundFx.playCrystalChime(780);
             setIsFormOpen((prev) => !prev);
           }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-sm active:scale-98 flex-shrink-0 ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-sm flex-shrink-0 ${
             isFormOpen
-              ? 'bg-white/[0.08] text-slate-300 hover:bg-white/[0.12] border border-white/[0.1]'
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-400/20'
+              ? 'bg-slate-800 text-slate-300 border border-slate-700'
+              : 'bg-indigo-600 hover:bg-indigo-500 text-white'
           }`}
         >
           <Plus className={`w-3.5 h-3.5 stroke-[2.5] transition-transform ${isFormOpen ? 'rotate-45' : ''}`} />
@@ -317,27 +303,27 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
       <AnimatePresence>
         {isFormOpen && (
           <motion.form
-            initial={{ opacity: 0, height: 0, y: -8 }}
-            animate={{ opacity: 1, height: 'auto', y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -8 }}
-            transition={{ duration: 0.22 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18 }}
             onSubmit={handleAddRecord}
-            className="overflow-hidden p-4 rounded-xl bg-[#090b10] border border-indigo-500/25 space-y-3.5 shadow-lg shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)]"
+            className="overflow-hidden p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3.5"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white tracking-tight flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-white tracking-tight flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                 Record Lend or Borrow
               </span>
 
               {/* Type Switcher */}
-              <div className="flex items-center bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.06]">
+              <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800">
                 <button
                   type="button"
                   onClick={() => setDebtType('lend')}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
                     debtType === 'lend'
-                      ? 'bg-emerald-600 text-white shadow-sm'
+                      ? 'bg-emerald-600 text-white'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -347,9 +333,9 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                 <button
                   type="button"
                   onClick={() => setDebtType('borrow')}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1 ${
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
                     debtType === 'borrow'
-                      ? 'bg-rose-600 text-white shadow-sm'
+                      ? 'bg-rose-600 text-white'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -363,7 +349,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               {/* Person Name */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">Person Name</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Person Name</label>
                 <div className="relative">
                   <User className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <input
@@ -371,15 +357,15 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                     required
                     value={personName}
                     onChange={(e) => setPersonName(e.target.value)}
-                    placeholder="e.g. David, Sarah, Mom"
-                    className="w-full bg-[#0d1019] border border-white/[0.08] focus:border-indigo-500 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+                    placeholder="e.g. David, Sarah"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
 
               {/* Amount */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">Amount ({currencySymbol})</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Amount ({currencySymbol})</label>
                 <input
                   type="number"
                   step="0.01"
@@ -388,39 +374,39 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
-                  className="w-full bg-[#0d1019] border border-white/[0.08] focus:border-indigo-500 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors tabular-nums"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors tabular-nums"
                 />
               </div>
 
               {/* Reason / Note */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">Reason / Note (Optional)</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Note (Optional)</label>
                 <input
                   type="text"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="e.g. Dinner bill, Concert ticket"
-                  className="w-full bg-[#0d1019] border border-white/[0.08] focus:border-indigo-500 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+                  placeholder="e.g. Dinner, Concert ticket"
+                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
                 />
               </div>
 
               {/* Due Date */}
               <div>
-                <label className="block text-[11px] font-medium text-slate-400 mb-1">Target Return Date</label>
+                <label className="block text-xs font-medium text-slate-400 mb-1">Target Return Date</label>
                 <div className="relative">
                   <Calendar className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full bg-[#0d1019] border border-white/[0.08] focus:border-indigo-500 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
             </div>
 
             {/* Submit / Cancel Buttons */}
-            <div className="flex items-center justify-end gap-2 pt-1 border-t border-white/[0.05]">
+            <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsFormOpen(false)}
@@ -430,7 +416,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
               </button>
               <button
                 type="submit"
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-all cursor-pointer shadow-sm ${
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors cursor-pointer shadow-sm ${
                   debtType === 'lend' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-rose-600 hover:bg-rose-500'
                 }`}
               >
@@ -450,7 +436,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by person name or description note..."
-          className="w-full bg-[#0d1019] border border-white/[0.07] focus:border-indigo-500/50 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+          className="w-full bg-slate-900/60 border border-slate-800 focus:border-indigo-500 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
         />
         {searchQuery && (
           <button
@@ -466,13 +452,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {filteredDebts.length === 0 ? (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="p-8 text-center rounded-xl bg-[#0d1019] border border-dashed border-white/[0.08]"
-            >
+            <div className="p-8 text-center rounded-xl bg-slate-900/60 border border-dashed border-slate-800">
               <User className="w-6 h-6 text-slate-500 mx-auto mb-2 opacity-60" />
               <h4 className="text-sm font-semibold text-slate-300">No records found</h4>
               <p className="text-xs text-slate-500 mt-1">
@@ -485,13 +465,13 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
               {!isFormOpen && (
                 <button
                   onClick={() => setIsFormOpen(true)}
-                  className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600/15 text-indigo-300 border border-indigo-500/30 text-xs font-semibold hover:bg-indigo-600/25 transition-all cursor-pointer"
+                  className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add First Record
                 </button>
               )}
-            </motion.div>
+            </div>
           ) : (
             filteredDebts.map((item, idx) => {
               const isLend = item.type === 'lend';
@@ -502,15 +482,14 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                 <motion.div
                   layout
                   key={item.id}
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  whileHover={{ y: -2, transition: { duration: 0.15 } }}
-                  transition={{ duration: 0.2, delay: idx * 0.02 }}
-                  className={`group relative flex items-start justify-between p-3.5 sm:p-4 rounded-xl border transition-all ${
+                  transition={{ duration: 0.18, delay: idx * 0.015 }}
+                  className={`group relative flex items-start justify-between p-3.5 sm:p-4 rounded-xl border transition-colors ${
                     isSettled
-                      ? 'bg-[#090b10]/90 border-white/[0.04] opacity-75'
-                      : 'bg-[#0d1019] border-white/[0.07] hover:border-white/[0.14] hover:bg-[#101320] shadow-sm'
+                      ? 'bg-slate-950/60 border-slate-850 opacity-75'
+                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
                   }`}
                 >
                   {/* Left: Avatar / Type Icon & Details */}
@@ -518,7 +497,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                     {/* Direction Icon Badge */}
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 border ${
                       isSettled 
-                        ? 'bg-white/[0.04] border-white/[0.06] text-slate-500' 
+                        ? 'bg-slate-800 border-slate-700 text-slate-500' 
                         : isLend 
                         ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400' 
                         : 'bg-rose-500/10 border-rose-500/25 text-rose-400'
@@ -542,20 +521,20 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                         </span>
 
                         {/* Type Tag */}
-                        <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded border whitespace-nowrap ${
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded border whitespace-nowrap ${
                           isSettled
-                            ? 'bg-white/[0.03] text-slate-500 border-white/[0.05]'
+                            ? 'bg-slate-800 text-slate-500 border-slate-700'
                             : isLend
-                            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                            : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                         }`}>
                           {isLend ? 'You Lent (Owed)' : 'You Borrowed (To Pay)'}
                         </span>
 
                         {/* Overdue Alert */}
                         {isOverdue && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1 whitespace-nowrap">
-                            <AlertCircle className="w-3 h-3 text-amber-400" />
+                          <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1 whitespace-nowrap">
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
                             Overdue
                           </span>
                         )}
@@ -563,7 +542,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
 
                       {/* Note */}
                       {item.note && (
-                        <p className={`text-[11px] break-words mt-0.5 leading-relaxed ${
+                        <p className={`text-xs break-words mt-1 leading-relaxed ${
                           isSettled ? 'text-slate-500' : 'text-slate-400'
                         }`}>
                           {item.note}
@@ -571,7 +550,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                       )}
 
                       {/* Timestamps & Due Date */}
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-[10px] text-slate-400">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs text-slate-400">
                         <span className="flex items-center gap-1 text-slate-400">
                           <Calendar className="w-3 h-3 text-slate-500 flex-shrink-0" />
                           <span>Logged: {item.createdAt}</span>
@@ -603,7 +582,7 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                   <div className="flex items-center gap-2 pl-2 sm:pl-3 flex-shrink-0 self-start mt-0.5">
                     {/* Amount */}
                     <div className="text-right">
-                      <div className={`text-sm sm:text-base font-extrabold tabular-nums tracking-tight whitespace-nowrap ${
+                      <div className={`text-sm sm:text-base font-bold tabular-nums tracking-tight whitespace-nowrap ${
                         isSettled 
                           ? 'text-slate-500 line-through' 
                           : isLend 
@@ -617,12 +596,12 @@ export const LendBorrowTracker: React.FC<LendBorrowTrackerProps> = ({
                     {/* Settle / Undo Action Button */}
                     <button
                       onClick={() => handleToggleStatus(item.id)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 shadow-sm active:scale-95 ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1 shadow-sm ${
                         isSettled
-                          ? 'bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-slate-200 border border-white/[0.07]'
+                          ? 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
                           : isLend
-                          ? 'bg-emerald-600/15 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/30'
-                          : 'bg-rose-600/15 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30'
+                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                          : 'bg-rose-600 hover:bg-rose-500 text-white'
                       }`}
                       title={isSettled ? 'Reopen as pending' : isLend ? 'Mark as received' : 'Mark as repaid'}
                     >

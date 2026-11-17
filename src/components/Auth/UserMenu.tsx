@@ -79,7 +79,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
       <button
         id="header-user-menu-btn"
         onClick={handleToggleMenu}
-        className="flex items-center gap-1.5 sm:gap-2 h-8.5 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-all cursor-pointer text-xs"
+        className="flex items-center gap-1.5 sm:gap-2 h-8.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 transition-all cursor-pointer text-xs"
         aria-label="User account menu"
         aria-expanded={isOpen}
       >
@@ -90,7 +90,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
             className="w-5.5 h-5.5 rounded-full object-cover border border-indigo-500/40"
           />
         ) : (
-          <div className="w-5.5 h-5.5 rounded-full bg-indigo-600/25 border border-indigo-500/40 flex items-center justify-center font-bold text-[10px] text-indigo-300">
+          <div className="w-5.5 h-5.5 rounded-full bg-indigo-600/25 border border-indigo-500/40 flex items-center justify-center font-bold text-xs text-indigo-300">
             {initials}
           </div>
         )}
@@ -104,9 +104,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-[#0d101a] border border-white/[0.09] rounded-xl shadow-2xl py-2 z-50 text-slate-200 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-64 bg-[#11141f] border border-slate-800 rounded-xl shadow-2xl py-2 z-50 text-slate-200 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
           {/* Identity header */}
-          <div className="px-3.5 py-2.5 border-b border-white/[0.06]">
+          <div className="px-3.5 py-2.5 border-b border-slate-800">
             <div className="flex items-center gap-2.5">
               {authUser.avatarUrl ? (
                 <img
@@ -121,17 +121,17 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
               )}
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-bold text-white truncate">{authUser.fullName}</div>
-                <div className="text-[11px] text-slate-400 truncate">{authUser.email}</div>
+                <div className="text-xs text-slate-400 truncate">{authUser.email}</div>
               </div>
             </div>
 
             {/* Verification and Provider Badges */}
             <div className="flex items-center gap-1.5 mt-2.5">
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 capitalize">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 capitalize">
                 {authUser.provider === 'google' ? 'Google' : 'Email'}
               </span>
               <span
-                className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                className={`text-xs font-semibold px-2 py-0.5 rounded border ${
                   authUser.isConfirmed
                     ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
                     : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
@@ -148,7 +148,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
               <button
                 type="button"
                 onClick={handleGoToSettings}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer text-left"
               >
                 <Settings className="w-3.5 h-3.5 text-slate-400" />
                 <span>Account Preferences</span>

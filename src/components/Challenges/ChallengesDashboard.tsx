@@ -226,13 +226,11 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner & KPI Stat Strip */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0d1019] border border-white/[0.08] relative overflow-hidden shadow-2xl">
-        <div className="absolute -right-16 -top-16 w-64 h-64 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="p-6 sm:p-8 rounded-2xl bg-[#11141f] border border-slate-800 relative overflow-hidden shadow-sm">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
-              <Flame className="w-3.5 h-3.5 text-orange-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/25">
+              <Flame className="w-3.5 h-3.5 text-amber-400" />
               <span>21-Day Habit Engine</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -250,7 +248,7 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
                 setModalDefaultValues({});
                 setIsCreateModalOpen(true);
               }}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
+              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm flex items-center gap-2 cursor-pointer active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>New Challenge</span>
@@ -259,20 +257,20 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
         </div>
 
         {/* 3 Metric Cards */}
-        <div className="relative z-10 mt-6 pt-6 border-t border-white/[0.06] grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.05] flex items-center gap-3">
+        <div className="relative z-10 mt-6 pt-6 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center text-indigo-400">
               <Sparkles className="w-4 h-4 text-amber-300" />
             </div>
             <div>
               <div className="text-base sm:text-lg font-black text-white">+{totalXP} XP</div>
-              <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
+              <div className="text-xs text-slate-400 uppercase tracking-wider font-medium">
                 Challenge XP Earned
               </div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.05] flex items-center gap-3">
+          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
               <Target className="w-4 h-4" />
             </div>
@@ -280,13 +278,13 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
               <div className="text-base sm:text-lg font-black text-white">
                 {activeChallenges.length} Active
               </div>
-              <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
+              <div className="text-xs text-slate-400 uppercase tracking-wider font-medium">
                 Current Challenges
               </div>
             </div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.05] flex items-center gap-3">
+          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-400">
               <TrendingUp className="w-4 h-4" />
             </div>
@@ -294,7 +292,7 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
               <div className="text-base sm:text-lg font-black text-indigo-400">
                 {bestConsistency}%
               </div>
-              <div className="text-[11px] text-slate-400 uppercase tracking-wider font-medium">
+              <div className="text-xs text-slate-400 uppercase tracking-wider font-medium">
                 Peak Consistency
               </div>
             </div>
@@ -304,20 +302,20 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
 
       {/* Navigation Subtabs: Active | Explore Templates | History */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-1.5 p-1 bg-[#0c0e15] border border-white/[0.08] rounded-2xl w-fit">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-xl w-fit">
           <button
             type="button"
             onClick={() => {
               setActiveSubTab('active');
               soundFx.playCrystalChime(780);
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeSubTab === 'active'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-indigo-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Flame className="w-3.5 h-3.5 text-orange-400" />
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
             <span>Active Challenges ({activeChallenges.length})</span>
           </button>
 
@@ -327,9 +325,9 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
               setActiveSubTab('explore');
               soundFx.playCrystalChime(780);
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeSubTab === 'explore'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-indigo-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -343,9 +341,9 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
               setActiveSubTab('history');
               soundFx.playCrystalChime(780);
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeSubTab === 'history'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                ? 'bg-indigo-600 text-white shadow-sm'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -358,7 +356,7 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
           type="button"
           onClick={loadData}
           disabled={isLoading}
-          className="p-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-400 hover:text-white border border-white/[0.08] transition-colors cursor-pointer"
+          className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/80 transition-colors cursor-pointer"
           title="Refresh challenges"
         >
           <RotateCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -377,9 +375,9 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
             className="space-y-4"
           >
             {activeChallenges.length === 0 ? (
-              <div className="p-10 sm:p-14 rounded-3xl bg-[#0d1019] border border-white/[0.08] text-center space-y-4 shadow-xl">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-600/15 border border-indigo-500/25 flex items-center justify-center mx-auto text-indigo-400">
-                  <Flame className="w-7 h-7 text-orange-400" />
+              <div className="p-10 sm:p-14 rounded-2xl bg-[#11141f] border border-slate-800 text-center space-y-4 shadow-sm">
+                <div className="w-14 h-14 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto text-indigo-400">
+                  <Flame className="w-7 h-7 text-amber-400" />
                 </div>
                 <div className="space-y-1">
                   <h4 className="text-base sm:text-lg font-bold text-white">
@@ -393,7 +391,7 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveSubTab('explore')}
-                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 flex items-center gap-2 cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm flex items-center gap-2 cursor-pointer transition-all"
                   >
                     <Compass className="w-4 h-4" />
                     <span>Explore Blueprints</span>
@@ -404,7 +402,7 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
                       setModalDefaultValues({});
                       setIsCreateModalOpen(true);
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.08] text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Create Custom Challenge</span>

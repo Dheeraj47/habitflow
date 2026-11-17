@@ -133,23 +133,23 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] xl:h-[540px] rounded-3xl overflow-hidden bg-gradient-to-b from-[#0a0d1c] via-[#060812] to-[#030408] border border-white/12 shadow-[0_25px_60px_rgba(0,0,0,0.85),0_0_40px_rgba(139,92,246,0.15)] group select-none flex items-center justify-center cursor-grab active:cursor-grabbing"
+      className="relative w-full h-[400px] sm:h-[460px] lg:h-[500px] xl:h-[540px] rounded-2xl overflow-hidden bg-gradient-to-b from-[#0b0d14] via-[#090b12] to-[#06070c] border border-slate-800 shadow-xl group select-none flex items-center justify-center cursor-grab active:cursor-grabbing"
     >
       {/* Background Radial Ambiance */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-950/30 via-[#080914]/80 to-[#030408] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-950/20 via-[#0b0d14]/80 to-[#06070c] pointer-events-none" />
 
       {/* Floating HUD Badges: Top Left */}
       <div className="absolute top-4 left-4 z-30 flex flex-col gap-1.5 pointer-events-none">
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 backdrop-blur-xl border border-violet-500/35 shadow-xl">
-          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_#06b6d4]" />
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
           <span className="text-xs font-bold tracking-wide text-white">
             Monk&apos;s Living Sanctuary
           </span>
-          <span className="text-[10px] uppercase font-bold text-violet-300 bg-violet-950/90 px-2 py-0.5 rounded-full border border-violet-500/30">
+          <span className="text-xs font-semibold text-indigo-300 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-500/20">
             Tier {sanctuaryTier} • {sanctuaryTierName}
           </span>
         </div>
-        <p className="text-[11px] text-slate-400 pl-1 flex items-center gap-1.5">
+        <p className="text-xs text-slate-400 pl-1 flex items-center gap-1.5">
           <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
           <span>{completedCount} of {totalCount} today</span>
           <span className="text-slate-600">•</span>
@@ -159,11 +159,11 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
 
       {/* Floating HUD Badges: Top Right (Crystal Lumens tied to real completionRate) */}
       <div className="absolute top-4 right-4 z-30 pointer-events-none">
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-violet-500/30 shadow-lg">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-sm">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
           <div className="text-right">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">Crystal Lumens</div>
-            <div className="text-xs font-extrabold text-violet-300">
+            <div className="text-xs text-slate-400 uppercase font-semibold">Crystal Lumens</div>
+            <div className="text-xs font-extrabold text-indigo-300">
               {completionRate}% Charged
             </div>
           </div>
@@ -178,9 +178,9 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
       />
 
       {/* Compact Camera Presets Selector */}
-      <div className="absolute bottom-11 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/10 shadow-lg">
-        <div className="flex items-center gap-1 mr-1 text-[10px] text-slate-400 font-medium pl-1">
-          <Camera className="w-3 h-3 text-violet-400" />
+      <div className="absolute bottom-11 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-sm">
+        <div className="flex items-center gap-1 mr-1 text-xs text-slate-400 font-medium pl-1">
+          <Camera className="w-3.5 h-3.5 text-indigo-400" />
           <span className="hidden sm:inline">View:</span>
         </div>
         {(['overview', 'monk', 'fissures', 'canopy'] as const).map((preset) => (
@@ -188,10 +188,10 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
             key={preset}
             type="button"
             onClick={() => handleSelectPreset(preset)}
-            className={`px-2 py-0.5 rounded-md text-[10px] font-medium tracking-wide transition-all capitalize cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md text-xs font-medium tracking-wide transition-all capitalize cursor-pointer ${
               activePreset === preset
-                ? 'bg-violet-600/40 text-violet-200 border border-violet-500/50 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-transparent'
             }`}
             title={`Switch camera view to ${preset}`}
           >
@@ -201,27 +201,27 @@ export const HabitIslandCanvas: React.FC<HabitIslandCanvasProps> = ({
         <button
           type="button"
           onClick={handleResetCamera}
-          className="ml-0.5 p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors cursor-pointer"
+          className="ml-0.5 p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
           title="Reset Camera to Overview"
         >
-          <RotateCcw className="w-2.5 h-2.5 text-violet-300" />
+          <RotateCcw className="w-3 h-3 text-slate-300" />
         </button>
       </div>
 
       {/* Floating HUD Control / Hint Bar at Bottom */}
-      <div className="absolute bottom-3 inset-x-3 z-30 flex items-center justify-between text-[11px] text-slate-400 px-3.5 py-1.5 rounded-xl bg-slate-950/70 backdrop-blur-md border border-white/5 pointer-events-none">
+      <div className="absolute bottom-3 inset-x-3 z-30 flex items-center justify-between text-xs text-slate-400 px-3.5 py-1.5 rounded-lg bg-slate-950/80 backdrop-blur-md border border-slate-800 pointer-events-none">
         <div className="flex items-center gap-2">
-          <Compass className="w-3.5 h-3.5 text-violet-400" />
+          <Compass className="w-3.5 h-3.5 text-indigo-400" />
           <span className="hidden sm:inline">Drag to rotate 3D sanctuary • Use views to inspect</span>
           <span className="sm:hidden">Interactive 3D Sanctuary</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
-            <ShieldCheck className="w-3 h-3" /> Real-time Habit Sync
+          <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
+            <ShieldCheck className="w-3.5 h-3.5" /> Real-time Habit Sync
           </span>
           <span className="hidden sm:inline text-slate-600">•</span>
-          <span className="hidden sm:inline text-[10px] text-slate-300 flex items-center gap-1">
-            <Eye className="w-3 h-3 text-cyan-400" /> 60 FPS Three.js
+          <span className="hidden sm:inline text-xs text-slate-300 flex items-center gap-1">
+            <Eye className="w-3.5 h-3.5 text-indigo-400" /> 60 FPS Three.js
           </span>
         </div>
       </div>

@@ -524,8 +524,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
   return (
     <div className="space-y-4 select-none">
       {/* 1. Header Toolbar & Quick Stats */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
+      <div className="p-5 sm:p-6 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
           {/* Title & Month Selector */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
@@ -533,10 +533,10 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                <h2 className="text-lg sm:text-xl font-semibold text-white tracking-tight">
                   {MONTH_NAMES[currentMonth]} {currentYear}
                 </h2>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                <span className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
                   Monthly View
                 </span>
               </div>
@@ -550,7 +550,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
           <div className="flex items-center gap-2 self-start md:self-auto">
             <button
               onClick={handlePrevMonth}
-              className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Previous month"
               aria-label="Previous month"
             >
@@ -559,7 +559,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
 
             <button
               onClick={handleJumpToToday}
-              className="px-3 py-1.5 rounded-lg bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Today</span>
@@ -567,7 +567,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
 
             <button
               onClick={handleNextMonth}
-              className="p-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
               title="Next month"
               aria-label="Next month"
             >
@@ -576,7 +576,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
 
             <button
               onClick={onGoToDashboard}
-              className="ml-2 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer hidden sm:block"
+              className="ml-2 px-3 py-1.5 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-xs font-medium text-slate-300 hover:text-white transition-colors cursor-pointer hidden sm:block"
             >
               Dashboard
             </button>
@@ -585,38 +585,38 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
 
         {/* 2. Monthly Performance Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 pt-4">
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5">
+          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
             <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 flex-shrink-0">
               <CheckCircle2 className="w-4 h-4" />
             </div>
             <div>
               <div className="text-base font-bold text-white tabular-nums">{monthMetrics.averageRate}%</div>
-              <div className="text-[10px] text-slate-400 font-medium">Monthly Adherence</div>
+              <div className="text-xs text-slate-400 font-medium">Monthly Adherence</div>
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5">
+          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
             <div className="p-2 rounded bg-amber-500/10 text-amber-400 flex-shrink-0">
               <Trophy className="w-4 h-4" />
             </div>
             <div>
               <div className="text-base font-bold text-white tabular-nums">{monthMetrics.perfectDays} Days</div>
-              <div className="text-[10px] text-slate-400 font-medium">100% Habit Days</div>
+              <div className="text-xs text-slate-400 font-medium">100% Habit Days</div>
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5">
+          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
             <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 flex-shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
               <div className="text-base font-bold text-white tabular-nums">{monthMetrics.totalCompletions}</div>
-              <div className="text-[10px] text-slate-400 font-medium">Completions</div>
+              <div className="text-xs text-slate-400 font-medium">Completions</div>
             </div>
           </div>
 
           {/* Month Total Spend */}
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5">
+          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
             <div className="p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
               <Wallet className="w-4 h-4" />
             </div>
@@ -624,14 +624,14 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               <div className="text-base font-bold text-white tabular-nums">
                 {formatCurrency(monthMetrics.totalMonthSpent, activeBudgetState.currencySymbol)}
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">
+              <div className="text-xs text-slate-400 font-medium">
                 Month Spend ({monthMetrics.daysWithSpend}d)
               </div>
             </div>
           </div>
 
           {/* Frugality Streak */}
-          <div className="p-3 rounded-lg bg-white/[0.02] border border-white/[0.05] flex items-center gap-2.5 col-span-2 sm:col-span-1">
+          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5 col-span-2 sm:col-span-1">
             <div className="p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
               <Flame className="w-4 h-4 fill-emerald-400/80" />
             </div>
@@ -639,7 +639,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               <div className="text-base font-bold text-white tabular-nums">
                 {activeBudgetState.savingStreak} Days
               </div>
-              <div className="text-[10px] text-slate-400 font-medium">Frugal Streak</div>
+              <div className="text-xs text-slate-400 font-medium">Frugal Streak</div>
             </div>
           </div>
         </div>
@@ -648,9 +648,9 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
       {/* 3. Main Split View: Calendar Grid (Left 7-col) & Day Inspector (Right 5-col) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Calendar Grid Container */}
-        <div className="lg:col-span-7 xl:col-span-8 p-4 sm:p-5 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl space-y-3">
+        <div className="lg:col-span-7 xl:col-span-8 p-5 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm space-y-3">
           {/* Filter Pills Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-white/[0.06]">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-slate-800/80">
             <div className="flex items-center gap-1.5">
               <Filter className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-xs font-semibold text-slate-300">Filter View:</span>
@@ -664,10 +664,10 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(900);
                     setTimeFilter(t);
                   }}
-                  className={`px-2 py-0.5 rounded capitalize text-[10px] font-medium transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded capitalize text-xs font-medium transition-colors cursor-pointer ${
                     timeFilter === t
-                      ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                      : 'bg-white/[0.03] text-slate-400 hover:text-white'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
                   }`}
                 >
                   {t}
@@ -683,10 +683,10 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(900);
                     setCategoryFilter(c);
                   }}
-                  className={`px-2 py-0.5 rounded capitalize text-[10px] font-medium transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded capitalize text-xs font-medium transition-colors cursor-pointer ${
                     categoryFilter === c
-                      ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                      : 'bg-white/[0.03] text-slate-400 hover:text-white'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
                   }`}
                 >
                   {c}
@@ -700,7 +700,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             {WEEKDAYS.map((wd) => (
               <div
                 key={wd}
-                className="py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500"
+                className="py-1 text-xs font-semibold uppercase tracking-wider text-slate-500"
               >
                 {wd}
               </div>
@@ -719,19 +719,19 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               const dayCellRating = calendarRatingsMap[dateStr];
               const badgeStyle = dayCellRating ? getRatingBadgeStyle(dayCellRating.rating) : null;
 
-              let heatStyles = 'bg-white/[0.02] border-white/[0.05] text-slate-400';
+              let heatStyles = 'bg-slate-900/40 border-slate-800/80 text-slate-400';
               if (!isCurrentMonth) {
                 heatStyles = 'bg-transparent border-transparent text-slate-600 opacity-25';
               } else if (stats.isFuture) {
-                heatStyles = 'bg-white/[0.01] border-white/[0.03] text-slate-600 border-dashed';
+                heatStyles = 'bg-slate-950/40 border-slate-850 text-slate-600 border-dashed';
               } else if (stats.rate === 100) {
-                heatStyles = 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300';
+                heatStyles = 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300';
               } else if (stats.rate >= 70) {
-                heatStyles = 'bg-indigo-950/40 border-indigo-500/30 text-indigo-200';
+                heatStyles = 'bg-indigo-950/30 border-indigo-500/30 text-indigo-200';
               } else if (stats.rate >= 40) {
-                heatStyles = 'bg-indigo-950/20 border-indigo-500/20 text-slate-300';
+                heatStyles = 'bg-indigo-950/15 border-indigo-500/20 text-slate-300';
               } else if (stats.rate > 0) {
-                heatStyles = 'bg-white/[0.02] border-white/[0.06] text-slate-400';
+                heatStyles = 'bg-slate-900/50 border-slate-800 text-slate-400';
               }
 
               return (
@@ -741,10 +741,10 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(800 + dayNum * 4);
                     setSelectedDate(dateStr);
                   }}
-                  className={`p-1.5 sm:p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col justify-between min-h-[58px] sm:min-h-[72px] relative group ${heatStyles} ${
+                  className={`p-1.5 sm:p-2 rounded-lg border text-center transition-colors cursor-pointer flex flex-col justify-between min-h-[58px] sm:min-h-[70px] relative ${heatStyles} ${
                     isSelected
                       ? 'ring-2 ring-indigo-500 border-transparent z-10'
-                      : 'hover:border-white/[0.12]'
+                      : 'hover:border-slate-700'
                   }`}
                 >
                   {/* Top Header: Day Number (Left) & Corner Day Rating Badge (Right) */}
@@ -758,7 +758,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                         {dayNum}
                       </span>
                       {isToday && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse flex-shrink-0" title="Today" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" title="Today" />
                       )}
                     </div>
 
@@ -772,11 +772,11 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                           soundFx.playCrystalChime(950);
                           setInspectRating(dayCellRating);
                         }}
-                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] sm:text-[9px] font-black tabular-nums border leading-none shadow-xs transition-transform hover:scale-110 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-80' : ''}`}
+                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-xs font-bold tabular-nums border leading-none transition-transform hover:scale-105 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-80' : ''}`}
                         title={`Day Rating: ${dayCellRating.rating.toFixed(1)}/10 ${dayCellRating.isEstimated ? '(Estimated Unverified)' : `(${dayCellRating.tierLabel})`} • Click for full breakdown`}
                         aria-label={`Rating for ${dateStr}: ${dayCellRating.rating.toFixed(1)}`}
                       >
-                        <Star className={`w-2 h-2 sm:w-2.5 sm:h-2.5 ${badgeStyle.star}`} />
+                        <Star className={`w-2.5 h-2.5 ${badgeStyle.star}`} />
                         <span>{dayCellRating.rating.toFixed(1)}</span>
                       </button>
                     )}
@@ -786,9 +786,9 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                   {isCurrentMonth && !stats.isFuture && daySpend.hasRecord && (
                     <div className="my-0.5 flex justify-center">
                       <span
-                        className={`text-[9px] sm:text-[10px] font-semibold px-1 py-0.2 rounded tabular-nums inline-block ${
+                        className={`text-xs font-medium px-1.5 py-0.2 rounded tabular-nums inline-block ${
                           daySpend.totalSpent === 0
-                            ? 'text-slate-500 bg-white/[0.02]'
+                            ? 'text-slate-500 bg-slate-900'
                             : daySpend.isUnderBudget
                             ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
                             : 'text-rose-400 bg-rose-500/10 border border-rose-500/20'
@@ -803,14 +803,14 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                   {/* Micro Habit Dots & Heat Indicators */}
                   <div className="mt-auto pt-1 flex items-center justify-center gap-1">
                     {stats.isFuture ? (
-                      <span className="text-[8px] text-slate-700">•</span>
+                      <span className="text-xs text-slate-700">•</span>
                     ) : stats.rate === 100 ? (
-                      <div className="inline-flex items-center gap-0.5 text-emerald-400 text-[10px] font-bold">
+                      <div className="inline-flex items-center gap-0.5 text-emerald-400 text-xs font-bold">
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
                         <span className="hidden sm:inline">100%</span>
                       </div>
                     ) : stats.rate > 0 ? (
-                      <span className="text-[10px] font-medium text-slate-400 tabular-nums">
+                      <span className="text-xs font-medium text-slate-400 tabular-nums">
                         {stats.rate}%
                       </span>
                     ) : (
@@ -823,33 +823,33 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
           </div>
 
           {/* Adherence Scale Legend & Rating Corner Pill Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-white/[0.06] text-xs text-slate-400">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-slate-800/80 text-xs text-slate-400">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-slate-500">Day Rating:</span>
-              <div className="inline-flex items-center gap-1 text-[10px] text-amber-300 font-bold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/25">
-                <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+              <span className="text-xs text-slate-500">Day Rating:</span>
+              <div className="inline-flex items-center gap-1 text-xs text-amber-300 font-bold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/25">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                 <span>Corner Score (1.0 - 10.0)</span>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-slate-500 mr-1">Habit Adherence:</span>
-              <span className="text-[10px] text-slate-500">0%</span>
-              <div className="w-3 h-3 rounded bg-white/[0.02] border border-white/[0.05]" />
+              <span className="text-xs text-slate-500 mr-1">Habit Adherence:</span>
+              <span className="text-xs text-slate-500">0%</span>
+              <div className="w-3 h-3 rounded bg-slate-900 border border-slate-800" />
               <div className="w-3 h-3 rounded bg-indigo-950/20 border border-indigo-500/20" />
               <div className="w-3 h-3 rounded bg-indigo-950/40 border border-indigo-500/30" />
               <div className="w-3 h-3 rounded bg-emerald-950/40 border border-emerald-500/30" />
-              <span className="text-[10px] text-emerald-400 font-semibold">100%</span>
+              <span className="text-xs text-emerald-400 font-semibold">100%</span>
             </div>
           </div>
         </div>
 
         {/* 4. Day Inspector & Checklist Drawer (Right Column) */}
-        <div className="lg:col-span-5 xl:col-span-4 p-4 sm:p-5 rounded-2xl bg-[#0d1019] border border-white/[0.08] shadow-xl space-y-4">
+        <div className="lg:col-span-5 xl:col-span-4 p-5 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm space-y-4">
           {/* Day Header */}
-          <div className="pb-3 border-b border-white/[0.06]">
+          <div className="pb-3 border-b border-slate-800/80">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-wider">
+              <span className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 uppercase tracking-wider">
                 {isSelectedDateToday ? "Today's Schedule" : 'Day Inspector'}
               </span>
               <span className="text-xs font-bold text-indigo-400 tabular-nums">
@@ -857,7 +857,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               </span>
             </div>
 
-            <h3 className="text-base font-bold text-white tracking-tight mt-1.5">
+            <h3 className="text-base font-semibold text-white tracking-tight mt-1.5">
               {formattedSelectedDate}
             </h3>
 
@@ -873,25 +873,25 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                 soundFx.playCrystalChime(920);
                 setInspectRating(selectedDayRating);
               }}
-              className="p-3 sm:p-3.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-transparent border border-amber-500/25 hover:border-amber-400/40 flex items-center justify-between shadow-sm cursor-pointer transition-all hover:scale-[1.01] active:scale-99"
+              className="p-3 sm:p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-amber-500/30 flex items-center justify-between shadow-sm cursor-pointer transition-colors"
               title="Click to view complete performance breakdown modal"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300 font-black text-sm tracking-tight shadow-sm">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-300 font-bold text-sm tracking-tight">
                   {selectedDayRating.rating.toFixed(1)}
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white flex items-center gap-1.5">
                     <span>Performance Rating</span>
-                    <span className={`text-[9px] font-black px-1.5 py-0.2 rounded border uppercase tracking-wider ${
+                    <span className={`text-xs font-medium px-1.5 py-0.2 rounded border ${
                       selectedDayRating.isEstimated
-                        ? 'bg-slate-500/20 text-slate-400 border-slate-500/30 border-dashed'
-                        : 'bg-amber-400/20 text-amber-300 border-amber-400/30'
+                        ? 'bg-slate-800 text-slate-400 border-slate-700 border-dashed'
+                        : 'bg-amber-500/10 text-amber-300 border-amber-500/25'
                     }`}>
-                      {selectedDayRating.isEstimated ? 'Estimated (Unverified)' : selectedDayRating.tierLabel}
+                      {selectedDayRating.isEstimated ? 'Estimated' : selectedDayRating.tierLabel}
                     </span>
                   </div>
-                  <div className="text-[10px] text-slate-300 font-medium">
+                  <div className="text-xs text-slate-400 font-medium">
                     {selectedDayRating.isEstimated
                       ? 'Reconstructed from past completion count'
                       : (selectedDayRating.isUnderBudget ? 'Budget Maintained' : 'Budget Exceeded')} • {selectedDayRating.habitsCompleted}/{selectedDayRating.totalHabits} Habits
@@ -899,10 +899,10 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xs font-mono font-bold text-amber-300 block">
+                <span className="text-xs font-bold text-amber-300 block">
                   {selectedDayRating.rating.toFixed(1)}/10
                 </span>
-                <span className="text-[10px] font-medium text-slate-400">
+                <span className="text-xs font-medium text-slate-400">
                   {selectedDayRating.completionRate}% Done
                 </span>
               </div>
@@ -910,7 +910,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
           )}
 
           {/* Daily Spend on Selected Date */}
-          <div className="p-3 sm:p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.07] space-y-2.5">
+          <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
@@ -918,7 +918,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-white tracking-tight">Amount Spent on This Day</div>
-                  <div className="text-[10px] text-slate-400">
+                  <div className="text-xs text-slate-400">
                     {isSelectedDateToday 
                       ? "Today's live spending & limit" 
                       : `Financial ledger for ${selectedDate}`}
@@ -927,12 +927,12 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               </div>
 
               {/* Status Badge */}
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border tabular-nums ${
+              <span className={`text-xs font-medium px-2 py-0.5 rounded border tabular-nums ${
                 selectedSpend.totalSpent === 0
-                  ? 'bg-slate-800/80 text-slate-300 border-white/[0.08]'
+                  ? 'bg-slate-800 text-slate-300 border-slate-700'
                   : selectedSpend.isUnderBudget
-                  ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                  : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
               }`}>
                 {selectedSpend.totalSpent === 0 
                   ? 'No Spend' 
@@ -945,7 +945,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             {/* Main Spent Figure and Daily Allowance */}
             <div className="flex items-baseline justify-between pt-0.5">
               <div>
-                <span className="text-[10px] text-slate-400 font-medium block">Total Spent</span>
+                <span className="text-xs text-slate-400 font-medium block">Total Spent</span>
                 <div className="flex items-baseline gap-1.5">
                   <span className={`text-xl sm:text-2xl font-bold tracking-tight tabular-nums ${
                     selectedSpend.totalSpent === 0 
@@ -957,7 +957,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     {formatCurrency(selectedSpend.totalSpent, activeBudgetState.currencySymbol)}
                   </span>
                   {selectedSpend.hasRecord && selectedSpend.expenseCount > 0 && (
-                    <span className="text-[11px] text-slate-400 tabular-nums">
+                    <span className="text-xs text-slate-400 tabular-nums">
                       ({selectedSpend.expenseCount} txn{selectedSpend.expenseCount === 1 ? '' : 's'})
                     </span>
                   )}
@@ -965,7 +965,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 font-medium block">Daily Allowance</span>
+                <span className="text-xs text-slate-400 font-medium block">Daily Allowance</span>
                 <span className="text-xs sm:text-sm font-semibold text-slate-200 tabular-nums">
                   {formatCurrency(selectedSpend.dailyLimit, activeBudgetState.currencySymbol)}
                 </span>
@@ -990,7 +990,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             </div>
 
             {/* Remaining Balance / Over budget footnote */}
-            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-0.5">
               <span>
                 {selectedSpend.isUnderBudget ? 'Remaining Allowance:' : 'Exceeded Allowance By:'}
               </span>
@@ -1003,8 +1003,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
 
             {/* Itemized Transactions for Selected Date */}
             {selectedSpend.items.length > 0 && (
-              <div className="pt-2 border-t border-white/[0.05] space-y-1.5">
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <div className="pt-2 border-t border-slate-800 space-y-1.5">
+                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Itemized Expenses ({selectedSpend.items.length})
                 </div>
                 <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
@@ -1014,7 +1014,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-1.5 rounded-lg bg-white/[0.02] border border-white/[0.04]"
+                        className="flex items-center justify-between p-1.5 rounded bg-slate-900 border border-slate-800"
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
@@ -1022,7 +1022,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                           </div>
                           <div className="min-w-0">
                             <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
-                            <div className="text-[9px] text-slate-500 flex items-center gap-1">
+                            <div className="text-xs text-slate-500 flex items-center gap-1">
                               <span>{meta?.label || item.category}</span>
                               {item.timestamp && (
                                 <>
@@ -1047,7 +1047,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
           {/* Habit Checklist for Selected Date */}
           <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
             {filteredHabits.length === 0 ? (
-              <div className="p-4 text-center rounded-xl bg-white/[0.02] border border-white/[0.05]">
+              <div className="p-4 text-center rounded-lg bg-slate-900/60 border border-slate-800">
                 <p className="text-xs text-slate-400">No habits match current filter.</p>
               </div>
             ) : (
@@ -1059,7 +1059,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     className={`flex items-center justify-between p-2.5 rounded-lg border transition-colors ${
                       isDone
                         ? 'bg-emerald-950/20 border-emerald-500/20'
-                        : 'bg-white/[0.02] border-white/[0.05]'
+                        : 'bg-slate-900/60 border-slate-800'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -1072,7 +1072,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                           className={`w-5 h-5 rounded flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 ${
                             isDone
                               ? 'bg-emerald-500 text-slate-950'
-                              : 'border border-slate-600 hover:border-indigo-400 bg-white/[0.02]'
+                              : 'border border-slate-600 hover:border-indigo-400 bg-slate-950'
                           }`}
                         >
                           {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -1082,7 +1082,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                           className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                             isDone
                               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              : 'bg-white/[0.02] border border-slate-700 text-slate-600'
+                              : 'bg-slate-950 border border-slate-800 text-slate-600'
                           }`}
                         >
                           {isDone && <Check className="w-3 h-3" />}
@@ -1100,13 +1100,13 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                             {habit.title}
                           </h4>
                         </div>
-                        <span className="text-[10px] text-slate-500 capitalize">
+                        <span className="text-xs text-slate-500 capitalize">
                           {habit.timeOfDay} • {habit.category}
                         </span>
                       </div>
                     </div>
 
-                    <span className="text-[10px] font-semibold text-amber-400 flex items-center gap-0.5 flex-shrink-0 ml-2 tabular-nums">
+                    <span className="text-xs font-semibold text-amber-400 flex items-center gap-0.5 flex-shrink-0 ml-2 tabular-nums">
                       <Flame className="w-3 h-3 fill-amber-400/80" />
                       {habit.streak}d
                     </span>
@@ -1122,21 +1122,21 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               soundFx.playCrystalChime(880);
               onOpenAddModal();
             }}
-            className="w-full py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full py-2 rounded-lg bg-slate-900/60 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Habit</span>
           </button>
 
           {/* 5. Daily Reflection Notes */}
-          <div className="pt-3 border-t border-white/[0.06] space-y-2">
+          <div className="pt-3 border-t border-slate-800/80 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                 <MessageSquareQuote className="w-3.5 h-3.5 text-indigo-400" />
                 <span>Day Notes &amp; Reflection</span>
               </span>
               {isNoteSaved && (
-                <span className="text-[10px] font-semibold text-emerald-400">
+                <span className="text-xs font-medium text-emerald-400">
                   ✓ Saved
                 </span>
               )}
@@ -1145,15 +1145,15 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
             <textarea
               value={dailyNote}
               onChange={(e) => setDailyNote(e.target.value)}
-              placeholder="Record a win, mindset reflection, or obstacle..."
+              placeholder="Record a win, reflection, or note..."
               rows={3}
-              className="w-full p-2.5 rounded-lg bg-[#111420] border border-white/[0.08] focus:border-indigo-500 focus:outline-none text-xs text-slate-200 placeholder-slate-500 resize-none transition-colors"
+              className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none text-xs text-slate-200 placeholder-slate-500 resize-none transition-colors"
             />
 
             <div className="flex justify-end">
               <button
                 onClick={handleSaveNote}
-                className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1 shadow-sm"
               >
                 <Save className="w-3 h-3" />
                 <span>Save Note</span>

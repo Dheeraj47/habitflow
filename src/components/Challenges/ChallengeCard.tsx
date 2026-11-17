@@ -38,17 +38,17 @@ export const ChallengeCard: React.FC<ChallengeCardProps> = ({
   const getCategoryColor = (cat: string) => {
     switch (cat) {
       case 'health':
-        return 'from-emerald-500/20 to-teal-500/10 text-emerald-400 border-emerald-500/30';
+        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
       case 'mindfulness':
-        return 'from-purple-500/20 to-indigo-500/10 text-purple-400 border-purple-500/30';
+        return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
       case 'productivity':
-        return 'from-indigo-500/20 to-blue-500/10 text-indigo-400 border-indigo-500/30';
+        return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
       case 'fitness':
-        return 'from-orange-500/20 to-amber-500/10 text-orange-400 border-orange-500/30';
+        return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
       case 'learning':
-        return 'from-cyan-500/20 to-sky-500/10 text-cyan-400 border-cyan-500/30';
+        return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
       default:
-        return 'from-indigo-500/20 to-purple-500/10 text-indigo-400 border-indigo-500/30';
+        return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
     }
   };
 
@@ -69,25 +69,22 @@ export const ChallengeCard: React.FC<ChallengeCardProps> = ({
 
   return (
     <motion.div
-      whileHover={{ y: -3, transition: { duration: 0.2 } }}
+      whileHover={{ y: -2, transition: { duration: 0.2 } }}
       onClick={() => onSelect(challenge)}
-      className="group relative p-5 rounded-2xl bg-[#0d1019] border border-white/[0.08] hover:border-indigo-500/40 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between overflow-hidden"
+      className="group relative p-5 rounded-xl bg-[#11141f] border border-slate-800 hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-sm flex flex-col justify-between overflow-hidden"
     >
-      {/* Background ambient glow */}
-      <div className="absolute -right-12 -top-12 w-36 h-36 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-600/15 transition-all" />
-
       <div>
         {/* Top Badges */}
         <div className="flex items-center justify-between gap-2 mb-3.5">
           <div className="flex items-center gap-2">
             <span
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider border bg-gradient-to-r ${getCategoryColor(
+              className={`px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider border ${getCategoryColor(
                 challenge.category
               )}`}
             >
               {challenge.category}
             </span>
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/[0.04] border border-white/[0.08] text-slate-300">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-900 border border-slate-700/80 text-slate-300">
               {challenge.mode === 'friends' ? (
                 <>
                   <Users className="w-3 h-3 text-indigo-400" />
@@ -104,24 +101,24 @@ export const ChallengeCard: React.FC<ChallengeCardProps> = ({
 
           {/* Current Day / Status Tag */}
           {isUpcoming ? (
-            <span className="text-[11px] font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
               Starts {challenge.startDate}
             </span>
           ) : isCompleted ? (
-            <span className="text-[11px] font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
               <span>Concluded</span>
             </span>
           ) : (
-            <span className="text-[11px] font-semibold text-indigo-300 bg-indigo-600/15 border border-indigo-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <Flame className="w-3 h-3 text-orange-400" />
+            <span className="text-xs font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/25 px-2.5 py-0.5 rounded-md flex items-center gap-1">
+              <Flame className="w-3.5 h-3.5 text-amber-400" />
               <span>Day {currentDay} of 21</span>
             </span>
           )}
         </div>
 
         {/* Title & Description */}
-        <h4 className="text-base font-bold text-white group-hover:text-indigo-200 transition-colors line-clamp-1">
+        <h4 className="text-base font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">
           {challenge.title}
         </h4>
         {challenge.description && (
@@ -132,7 +129,7 @@ export const ChallengeCard: React.FC<ChallengeCardProps> = ({
 
         {/* Linked Habit Indicator if any */}
         {linkedHabitTitle && (
-          <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-md w-fit">
+          <div className="flex items-center gap-1.5 mt-2.5 text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-md w-fit">
             <LinkIcon className="w-3 h-3 text-indigo-400 shrink-0" />
             <span className="truncate">Linked: {linkedHabitTitle}</span>
           </div>
@@ -142,29 +139,29 @@ export const ChallengeCard: React.FC<ChallengeCardProps> = ({
         <div className="mt-4 space-y-1.5">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-slate-500" />
+              <Calendar className="w-3.5 h-3.5 text-slate-500" />
               <span className="font-semibold text-white">{completed}</span> / 21 days completed
             </span>
             <span className="flex items-center gap-1 font-semibold text-indigo-400">
-              <TrendingUp className="w-3 h-3" />
+              <TrendingUp className="w-3.5 h-3.5" />
               {consistency}% consistency
             </span>
           </div>
-          <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden p-0.5 border border-white/[0.05]">
+          <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 shadow-[0_0_8px_rgba(99,102,241,0.5)]"
+              className="h-full rounded-full bg-indigo-500"
             />
           </div>
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="mt-5 pt-3.5 border-t border-white/[0.06] flex items-center justify-between gap-3">
+      <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between gap-3">
         {challenge.isCheckedInToday ? (
-          <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1.5 rounded-lg">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Checked In Today</span>
           </div>
@@ -181,9 +178,9 @@ export const ChallengeCard: React.FC<ChallengeCardProps> = ({
             type="button"
             onClick={handleCheckinClick}
             disabled={isCheckingIn}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer active:scale-95 disabled:opacity-50"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             <span>{isCheckingIn ? 'Logging...' : 'Check In (+10 XP)'}</span>
           </button>
         )}
