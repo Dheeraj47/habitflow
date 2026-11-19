@@ -150,18 +150,23 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
     const amountVal = parseFloat(expenseAmount);
-    if (isNaN(amountVal) || amountVal <= 0) return;
+    if (isNaN(amountVal) || amountVal < 0) return;
 
     soundFx.playCrystalChime(950);
 
+    const isZeroSpend = amountVal === 0;
+    const defaultTitle = isZeroSpend
+      ? 'Zero Spend Day (All Saved)'
+      : CATEGORY_METADATA[selectedCategory].label;
+
     const newExpense: ExpenseItem = {
       id: generateUniqueExpenseId(),
-      title: expenseTitle.trim() || CATEGORY_METADATA[selectedCategory].label,
+      title: expenseTitle.trim() || defaultTitle,
       amount: amountVal,
-      category: selectedCategory,
+      category: isZeroSpend ? 'other' : selectedCategory,
       timestamp: getTimeString(),
       dateStr: getTodayDateString(),
-      paymentMethod: 'card',
+      paymentMethod: 'cash',
     };
 
     const newExpenses = [newExpense, ...state.expenses];
@@ -173,6 +178,29 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
     updateStateAndPersist(newState);
     setExpenseTitle('');
     setExpenseAmount('');
+  };
+
+  // Direct 1-tap zero-spend day logger
+  const handleLogZeroSpendToday = () => {
+    soundFx.playCrystalChime(1046.5);
+
+    const newExpense: ExpenseItem = {
+      id: generateUniqueExpenseId(),
+      title: 'Zero Spend Day (All Saved)',
+      amount: 0,
+      category: 'other',
+      timestamp: getTimeString(),
+      dateStr: getTodayDateString(),
+      paymentMethod: 'cash',
+    };
+
+    const newExpenses = [newExpense, ...state.expenses];
+    const newState: BudgetTrackerState = {
+      ...state,
+      expenses: newExpenses,
+    };
+
+    updateStateAndPersist(newState);
   };
 
   // Quick preset button handler
@@ -267,7 +295,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                 Active
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="hidden sm:block text-xs text-slate-400">
               Set spending thresholds, track daily purchases, and monitor savings
             </p>
           </div>
@@ -423,7 +451,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                 {isUnderBudget ? 'remaining in budget' : 'above daily limit'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 pt-1 leading-relaxed">
+            <p className="hidden sm:block text-xs text-slate-400 pt-1 leading-relaxed">
               {isUnderBudget
                 ? `You have preserved ${(100 - spentPercentage).toFixed(0)}% of your allowance today.`
                 : `You have exceeded your daily target by ${formatCurrency(Math.abs(savings), state.currencySymbol)}.`}
@@ -441,25 +469,37 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
 
       {/* 3. Expense Logger Form */}
       <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
             <Plus className="w-3.5 h-3.5 text-indigo-400" />
             <span>Record an Expense</span>
           </span>
 
-          {/* Quick Presets */}
-          <div className="hidden sm:flex items-center gap-1.5">
-            <span className="text-xs text-slate-500">Quick:</span>
-            {[5, 10, 20, 50].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => handleQuickAddPreset(preset)}
-                className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition-colors cursor-pointer tabular-nums"
-              >
-                +{state.currencySymbol}{preset}
-              </button>
-            ))}
+          {/* Quick Presets & Zero Spend Action */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleLogZeroSpendToday}
+              className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-xs font-bold text-emerald-300 border border-emerald-500/30 transition-all cursor-pointer flex items-center gap-1 active:scale-95 shadow-sm"
+              title="Record ₹0 spent today (+0.4 Day Rating bonus)"
+            >
+              <Sparkles className="w-3 h-3 text-emerald-400" />
+              <span>Log {state.currencySymbol}0 Spent Today</span>
+            </button>
+
+            <div className="hidden sm:flex items-center gap-1.5 pl-1 border-l border-slate-800">
+              <span className="text-xs text-slate-500">Quick:</span>
+              {[5, 10, 20, 50].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => handleQuickAddPreset(preset)}
+                  className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition-colors cursor-pointer tabular-nums"
+                >
+                  +{state.currencySymbol}{preset}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -483,7 +523,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
             <input
               type="number"
               step="0.01"
-              min="0.01"
+              min="0"
               required
               placeholder="0.00"
               value={expenseAmount}

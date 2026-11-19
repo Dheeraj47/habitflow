@@ -190,14 +190,15 @@ export function calculateDayRating({
 
   const savings = Math.max(0, limit - totalSpent);
   const spentPercentage = limit > 0 ? Math.round((totalSpent / limit) * 100) : 0;
+  const hasZeroSpendLogged = todayExpenses.some((exp) => Number(exp.amount) === 0);
 
-  if (limit > 0) {
-    if (totalSpent === 0) {
+  if (hasZeroSpendLogged || limit > 0) {
+    if (hasZeroSpendLogged || totalSpent === 0) {
       isUnderBudget = true;
       budgetImpact = 0.4; // Zero spend (100% saved >= 50% limit): +0.4 pts
       budgetStatus = 'zero_spend';
       statusLabel = 'Zero Spend Day';
-      insightMessage = `Zero Spend (+0.4 pts): You preserved 100% of your ${currencySymbol}${limit} daily limit.`;
+      insightMessage = `Zero Spend (+0.4 pts): You preserved your daily allowance with zero expenses recorded today.`;
     } else if (totalSpent <= limit * 0.5) {
       isUnderBudget = true;
       budgetImpact = 0.4; // Saved >= 50% of budget: +0.4 pts

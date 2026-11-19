@@ -60,7 +60,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-semibold text-white tracking-tight">Execution Focus</h3>
-            <p className="text-xs text-slate-400">Daily habit progress</p>
+            <p className="hidden sm:block text-xs text-slate-400">Daily habit progress</p>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
               : 'Daily Routine Underway'}
           </h4>
 
-          <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+          <p className="hidden sm:block text-xs text-slate-400 max-w-xs leading-relaxed">
             {completionRate === 100
               ? 'All scheduled habits for today are completed.'
               : `${totalCount - completedCount} habits remaining to complete today's routine.`}
@@ -164,7 +164,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-bold text-white tabular-nums">{topStreak} Days</div>
-            <div className="text-[11px] text-slate-400 truncate">Active Streak</div>
+            <div className="text-[10px] sm:text-[11px] text-slate-400 whitespace-nowrap">Streak</div>
           </div>
         </div>
 
@@ -174,7 +174,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-xs font-bold text-white">Lvl {currentLevel}</div>
-            <div className="text-[11px] text-slate-400 truncate tabular-nums">
+            <div className="text-[10px] sm:text-[11px] text-slate-400 whitespace-nowrap tabular-nums">
               {xpIntoCurrentLevel}/100 XP
             </div>
           </div>

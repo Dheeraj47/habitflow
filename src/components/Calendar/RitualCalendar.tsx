@@ -540,7 +540,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                   Monthly View
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="hidden sm:block text-xs text-slate-400 mt-0.5">
                 Monthly adherence tracking, daily habit heatmaps, and reflections
               </p>
             </div>
@@ -584,62 +584,69 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
         </div>
 
         {/* 2. Monthly Performance Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 pt-4">
-          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
-            <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 flex-shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 pt-3 sm:pt-4">
+          <div className="p-2.5 sm:p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 sm:gap-2.5">
+            <div className="p-1.5 sm:p-2 rounded bg-indigo-500/10 text-indigo-400 flex-shrink-0">
               <CheckCircle2 className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-base font-bold text-white tabular-nums">{monthMetrics.averageRate}%</div>
-              <div className="text-xs text-slate-400 font-medium">Monthly Adherence</div>
+              <div className="text-sm sm:text-base font-bold text-white tabular-nums">{monthMetrics.averageRate}%</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                <span className="sm:hidden">Adherence</span>
+                <span className="hidden sm:inline">Monthly Adherence</span>
+              </div>
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
-            <div className="p-2 rounded bg-amber-500/10 text-amber-400 flex-shrink-0">
+          <div className="p-2.5 sm:p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 sm:gap-2.5">
+            <div className="p-1.5 sm:p-2 rounded bg-amber-500/10 text-amber-400 flex-shrink-0">
               <Trophy className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-base font-bold text-white tabular-nums">{monthMetrics.perfectDays} Days</div>
-              <div className="text-xs text-slate-400 font-medium">100% Habit Days</div>
+              <div className="text-sm sm:text-base font-bold text-white tabular-nums">{monthMetrics.perfectDays} Days</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                <span className="sm:hidden">Perfect Days</span>
+                <span className="hidden sm:inline">100% Habit Days</span>
+              </div>
             </div>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
-            <div className="p-2 rounded bg-indigo-500/10 text-indigo-400 flex-shrink-0">
+          <div className="p-2.5 sm:p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 sm:gap-2.5">
+            <div className="p-1.5 sm:p-2 rounded bg-indigo-500/10 text-indigo-400 flex-shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-base font-bold text-white tabular-nums">{monthMetrics.totalCompletions}</div>
-              <div className="text-xs text-slate-400 font-medium">Completions</div>
+              <div className="text-sm sm:text-base font-bold text-white tabular-nums">{monthMetrics.totalCompletions}</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 font-medium">Completions</div>
             </div>
           </div>
 
           {/* Month Total Spend */}
-          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
-            <div className="p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
+          <div className="p-2.5 sm:p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 sm:gap-2.5">
+            <div className="p-1.5 sm:p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
               <Wallet className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-base font-bold text-white tabular-nums">
+              <div className="text-sm sm:text-base font-bold text-white tabular-nums">
                 {formatCurrency(monthMetrics.totalMonthSpent, activeBudgetState.currencySymbol)}
               </div>
-              <div className="text-xs text-slate-400 font-medium">
-                Month Spend ({monthMetrics.daysWithSpend}d)
+              <div className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                <span className="sm:hidden">Month Spend</span>
+                <span className="hidden sm:inline">Month Spend ({monthMetrics.daysWithSpend}d)</span>
               </div>
             </div>
           </div>
 
           {/* Frugality Streak */}
-          <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5 col-span-2 sm:col-span-1">
-            <div className="p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
+          <div className="p-2.5 sm:p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 sm:gap-2.5 col-span-2 sm:col-span-1">
+            <div className="p-1.5 sm:p-2 rounded bg-emerald-500/10 text-emerald-400 flex-shrink-0">
               <Flame className="w-4 h-4 fill-emerald-400/80" />
             </div>
             <div>
-              <div className="text-base font-bold text-white tabular-nums">
+              <div className="text-sm sm:text-base font-bold text-white tabular-nums">
                 {activeBudgetState.savingStreak} Days
               </div>
-              <div className="text-xs text-slate-400 font-medium">Frugal Streak</div>
+              <div className="text-[11px] sm:text-xs text-slate-400 font-medium">Frugal Streak</div>
             </div>
           </div>
         </div>
@@ -653,7 +660,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
             <div className="flex items-center gap-1.5">
               <Filter className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-xs font-semibold text-slate-300">Filter View:</span>
+              <span className="hidden sm:inline text-xs font-semibold text-slate-300">Filter View:</span>
             </div>
 
             <div className="flex items-center gap-1 text-xs overflow-x-auto no-scrollbar touch-pan-x py-0.5">
@@ -742,14 +749,14 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(800 + dayNum * 4);
                     setSelectedDate(dateStr);
                   }}
-                  className={`p-1 sm:p-2 rounded-lg border text-center transition-colors cursor-pointer flex flex-col justify-between min-h-[50px] sm:min-h-[70px] relative ${heatStyles} ${
+                  className={`p-1 sm:p-2 rounded-lg border text-center transition-colors cursor-pointer flex flex-col justify-between min-h-[50px] sm:min-h-[70px] relative overflow-hidden ${heatStyles} ${
                     isSelected
                       ? 'ring-2 ring-indigo-500 border-transparent z-10'
                       : 'hover:border-slate-700'
                   }`}
                 >
-                  {/* Top Header: Day Number (Left) & Corner Day Rating Badge (Right) */}
-                  <div className="flex items-center justify-between gap-0.5 sm:gap-1 leading-none">
+                  {/* Desktop Header: Side-by-side Day Number & Corner Day Rating Badge (>=sm) */}
+                  <div className="hidden sm:flex items-center justify-between gap-1 leading-none">
                     <div className="flex items-center gap-1 min-w-0">
                       <span
                         className={`text-xs font-semibold tabular-nums ${
@@ -773,19 +780,44 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                           soundFx.playCrystalChime(950);
                           setInspectRating(dayCellRating);
                         }}
-                        className={`inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[10px] sm:text-xs font-bold tabular-nums border leading-none transition-transform hover:scale-105 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-80' : ''}`}
+                        className={`inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-xs font-bold tabular-nums border leading-none transition-transform hover:scale-105 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-80' : ''}`}
                         title={`Day Rating: ${dayCellRating.rating.toFixed(1)}/10 ${dayCellRating.isEstimated ? '(Estimated Unverified)' : `(${dayCellRating.tierLabel})`} • Click for full breakdown`}
                         aria-label={`Rating for ${dateStr}: ${dayCellRating.rating.toFixed(1)}`}
                       >
-                        <Star className={`w-2.5 h-2.5 hidden sm:inline ${badgeStyle.star}`} />
+                        <Star className={`w-2.5 h-2.5 ${badgeStyle.star}`} />
                         <span>{dayCellRating.rating.toFixed(1)}</span>
                       </button>
                     )}
                   </div>
 
-                  {/* Amount Spent on that day */}
+                  {/* Mobile Header: Day Number Top-Left (<sm) - Prevents side-by-side overlap */}
+                  <div className="flex sm:hidden items-center justify-between leading-none w-full">
+                    <span
+                      className={`text-[11px] font-bold tabular-nums ${
+                        isToday ? 'text-indigo-400' : 'text-slate-300'
+                      }`}
+                    >
+                      {dayNum}
+                    </span>
+                    {isToday && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" title="Today" />
+                    )}
+                  </div>
+
+                  {/* Mobile Rating Pill: Centered on dedicated row (<sm) - ZERO COLLISION! */}
+                  {badgeStyle && dayCellRating && (
+                    <div className="flex sm:hidden justify-center my-0.5">
+                      <span
+                        className={`px-1 py-0.2 rounded text-[9px] font-black tabular-nums border leading-none ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-75' : ''}`}
+                      >
+                        {dayCellRating.rating.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Amount Spent on that day (Desktop only: on mobile, Day Inspector below shows full ledger) */}
                   {isCurrentMonth && !stats.isFuture && daySpend.hasRecord && (
-                    <div className="my-0.5 flex justify-center">
+                    <div className="hidden sm:flex my-0.5 justify-center">
                       <span
                         className={`text-xs font-medium px-1.5 py-0.2 rounded tabular-nums inline-block ${
                           daySpend.totalSpent === 0
@@ -802,16 +834,16 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                   )}
 
                   {/* Micro Habit Dots & Heat Indicators */}
-                  <div className="mt-auto pt-1 flex items-center justify-center gap-1">
+                  <div className="mt-auto pt-0.5 sm:pt-1 flex items-center justify-center gap-1">
                     {stats.isFuture ? (
-                      <span className="text-xs text-slate-700">•</span>
+                      <span className="text-[10px] sm:text-xs text-slate-700">•</span>
                     ) : stats.rate === 100 ? (
-                      <div className="inline-flex items-center gap-0.5 text-emerald-400 text-xs font-bold">
+                      <div className="inline-flex items-center gap-0.5 text-emerald-400 text-[10px] sm:text-xs font-bold">
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
                         <span className="hidden sm:inline">100%</span>
                       </div>
                     ) : stats.rate > 0 ? (
-                      <span className="text-xs font-medium text-slate-400 tabular-nums">
+                      <span className="text-[10px] sm:text-xs font-medium text-slate-400 tabular-nums">
                         {stats.rate}%
                       </span>
                     ) : (
@@ -829,7 +861,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               <span className="text-xs text-slate-500">Day Rating:</span>
               <div className="inline-flex items-center gap-1 text-xs text-amber-300 font-bold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/25">
                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                <span>Corner Score (1.0 - 10.0)</span>
+                <span className="sm:hidden">Score (1.0 - 10.0)</span>
+                <span className="hidden sm:inline">Corner Score (1.0 - 10.0)</span>
               </div>
             </div>
 
@@ -862,7 +895,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
               {formattedSelectedDate}
             </h3>
 
-            <p className="text-xs text-slate-400 mt-0.5 tabular-nums">
+            <p className="hidden sm:block text-xs text-slate-400 mt-0.5 tabular-nums">
               {selectedStats.count} of {habits.length} rituals completed on this day.
             </p>
           </div>
@@ -892,7 +925,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                       {selectedDayRating.isEstimated ? 'Estimated' : selectedDayRating.tierLabel}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400 font-medium">
+                  <div className="hidden sm:block text-xs text-slate-400 font-medium">
                     {selectedDayRating.isEstimated
                       ? 'Reconstructed from past completion count'
                       : (selectedDayRating.isUnderBudget ? 'Budget Maintained' : 'Budget Exceeded')} • {selectedDayRating.habitsCompleted}/{selectedDayRating.totalHabits} Habits
@@ -919,7 +952,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-white tracking-tight">Amount Spent on This Day</div>
-                  <div className="text-xs text-slate-400">
+                  <div className="hidden sm:block text-xs text-slate-400">
                     {isSelectedDateToday 
                       ? "Today's live spending & limit" 
                       : `Financial ledger for ${selectedDate}`}
@@ -1101,7 +1134,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                             {habit.title}
                           </h4>
                         </div>
-                        <span className="text-xs text-slate-500 capitalize">
+                        <span className="hidden sm:inline text-xs text-slate-500 capitalize">
                           {habit.timeOfDay} • {habit.category}
                         </span>
                       </div>

@@ -332,3 +332,66 @@ test('Calendar day rating corner badge: tiers properly map to rating bands', () 
   assert.equal(reset.tier, 'reset');
   assert.match(reset.tierColor, /rose/);
 });
+
+test('calculateDayRating: logging 0rs spend awards +0.4 pts even with 0 habits performed', () => {
+  const zeroHabits = SAMPLE_HABITS.map((h) => ({ ...h, completed: false, streak: 0 }));
+  const zeroSpendBudget: BudgetTrackerState = {
+    currencySymbol: '₹',
+    dailyLimit: 100,
+    expenses: [
+      {
+        id: 'zero-exp-1',
+        title: 'Zero Spend Day (All Saved)',
+        amount: 0,
+        category: 'other',
+        timestamp: '10:00 AM',
+        dateStr: '2026-11-19',
+        paymentMethod: 'cash',
+      },
+    ],
+  };
+
+  const result = calculateDayRating({
+    habits: zeroHabits,
+    budgetState: zeroSpendBudget,
+    challengesCheckedInToday: false,
+    dateStr: '2026-11-19',
+  });
+
+  // Base 5.0 - 1.8 (0 habits) + 0.4 (zero spend budget) + 0.0 (no streak) = 3.6
+  assert.equal(result.breakdown.baseRating, 5.0);
+  assert.equal(result.breakdown.habitsImpact, -1.8);
+  assert.equal(result.breakdown.budgetImpact, 0.4);
+  assert.equal(result.rating, 3.6);
+  assert.equal(result.budgetInsights.status, 'zero_spend');
+  assert.equal(result.isUnderBudget, true);
+});
+
+test('calculateDayRating: logging 0rs spend awards +0.4 pts even when daily limit is 0', () => {
+  const zeroSpendNoLimitBudget: BudgetTrackerState = {
+    currencySymbol: '₹',
+    dailyLimit: 0,
+    expenses: [
+      {
+        id: 'zero-exp-2',
+        title: 'Zero Spend Day (All Saved)',
+        amount: 0,
+        category: 'other',
+        timestamp: '11:00 AM',
+        dateStr: '2026-11-19',
+        paymentMethod: 'cash',
+      },
+    ],
+  };
+
+  const result = calculateDayRating({
+    habits: SAMPLE_HABITS,
+    budgetState: zeroSpendNoLimitBudget,
+    challengesCheckedInToday: false,
+    dateStr: '2026-11-19',
+  });
+
+  assert.equal(result.breakdown.budgetImpact, 0.4);
+  assert.equal(result.budgetInsights.status, 'zero_spend');
+  assert.equal(result.isUnderBudget, true);
+});

@@ -104,7 +104,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                 {completedCount} of {habits.length} Done
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="hidden sm:block text-xs text-slate-400 mt-1">
               Mark rituals complete as you finish them throughout your day.
             </p>
           </div>
@@ -134,7 +134,7 @@ export const HabitList: React.FC<HabitListProps> = ({
             </div>
             <div>
               <div className="text-xs font-semibold text-slate-200">Daily Adherence</div>
-              <div className="text-xs text-slate-400 font-medium">
+              <div className="hidden sm:block text-xs text-slate-400 font-medium">
                 {completionRate === 100
                   ? 'All rituals finished'
                   : `${habits.length - completedCount} remaining`}
@@ -247,7 +247,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                       </div>
 
                       {habit.description && (
-                        <p className="text-xs text-slate-400 break-words mt-1 leading-relaxed">
+                        <p className="hidden sm:block text-xs text-slate-400 break-words mt-1 leading-relaxed">
                           {habit.description}
                         </p>
                       )}

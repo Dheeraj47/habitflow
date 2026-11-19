@@ -73,8 +73,8 @@ export const BudgetPulseCard: React.FC<BudgetPulseCardProps> = ({
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(quickAmount);
-    if (!isNaN(val) && val > 0) {
-      handleQuickAdd(val, 'Direct Log');
+    if (!isNaN(val) && val >= 0) {
+      handleQuickAdd(val, val === 0 ? 'Zero Spend Day (All Saved)' : 'Direct Log');
     }
   };
 
@@ -168,7 +168,7 @@ export const BudgetPulseCard: React.FC<BudgetPulseCardProps> = ({
               <input
                 type="number"
                 step="0.01"
-                min="0.01"
+                min="0"
                 autoFocus
                 placeholder="0.00"
                 value={quickAmount}
@@ -184,7 +184,15 @@ export const BudgetPulseCard: React.FC<BudgetPulseCardProps> = ({
             </button>
           </form>
         ) : (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleQuickAdd(0, 'Zero Spend Day (All Saved)')}
+              className="py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs font-bold text-emerald-300 transition-colors cursor-pointer tabular-nums text-center"
+              title="Record ₹0 spent today (+0.4 Day Rating bonus)"
+            >
+              {budgetState.currencySymbol}0
+            </button>
             {[5, 10, 15, 25].map((amt) => (
               <button
                 key={amt}
