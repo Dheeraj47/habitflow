@@ -11,6 +11,7 @@ import { AddHabitModal } from './components/AddHabitModal';
 import { AuthModal } from './components/Auth/AuthModal';
 import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
+import { MobileGlanceHero } from './components/Hero/MobileGlanceHero';
 import { DailyBudgetTracker } from './components/Budget/DailyBudgetTracker';
 import { BudgetPulseCard } from './components/Budget/BudgetPulseCard';
 import { ScrollHUD } from './components/Navigation/ScrollHUD';
@@ -30,7 +31,7 @@ import {
   migrateCollidingHabitsAndSanctuary,
 } from './utils/sanctuaryGrowth';
 import { INITIAL_HABITS, PAST_WEEK_ACTIVITY, generateHeatmapData } from './data/initialData';
-import { Compass } from 'lucide-react';
+import { Compass, Plus } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import confetti from 'canvas-confetti';
 import { soundFx } from './utils/sound';
@@ -534,23 +535,56 @@ export function App() {
         />
 
         {/* Main Content Body */}
-        <main className="flex-1 px-3.5 sm:px-8 py-4 sm:py-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-24 sm:pb-8">
+        <main className="flex-1 px-3 sm:px-8 py-3 sm:py-8 max-w-7xl mx-auto w-full space-y-5 sm:space-y-8 pb-24 sm:pb-8">
           <AnimatePresence mode="wait">
-            {activeTab === 'dashboard' || activeTab === 'habits' ? (
+            {activeTab === 'habits' ? (
+              <motion.div
+                key="habits-view"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4 sm:space-y-6"
+              >
+                {/* Desktop view header */}
+                <div className="hidden sm:flex items-center justify-between pb-3 border-b border-slate-800">
+                  <div>
+                    <h2 className="text-xl font-bold text-white tracking-tight">Habit Rituals &amp; Systems</h2>
+                    <p className="text-xs text-slate-400">Manage daily repetitions and weekly consistency</p>
+                  </div>
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>New Habit</span>
+                  </button>
+                </div>
+
+                <HabitList
+                  habits={habits}
+                  onToggleHabit={handleToggleHabit}
+                  onDeleteHabit={handleDeleteHabit}
+                  onOpenAddModal={() => setIsAddModalOpen(true)}
+                  completionRate={completionRate}
+                />
+              </motion.div>
+            ) : activeTab === 'dashboard' ? (
               <motion.div
                 key="dashboard-view"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="space-y-10"
+                className="flex flex-col space-y-5 sm:space-y-10"
               >
-                {/* 0. Cinematic Motivational Hero */}
+                {/* 0. Desktop Cinematic Motivational Hero (Tablet & Desktop only) */}
                 <motion.section
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.55 }}
                   aria-label="Motivational Introduction"
+                  className="hidden sm:block"
                 >
                   <CinematicHero
                     onStartRituals={handleScrollToRituals}
@@ -565,10 +599,27 @@ export function App() {
                   />
                 </motion.section>
 
-                {/* 1. Daily Command Hub: Focus Dial, Budget Pulse & AI Companion */}
+                {/* 0b. Native Mobile Today Glance Header (Mobile only) */}
+                <div className="sm:hidden">
+                  <MobileGlanceHero
+                    onStartRituals={handleScrollToRituals}
+                    completionRate={completionRate}
+                    completedCount={completedHabits}
+                    totalCount={totalHabits}
+                    topStreak={highestStreak}
+                    budgetTodaySpent={todayBudgetSpent}
+                    budgetDailyLimit={dailyBudgetLimit}
+                    budgetCurrencySymbol={budgetState.currencySymbol}
+                    onScrollToBudget={handleScrollToBudget}
+                    dayRating={todayRating.rating}
+                    onOpenDayRating={() => setIsDayRatingModalOpen(true)}
+                  />
+                </div>
+
+                {/* 1. Daily Command Hub (Focus Dial, Budget Pulse & AI Companion) */}
                 <section
                   id="daily-focus-section"
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch scroll-mt-24"
+                  className="order-2 sm:order-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch scroll-mt-24"
                   aria-label="Daily Command Hub"
                 >
                   <motion.div
@@ -617,10 +668,10 @@ export function App() {
                   </motion.div>
                 </section>
 
-                {/* 2. Full-Width Habit Rituals Section */}
+                {/* 2. Full-Width Habit Rituals Section (On mobile, placed directly above the fold!) */}
                 <section
                   id="todays-rituals"
-                  className="w-full space-y-6 scroll-mt-24"
+                  className="order-1 sm:order-2 w-full space-y-4 sm:space-y-6 scroll-mt-24"
                   aria-label="Habit Checklist"
                 >
                   <motion.div
@@ -647,7 +698,7 @@ export function App() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-30px' }}
                   transition={{ duration: 0.48 }}
-                  className="w-full scroll-mt-24"
+                  className="order-3 w-full scroll-mt-24"
                   aria-label="Daily Budget and Savings Tracker"
                 >
                   <DailyBudgetTracker
@@ -665,7 +716,7 @@ export function App() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-30px' }}
                   transition={{ duration: 0.5 }}
-                  className="scroll-mt-24"
+                  className="order-4 scroll-mt-24"
                   aria-label="Habit Analytics & Heatmap"
                 >
                   <StatsAndCharts

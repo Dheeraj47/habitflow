@@ -103,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Drawer */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 bg-[#0e111a] border-r border-slate-800/80 flex flex-col shadow-2xl transition-transform duration-200 ease-out ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-72 max-w-[85vw] bg-[#0e111a] border-r border-slate-800/80 flex flex-col shadow-2xl transition-transform duration-200 ease-out ${
           isVisible ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

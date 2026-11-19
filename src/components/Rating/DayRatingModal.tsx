@@ -56,7 +56,7 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -68,12 +68,17 @@ export const DayRatingModal: React.FC<DayRatingModalProps> = ({
 
         {/* Modal Window */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="relative w-full max-w-lg bg-[#11141f] border border-slate-800/90 rounded-xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 30 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="relative w-full max-w-lg bg-[#11141f] border-t sm:border border-slate-800/90 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden my-0 sm:my-auto max-h-[85dvh] flex flex-col pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-0"
         >
+          {/* Native Mobile Pull Indicator */}
+          <div className="pt-2.5 pb-0.5 flex justify-center sm:hidden">
+            <div className="w-10 h-1 bg-slate-700/80 rounded-full" />
+          </div>
+
           {/* Header */}
           <div className="p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40">
             <div className="flex items-center gap-3">
