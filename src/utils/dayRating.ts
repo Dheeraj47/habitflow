@@ -112,6 +112,87 @@ export function getRatingTier(rating: number): {
   };
 }
 
+export interface BudgetRatingImpactInfo {
+  impact: number;
+  label: string;
+  tier: 'zero_spend' | 'high_savings' | 'under_budget' | 'over_budget_mild' | 'over_budget_severe' | 'no_limit';
+  description: string;
+}
+
+/**
+ * Calculates the exact Day Rating effect from budget performance:
+ * - Spend <= 50% of set limit (or 0 spend logged): +0.4 pts
+ * - Spend between 50% to 100% of set limit: +0.2 pts
+ * - Overspend by 100% to 200% of set limit (1x to 2x limit): -0.8 pts
+ * - Overspend more than 200% of set limit (>2x limit): -1.0 pt
+ * - No limit set: 0.0 pts
+ */
+export function getBudgetRatingImpact(
+  todaySpent: number,
+  dailyLimit: number,
+  hasZeroSpendLogged: boolean = false,
+  currencySymbol: string = '₹'
+): BudgetRatingImpactInfo {
+  if (hasZeroSpendLogged || (dailyLimit > 0 && todaySpent === 0)) {
+    return {
+      impact: 0.4,
+      label: '+0.4 pts (Zero Spend)',
+      tier: 'zero_spend',
+      description: 'Preserved 100% of allowance with zero expenses logged (+0.4 rating bonus)',
+    };
+  }
+
+  if (dailyLimit <= 0) {
+    return {
+      impact: 0.0,
+      label: '0.0 pts (No Limit)',
+      tier: 'no_limit',
+      description: 'Set a daily budget limit to earn financial discipline points (+0.2 to +0.4 pts)',
+    };
+  }
+
+  if (todaySpent <= dailyLimit * 0.5) {
+    const savedPct = Math.round(((dailyLimit - todaySpent) / dailyLimit) * 100);
+    return {
+      impact: 0.4,
+      label: '+0.4 pts (≤50% Limit Spent)',
+      tier: 'high_savings',
+      description: `Spent 50% or less of daily limit (saved ${savedPct}%). Maximum financial rating bonus!`,
+    };
+  }
+
+  if (todaySpent <= dailyLimit) {
+    const usedPct = Math.round((todaySpent / dailyLimit) * 100);
+    return {
+      impact: 0.2,
+      label: '+0.2 pts (50%–100% Limit Spent)',
+      tier: 'under_budget',
+      description: `Kept spending within daily limit (${usedPct}% used). Financial discipline bonus awarded.`,
+    };
+  }
+
+  const overspent = todaySpent - dailyLimit;
+  if (overspent <= dailyLimit) {
+    // Total spent between 100% and 200% of limit
+    const overrunPct = Math.round((overspent / dailyLimit) * 100);
+    return {
+      impact: -0.8,
+      label: '-0.8 pts (100%–200% Overspent)',
+      tier: 'over_budget_mild',
+      description: `Exceeded daily limit by ${currencySymbol}${overspent} (${overrunPct}% excess). Rating reduced by 0.8 pts.`,
+    };
+  }
+
+  // Total spent > 200% of limit
+  const overrunPct = Math.round((overspent / dailyLimit) * 100);
+  return {
+    impact: -1.0,
+    label: '-1.0 pt (>200% Overspent)',
+    tier: 'over_budget_severe',
+    description: `Severe budget overrun: exceeded limit by ${currencySymbol}${overspent} (${overrunPct}% excess). Rating reduced by 1.0 pt.`,
+  };
+}
+
 /**
  * Pure calculation function for the daily rating score and budget insights.
  * Explicitly excludes lend & borrow (debts) from the calculation.
@@ -223,9 +304,9 @@ export function calculateDayRating({
         budgetImpact = -1.0;
         insightMessage = `Budget Exceeded (-1.0 pt): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 1.0 pt.`;
       } else {
-        // Exceeded but under 100% excess (<= 2x limit)
-        budgetImpact = -0.6;
-        insightMessage = `Budget Exceeded (-0.6 pts): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 0.6 pts.`;
+        // Exceeded by 100% to 200% of daily budget limit (<= 2x limit)
+        budgetImpact = -0.8;
+        insightMessage = `Budget Exceeded (-0.8 pts): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 0.8 pts.`;
       }
     }
   }
@@ -317,7 +398,7 @@ export function calculateDayRating({
     } else if (totalSpent > limit * 2) {
       highlights.push(`Heavy Deficit: Exceeded daily limit by more than 100% (-1.0 pt rating penalty)`);
     } else {
-      highlights.push(`Budget Warning: Exceeded daily limit by ${currencySymbol}${totalSpent - limit} (-0.6 pts rating penalty)`);
+      highlights.push(`Budget Warning: Exceeded daily limit by ${currencySymbol}${totalSpent - limit} (-0.8 pts rating penalty)`);
     }
   }
 
