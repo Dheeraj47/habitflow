@@ -22,8 +22,15 @@
     color: #e2e8f0;
     overflow-x: clip;
     min-height: 100vh;
+    min-height: 100dvh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Optimize touch responsiveness and eliminate tap delays */
+  button, a, input, select, textarea, [role="button"] {
+    touch-action: manipulation;
   }
 
   #root {

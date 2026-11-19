@@ -81,15 +81,15 @@ export const BudgetPulseCard: React.FC<BudgetPulseCardProps> = ({
   return (
     <div className="p-5 sm:p-6 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm relative overflow-hidden space-y-4 sm:space-y-5 h-full flex flex-col justify-between transition-colors">
       {/* Top Header Row */}
-      <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-slate-800/80">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 pb-3.5 border-b border-slate-800/80">
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
             <Wallet className="w-4 h-4 text-emerald-400" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="text-sm sm:text-base font-semibold text-white tracking-tight">Daily Budget</h3>
-              <span className={`text-xs font-medium px-2 py-0.5 rounded border tabular-nums ${
+              <span className={`text-[10px] sm:text-xs font-medium px-1.5 py-0.2 rounded border tabular-nums whitespace-nowrap ${
                 isUnderBudget 
                   ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                   : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
@@ -97,12 +97,12 @@ export const BudgetPulseCard: React.FC<BudgetPulseCardProps> = ({
                 {isUnderBudget ? 'Under Limit' : 'Over Limit'}
               </span>
             </div>
-            <p className="text-xs text-slate-400">Spending &amp; allowance pacing</p>
+            <p className="text-xs text-slate-400 truncate">Spending &amp; allowance pacing</p>
           </div>
         </div>
 
         {/* Frugal Streak Badge */}
-        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-300 tabular-nums">
+        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-300 tabular-nums flex-shrink-0">
           <Flame className="w-3.5 h-3.5 fill-amber-400/80 text-amber-400" />
           <span>{budgetState.savingStreak}d Streak</span>
         </div>

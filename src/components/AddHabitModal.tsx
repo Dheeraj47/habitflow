@@ -101,10 +101,10 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="relative w-full max-w-lg rounded-2xl bg-[#11141f] border border-slate-800 shadow-2xl overflow-hidden"
+            className="relative w-full max-w-lg max-h-[90dvh] flex flex-col rounded-2xl bg-[#11141f] border border-slate-800 shadow-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                   <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -127,7 +127,7 @@ export const AddHabitModal: React.FC<AddHabitModalProps> = ({
             </div>
 
             {/* Form Body */}
-            <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1 touch-pan-y">
               {error && (
                 <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium">
                   {error}

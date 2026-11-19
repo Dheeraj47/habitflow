@@ -35,23 +35,23 @@ export const AICoachCard: React.FC<AICoachCardProps> = ({
   return (
     <div className="p-5 sm:p-6 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm relative overflow-hidden space-y-4 sm:space-y-5 h-full flex flex-col justify-between transition-colors">
       {/* Top Header Row */}
-      <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-slate-800/80">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 pb-3.5 border-b border-slate-800/80">
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
             <Bot className="w-4 h-4 text-indigo-400" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h3 className="text-sm sm:text-base font-semibold text-white tracking-tight">AI Habit Advisor</h3>
-              <span className="text-xs font-medium px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              <span className="text-[10px] sm:text-xs font-medium px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 whitespace-nowrap">
                 Insights
               </span>
             </div>
-            <p className="text-xs text-slate-400">Behavioral guidance &amp; recommendations</p>
+            <p className="text-xs text-slate-400 truncate">Behavioral guidance &amp; recommendations</p>
           </div>
         </div>
 
-        <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1.5">
+        <span className="text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded flex items-center gap-1.5 flex-shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           Ready
         </span>

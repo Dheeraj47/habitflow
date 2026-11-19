@@ -111,7 +111,7 @@ const CreateChallengeForm: React.FC<FormInnerProps> = ({
       initial={{ opacity: 0, scale: 0.95, y: 15 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 15 }}
-      className="w-full max-w-lg p-6 sm:p-7 rounded-2xl bg-[#11141f] border border-slate-800 shadow-2xl space-y-6 my-8"
+      className="w-full max-w-lg p-4 sm:p-7 rounded-2xl bg-[#11141f] border border-slate-800 shadow-2xl space-y-5 my-auto max-h-[90dvh] overflow-y-auto touch-pan-y"
     >
       {/* Modal Header */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-800">

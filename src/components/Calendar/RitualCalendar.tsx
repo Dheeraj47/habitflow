@@ -648,15 +648,15 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
       {/* 3. Main Split View: Calendar Grid (Left 7-col) & Day Inspector (Right 5-col) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Calendar Grid Container */}
-        <div className="lg:col-span-7 xl:col-span-8 p-5 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm space-y-3">
+        <div className="lg:col-span-7 xl:col-span-8 p-3.5 sm:p-5 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm space-y-3">
           {/* Filter Pills Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-slate-800/80">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
             <div className="flex items-center gap-1.5">
               <Filter className="w-3.5 h-3.5 text-slate-400" />
               <span className="text-xs font-semibold text-slate-300">Filter View:</span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1 text-xs">
+            <div className="flex items-center gap-1 text-xs overflow-x-auto no-scrollbar touch-pan-x py-0.5">
               {(['all', 'morning', 'afternoon', 'evening'] as const).map((t) => (
                 <button
                   key={t}
@@ -664,7 +664,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(900);
                     setTimeFilter(t);
                   }}
-                  className={`px-2 py-0.5 rounded capitalize text-xs font-medium transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded capitalize text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                     timeFilter === t
                       ? 'bg-indigo-600 text-white'
                       : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
@@ -683,7 +683,7 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(900);
                     setCategoryFilter(c);
                   }}
-                  className={`px-2 py-0.5 rounded capitalize text-xs font-medium transition-colors cursor-pointer ${
+                  className={`px-2 py-0.5 rounded capitalize text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                     categoryFilter === c
                       ? 'bg-indigo-600 text-white'
                       : 'bg-slate-900/60 text-slate-400 hover:text-white border border-slate-800'
@@ -702,7 +702,8 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                 key={wd}
                 className="py-1 text-xs font-semibold uppercase tracking-wider text-slate-500"
               >
-                {wd}
+                <span className="sm:hidden">{wd.slice(0, 1)}</span>
+                <span className="hidden sm:inline">{wd}</span>
               </div>
             ))}
           </div>
@@ -741,14 +742,14 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                     soundFx.playCrystalChime(800 + dayNum * 4);
                     setSelectedDate(dateStr);
                   }}
-                  className={`p-1.5 sm:p-2 rounded-lg border text-center transition-colors cursor-pointer flex flex-col justify-between min-h-[58px] sm:min-h-[70px] relative ${heatStyles} ${
+                  className={`p-1 sm:p-2 rounded-lg border text-center transition-colors cursor-pointer flex flex-col justify-between min-h-[50px] sm:min-h-[70px] relative ${heatStyles} ${
                     isSelected
                       ? 'ring-2 ring-indigo-500 border-transparent z-10'
                       : 'hover:border-slate-700'
                   }`}
                 >
                   {/* Top Header: Day Number (Left) & Corner Day Rating Badge (Right) */}
-                  <div className="flex items-center justify-between gap-1 leading-none">
+                  <div className="flex items-center justify-between gap-0.5 sm:gap-1 leading-none">
                     <div className="flex items-center gap-1 min-w-0">
                       <span
                         className={`text-xs font-semibold tabular-nums ${
@@ -772,11 +773,11 @@ export const RitualCalendar: React.FC<RitualCalendarProps> = ({
                           soundFx.playCrystalChime(950);
                           setInspectRating(dayCellRating);
                         }}
-                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-xs font-bold tabular-nums border leading-none transition-transform hover:scale-105 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-80' : ''}`}
+                        className={`inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[10px] sm:text-xs font-bold tabular-nums border leading-none transition-transform hover:scale-105 active:scale-95 cursor-pointer ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.text} ${dayCellRating.isEstimated ? 'border-dashed opacity-80' : ''}`}
                         title={`Day Rating: ${dayCellRating.rating.toFixed(1)}/10 ${dayCellRating.isEstimated ? '(Estimated Unverified)' : `(${dayCellRating.tierLabel})`} • Click for full breakdown`}
                         aria-label={`Rating for ${dateStr}: ${dayCellRating.rating.toFixed(1)}`}
                       >
-                        <Star className={`w-2.5 h-2.5 ${badgeStyle.star}`} />
+                        <Star className={`w-2.5 h-2.5 hidden sm:inline ${badgeStyle.star}`} />
                         <span>{dayCellRating.rating.toFixed(1)}</span>
                       </button>
                     )}

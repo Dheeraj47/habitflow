@@ -176,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User Profile Card & Streak Banner */}
-        <div className="p-4 border-t border-slate-800/80 bg-[#0b0d14]">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-slate-800/80 bg-[#0b0d14]">
           {/* Streak indicator badge */}
           <div className="mb-3 px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-2">

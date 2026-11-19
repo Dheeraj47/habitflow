@@ -158,23 +158,23 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
 
       {/* Streak & XP Dual Card */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 sm:gap-2.5">
           <div className="p-1.5 rounded-md bg-amber-500/10 text-amber-400 flex-shrink-0">
             <Flame className="w-4 h-4 fill-amber-400/80" />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="text-xs font-bold text-white tabular-nums">{topStreak} Days</div>
-            <div className="text-xs text-slate-400 truncate">Streak Chain</div>
+            <div className="text-[11px] text-slate-400 truncate">Active Streak</div>
           </div>
         </div>
 
-        <div className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2.5">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 sm:gap-2.5">
           <div className="p-1.5 rounded-md bg-indigo-500/10 text-indigo-400 flex-shrink-0">
             <Trophy className="w-4 h-4" />
           </div>
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-white">Level {currentLevel}</div>
-            <div className="text-xs text-slate-400 truncate tabular-nums">
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-bold text-white">Lvl {currentLevel}</div>
+            <div className="text-[11px] text-slate-400 truncate tabular-nums">
               {xpIntoCurrentLevel}/100 XP
             </div>
           </div>

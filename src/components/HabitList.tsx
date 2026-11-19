@@ -144,7 +144,7 @@ export const HabitList: React.FC<HabitListProps> = ({
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 pt-3.5 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5 pt-3.5 overflow-x-auto no-scrollbar touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
           <ListFilter className="w-3.5 h-3.5 text-slate-500 mr-1 flex-shrink-0" />
           {filterTabs.map((item) => {
             const isActive = filter === item.id;
@@ -155,7 +155,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                   setFilter(item.id);
                   soundFx.playCrystalChime(784);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border flex items-center gap-2 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border flex items-center gap-2 min-h-[36px] ${
                   isActive 
                     ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm' 
                     : 'bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800'
@@ -201,29 +201,33 @@ export const HabitList: React.FC<HabitListProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.18, delay: idx * 0.015 }}
-                  className={`group relative flex items-start justify-between p-4 rounded-xl border transition-colors ${
+                  className={`group relative flex items-start justify-between p-3 sm:p-4 rounded-xl border transition-colors ${
                     isDone
                       ? 'bg-[#0e111a]/80 border-slate-800/60 opacity-80'
                       : 'bg-[#11141f] border-slate-800/90 hover:border-slate-700 hover:bg-[#141824]'
                   }`}
                 >
                   {/* Left: Checkbox & Habit Info */}
-                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                    {/* Checkbox Control */}
+                  <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+                    {/* Checkbox Control with Comfortable Touch Tap Target */}
                     <button
                       onClick={() => handleToggle(habit.id)}
-                      className={`relative w-5 h-5 rounded flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 mt-0.5 ${
-                        isDone
-                          ? 'bg-emerald-500 text-slate-950 border border-emerald-400'
-                          : 'border border-slate-600 hover:border-indigo-400 bg-slate-900/60 hover:bg-indigo-500/10'
-                      }`}
+                      className="relative p-1.5 -m-1.5 flex items-center justify-center cursor-pointer flex-shrink-0 mt-0.5"
                       aria-label={`Toggle habit: ${habit.title}`}
                     >
-                      {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      <div
+                        className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
+                          isDone
+                            ? 'bg-emerald-500 text-slate-950 border border-emerald-400'
+                            : 'border border-slate-600 hover:border-indigo-400 bg-slate-900/60 hover:bg-indigo-500/10'
+                        }`}
+                      >
+                        {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
                     </button>
 
                     {/* Category Icon & Details */}
-                    <div className="min-w-0 flex-1 pr-2">
+                    <div className="min-w-0 flex-1 pr-1 sm:pr-2">
                       <div className="flex items-start gap-2">
                         <div
                           className="p-1 rounded bg-slate-800/80 flex-shrink-0 mt-0.5"
@@ -232,7 +236,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                           {renderHabitIcon(habit.iconName, habit.color)}
                         </div>
                         <h4
-                          className={`text-sm font-semibold break-words transition-colors leading-snug flex-1 ${
+                          className={`text-xs sm:text-sm font-semibold break-words transition-colors leading-snug flex-1 ${
                             isDone
                               ? 'line-through text-slate-500'
                               : 'text-slate-100 group-hover:text-white'
@@ -277,7 +281,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                   </div>
 
                   {/* Right: Streak & Actions */}
-                  <div className="flex items-center gap-2 pl-3 flex-shrink-0 self-start mt-0.5">
+                  <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-3 flex-shrink-0 self-start mt-0.5">
                     {/* Streak Badge */}
                     <div
                       className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold border tabular-nums ${

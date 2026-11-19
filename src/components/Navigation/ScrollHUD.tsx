@@ -41,7 +41,7 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 16 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2"
+          className="hidden sm:flex fixed sm:bottom-6 sm:right-6 z-30 items-center gap-2"
           aria-label="Floating Actions"
         >
           {/* Quick Progress Badge */}
@@ -51,10 +51,10 @@ export const ScrollHUD: React.FC<ScrollHUDProps> = ({
             <span className="text-slate-400 tabular-nums">{completionRate}% Done</span>
           </div>
 
-          {/* Quick Add Habit Button */}
+          {/* Quick Add Habit Button (Desktop/Tablet) */}
           <button
             onClick={onOpenAddModal}
-            className="w-9 h-9 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shadow-lg transition-colors cursor-pointer"
+            className="hidden sm:flex w-9 h-9 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white items-center justify-center shadow-lg transition-colors cursor-pointer"
             title="Create New Habit"
             aria-label="Create New Habit"
           >

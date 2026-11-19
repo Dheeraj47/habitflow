@@ -53,12 +53,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
       <button
         id="header-sign-in-btn"
         onClick={() => openAuthModal('signin')}
-        className="flex items-center gap-1.5 h-8.5 px-2.5 sm:px-3 rounded-lg bg-indigo-600/15 hover:bg-indigo-600/25 text-indigo-300 hover:text-white border border-indigo-500/30 transition-all cursor-pointer text-xs font-semibold active:scale-98 flex-shrink-0"
+        className="flex items-center gap-1.5 h-8 sm:h-8.5 px-2 sm:px-3 rounded-lg bg-indigo-600/15 hover:bg-indigo-600/25 text-indigo-300 hover:text-white border border-indigo-500/30 transition-all cursor-pointer text-xs font-semibold active:scale-98 flex-shrink-0"
         title="Sign in or create an account"
         aria-label="Sign In"
       >
         <LogIn className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Sign In</span>
+        <span className="hidden md:inline">Sign In</span>
       </button>
     );
   }
@@ -79,7 +79,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
       <button
         id="header-user-menu-btn"
         onClick={handleToggleMenu}
-        className="flex items-center gap-1.5 sm:gap-2 h-8.5 px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 transition-all cursor-pointer text-xs"
+        className="flex items-center gap-1.5 sm:gap-2 h-8 sm:h-8.5 px-1.5 sm:px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 transition-all cursor-pointer text-xs"
         aria-label="User account menu"
         aria-expanded={isOpen}
       >

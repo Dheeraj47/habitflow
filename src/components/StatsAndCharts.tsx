@@ -242,17 +242,21 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
           </div>
 
           {/* Heatmap Grid (7 rows x 8 cols) */}
-          <div className="py-2 overflow-x-auto no-scrollbar">
+          <div className="py-2 overflow-x-auto no-scrollbar touch-pan-x">
             <div className="inline-grid grid-flow-col grid-rows-7 gap-1.5">
               {effectiveHeatmapData.map((cell) => (
                 <div
                   key={cell.date}
+                  onClick={() => {
+                    setHoveredCell(cell);
+                    soundFx.playCrystalChime(cell.level === 0 ? 440 : 600 + cell.level * 60);
+                  }}
                   onMouseEnter={() => {
                     setHoveredCell(cell);
                     soundFx.playCrystalChime(cell.level === 0 ? 440 : 600 + cell.level * 60);
                   }}
                   onMouseLeave={() => setHoveredCell(null)}
-                  className={`w-3.5 h-3.5 rounded-[3px] border transition-transform hover:scale-125 cursor-pointer ${getCellColor(
+                  className={`w-3.5 h-3.5 rounded-[3px] border transition-transform hover:scale-125 active:scale-110 cursor-pointer ${getCellColor(
                     cell.level
                   )}`}
                   title={`${cell.date}: ${cell.count} habits ${cell.level === 0 ? '(<30% tasks completed)' : ''}`}

@@ -471,7 +471,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
               placeholder="Expense title (e.g., Coffee, Lunch, Transit...)"
               value={expenseTitle}
               onChange={(e) => setExpenseTitle(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs sm:text-sm min-h-[40px] focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
 
@@ -488,7 +488,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
               placeholder="0.00"
               value={expenseAmount}
               onChange={(e) => setExpenseAmount(e.target.value)}
-              className="w-full pl-6 pr-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs font-semibold tabular-nums focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full pl-6 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-xs sm:text-sm font-semibold tabular-nums min-h-[40px] focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
 
@@ -497,7 +497,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value as ExpenseCategory)}
-              className="w-full px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
+              className="w-full px-2.5 py-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs font-medium min-h-[40px] focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
             >
               {(Object.keys(CATEGORY_METADATA) as ExpenseCategory[]).map((cat) => (
                 <option key={cat} value={cat} className="bg-slate-900 text-white">
@@ -511,7 +511,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
           <div className="sm:col-span-2">
             <button
               type="submit"
-              className="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+              className="w-full py-2.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs min-h-[40px] transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Log Expense</span>
@@ -520,7 +520,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
         </form>
 
         {/* Category Pills Row */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 no-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar touch-pan-x">
           {(Object.keys(CATEGORY_METADATA) as ExpenseCategory[]).map((cat) => {
             const meta = CATEGORY_METADATA[cat];
             const Icon = CATEGORY_ICONS[cat];
@@ -530,7 +530,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border min-h-[34px] ${
                   isSelected
                     ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
                     : 'bg-slate-950 hover:bg-slate-850 text-slate-400 hover:text-white border-slate-800'
@@ -545,7 +545,7 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
       </div>
 
       {/* 4. Sub-Navigation Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-slate-800/80 pb-2 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 border-b border-slate-800/80 pb-2 overflow-x-auto no-scrollbar touch-pan-x">
         <button
           onClick={() => {
             setActiveSubTab('today');

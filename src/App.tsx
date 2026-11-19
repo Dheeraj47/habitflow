@@ -14,6 +14,7 @@ import { CinematicHero } from './components/Hero/CinematicHero';
 import { DailyBudgetTracker } from './components/Budget/DailyBudgetTracker';
 import { BudgetPulseCard } from './components/Budget/BudgetPulseCard';
 import { ScrollHUD } from './components/Navigation/ScrollHUD';
+import { MobileNavBar } from './components/Navigation/MobileNavBar';
 import { ToastContainer } from './components/Toast/ToastContainer';
 import type { ToastItem } from './components/Toast/ToastContainer';
 import type { Habit, ActiveTab, SanctuaryLifetimeStats } from './types/habit';
@@ -533,7 +534,7 @@ export function App() {
         />
 
         {/* Main Content Body */}
-        <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-8">
+        <main className="flex-1 px-3.5 sm:px-8 py-4 sm:py-8 max-w-7xl mx-auto w-full space-y-6 sm:space-y-8 pb-24 sm:pb-8">
           <AnimatePresence mode="wait">
             {activeTab === 'dashboard' || activeTab === 'habits' ? (
               <motion.div
@@ -704,7 +705,7 @@ export function App() {
         </main>
 
         {/* Clean Executive Footer */}
-        <footer className="border-t border-slate-800/80 py-6 px-4 sm:px-8 text-xs text-slate-400 mt-16 bg-[#0e111a]">
+        <footer className="border-t border-slate-800/80 py-6 px-4 sm:px-8 text-xs text-slate-400 mt-16 bg-[#0e111a] pb-24 sm:pb-6">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div className="w-6 h-6 rounded-md bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
@@ -734,6 +735,18 @@ export function App() {
         onOpenAddModal={() => setIsAddModalOpen(true)}
         onOpenCoachModal={() => handleOpenCoach()}
         onNavigateToDebts={handleNavigateToDebts}
+        pendingDebtsCount={pendingDebtsCount}
+      />
+
+      {/* Mobile Bottom Navigation Bar (<640px) */}
+      <MobileNavBar
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          setActiveTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onOpenAddModal={() => setIsAddModalOpen(true)}
+        onOpenSidebar={() => setIsSidebarOpen(true)}
         pendingDebtsCount={pendingDebtsCount}
       />
 
