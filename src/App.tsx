@@ -7,6 +7,7 @@ import { HabitList } from './components/HabitList';
 import { StatsAndCharts } from './components/StatsAndCharts';
 import { AddHabitModal } from './components/AddHabitModal';
 import { AuthModal } from './components/Auth/AuthModal';
+import { WorkspaceShell } from './features/workspace/components/WorkspaceShell';
 import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
 import { MobileGlanceHero } from './components/Hero/MobileGlanceHero';
@@ -108,7 +109,22 @@ export function App() {
     initialData.stats
   );
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#workspace')) {
+      return 'workspace';
+    }
+    return 'dashboard';
+  });
+
+  useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash.startsWith('#workspace')) {
+        setActiveTab('workspace');
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -481,6 +497,23 @@ export function App() {
     });
   };
 
+  if (activeTab === 'workspace') {
+    return (
+      <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-indigo-500/25 selection:text-indigo-200">
+        <WorkspaceShell 
+          onBackToHabitFlow={() => {
+            if (typeof window !== 'undefined') {
+              window.location.hash = '';
+            }
+            setActiveTab('dashboard');
+          }} 
+        />
+        <AuthModal />
+        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0b0d14] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-indigo-500/25 selection:text-indigo-200">
       {/* 1. Global Scroll Progress Indicator */}
@@ -493,6 +526,9 @@ export function App() {
       <Sidebar
         activeTab={activeTab}
         onSelectTab={(tab) => {
+          if (tab === 'workspace' && typeof window !== 'undefined') {
+            window.location.hash = '#workspace';
+          }
           setActiveTab(tab);
         }}
         isOpen={isSidebarOpen}
@@ -699,6 +735,7 @@ export function App() {
                     completedTodayCount={completedHabits}
                     totalHabitsCount={totalHabits}
                     bestActiveStreak={highestStreak}
+                    lifetimeStats={lifetimeStats}
                   />
                 </motion.section>
               </motion.div>

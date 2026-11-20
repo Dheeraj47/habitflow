@@ -13,7 +13,8 @@ import {
   Wallet, 
   ArrowLeftRight,
   LogIn,
-  LogOut
+  LogOut,
+  FolderKanban
 } from 'lucide-react';
 import type { ActiveTab } from '../types/habit';
 import { soundFx } from '../utils/sound';
@@ -86,6 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'friends', label: 'Community', icon: Users, badge: '3' },
     { id: 'achievements', label: 'Milestones', icon: Trophy },
     { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'workspace', label: 'Personal Workspace', icon: FolderKanban, badge: 'New' },
   ];
 
   return (

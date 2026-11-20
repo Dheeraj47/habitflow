@@ -91,32 +91,56 @@ export const PAST_WEEK_ACTIVITY: DayActivity[] = [
   { date: '2026-10-24', dayName: 'Today', completionRate: 50, habitsDone: 3, habitsTotal: 6 },
 ];
 
-// Generate an 8-week heatmap (56 days)
+// Generate a full year GitHub & LeetCode style heatmap (371 days / 53 weeks)
 export const generateHeatmapData = (): HeatmapCell[] => {
   const cells: HeatmapCell[] = [];
-  const levels: (0 | 1 | 2 | 3 | 4)[] = [
-    3, 4, 4, 0, 4, 3, 4,
-    2, 3, 0, 4, 1, 3, 4,
-    4, 4, 3, 4, 2, 0, 3,
-    3, 2, 4, 4, 0, 3, 4,
-    4, 4, 3, 0, 4, 4, 3,
-    2, 0, 4, 3, 4, 2, 4,
-    3, 4, 0, 4, 3, 4, 3,
-    4, 3, 4, 4, 0, 4, 2
-  ];
-
   const today = new Date();
-  for (let i = 55; i >= 0; i--) {
+
+  function pseudoRandom(seed: number) {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  for (let i = 370; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = d.toISOString().split('T')[0];
-    const lvl = levels[55 - i] ?? 3;
+
+    let lvl: 0 | 1 | 2 | 3 | 4 = 3;
+    let count = 0;
+
+    if (i < 27) {
+      // Current active streak (honors the 27-day streak on dashboard)
+      lvl = i === 0 ? 4 : (pseudoRandom(i * 17 + 3) > 0.4 ? 4 : 3);
+      count = lvl === 4 ? (i === 0 ? 10 : 8) : 5;
+    } else {
+      const r = pseudoRandom(i * 13 + 7);
+      if (r < 0.10) {
+        // Rest day (~10% of days)
+        lvl = 0;
+        count = 0;
+      } else if (r < 0.35) {
+        lvl = 1;
+        count = 2;
+      } else if (r < 0.65) {
+        lvl = 2;
+        count = 4;
+      } else if (r < 0.88) {
+        lvl = 3;
+        count = 6;
+      } else {
+        lvl = 4;
+        count = 8;
+      }
+    }
+
     cells.push({
       date: dateStr,
       level: lvl,
-      count: lvl === 0 ? (i % 2 === 0 ? 1 : 0) : Math.round(lvl * 1.5 + 1),
+      count,
     });
   }
+
   return cells;
 };
 

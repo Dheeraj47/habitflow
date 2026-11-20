@@ -40,7 +40,8 @@ export type ActiveTab =
   | 'insights'
   | 'friends'
   | 'achievements'
-  | 'settings';
+  | 'settings'
+  | 'workspace';
 
 export interface DailyCompletionRecord {
   completedHabitIds: string[];
