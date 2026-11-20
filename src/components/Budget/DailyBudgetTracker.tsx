@@ -22,8 +22,7 @@ import {
   CalendarCheck2,
   ChevronDown,
   ChevronUp,
-  ArrowLeftRight,
-  Star
+  ArrowLeftRight
 } from 'lucide-react';
 import { LendBorrowTracker } from './LendBorrowTracker';
 import type { 
@@ -40,7 +39,6 @@ import {
   ensureRecordItems
 } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
-import { getBudgetRatingImpact } from '../../utils/dayRating';
 
 interface DailyBudgetTrackerProps {
   budgetState?: BudgetTrackerState;
@@ -136,13 +134,6 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
   const isUnderBudget = savings >= 0;
   const spentPercentage = Math.min(Math.round((todaySpent / dailyLimit) * 100), 999);
   const pendingDebtsCount = (state.debts || []).filter((d) => d.status === 'pending').length;
-  const hasZeroSpendLogged = state.expenses.some((exp) => Number(exp.amount) === 0);
-  const budgetRatingImpact = getBudgetRatingImpact(
-    todaySpent,
-    Number(state.dailyLimit) || 0,
-    hasZeroSpendLogged,
-    state.currencySymbol
-  );
 
   const updateStateAndPersist = (newState: BudgetTrackerState) => {
     setInternalState(newState);
@@ -476,91 +467,6 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
         </div>
       </div>
 
-      {/* 2b. Live Day Rating System Impact Bar */}
-      <div className={`p-3 sm:p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-3 transition-all ${
-        budgetRatingImpact.impact > 0
-          ? 'bg-emerald-500/10 border-emerald-500/25'
-          : budgetRatingImpact.impact === 0
-          ? 'bg-slate-900/60 border-slate-800'
-          : 'bg-rose-500/10 border-rose-500/25'
-      }`}>
-        <div className="flex items-start sm:items-center gap-2.5">
-          <div className={`p-2 rounded-lg border flex-shrink-0 ${
-            budgetRatingImpact.impact > 0
-              ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
-              : budgetRatingImpact.impact === 0
-              ? 'bg-slate-800 border-slate-700 text-slate-400'
-              : 'bg-rose-500/20 border-rose-500/30 text-rose-400'
-          }`}>
-            <Star className="w-4 h-4 fill-current" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs sm:text-sm font-bold text-white">Day Rating Effect:</span>
-              <span className={`text-xs sm:text-sm font-black tabular-nums ${
-                budgetRatingImpact.impact > 0 
-                  ? 'text-emerald-400' 
-                  : budgetRatingImpact.impact === 0 
-                  ? 'text-slate-400' 
-                  : 'text-rose-400'
-              }`}>
-                {budgetRatingImpact.impact > 0 ? `+${budgetRatingImpact.impact.toFixed(1)} pts` : budgetRatingImpact.impact === 0 ? '0.0 pts' : `${budgetRatingImpact.impact.toFixed(1)} pts`}
-              </span>
-              <span className="text-xs font-semibold text-slate-400">
-                • {budgetRatingImpact.label}
-              </span>
-            </div>
-            <p className="text-[11px] sm:text-xs text-slate-400 leading-snug mt-0.5">
-              {budgetRatingImpact.description}
-            </p>
-          </div>
-        </div>
-
-        {/* 4 Official Tier Rules Pills */}
-        <div className="flex flex-wrap items-center gap-1 text-[10px] font-semibold">
-          <span 
-            className={`px-2 py-0.5 rounded border transition-colors ${
-              budgetRatingImpact.tier === 'high_savings' || budgetRatingImpact.tier === 'zero_spend'
-                ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50 font-bold ring-1 ring-emerald-500/40'
-                : 'bg-slate-900/80 text-slate-400 border-slate-800'
-            }`}
-            title="Spends ≤50% of daily limit: +0.4 Day Rating bonus"
-          >
-            ≤50%: +0.4
-          </span>
-          <span 
-            className={`px-2 py-0.5 rounded border transition-colors ${
-              budgetRatingImpact.tier === 'under_budget'
-                ? 'bg-emerald-500/25 text-emerald-300 border-emerald-500/50 font-bold ring-1 ring-emerald-500/40'
-                : 'bg-slate-900/80 text-slate-400 border-slate-800'
-            }`}
-            title="Spends 50% to 100% of daily limit: +0.2 Day Rating bonus"
-          >
-            50–100%: +0.2
-          </span>
-          <span 
-            className={`px-2 py-0.5 rounded border transition-colors ${
-              budgetRatingImpact.tier === 'over_budget_mild'
-                ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 font-bold ring-1 ring-rose-500/40'
-                : 'bg-slate-900/80 text-slate-400 border-slate-800'
-            }`}
-            title="Overspends by 100% to 200% of limit: -0.8 Day Rating penalty"
-          >
-            100–200%: -0.8
-          </span>
-          <span 
-            className={`px-2 py-0.5 rounded border transition-colors ${
-              budgetRatingImpact.tier === 'over_budget_severe'
-                ? 'bg-rose-500/25 text-rose-300 border-rose-500/50 font-bold ring-1 ring-rose-500/40'
-                : 'bg-slate-900/80 text-slate-400 border-slate-800'
-            }`}
-            title="Overspends more than 200% of limit: -1.0 Day Rating penalty"
-          >
-            &gt;200%: -1.0
-          </span>
-        </div>
-      </div>
-
       {/* 3. Expense Logger Form */}
       <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -779,31 +685,31 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.96 }}
-                        className="p-3 rounded-lg bg-slate-900/60 hover:bg-slate-850 border border-slate-800 flex items-center justify-between gap-2.5 transition-colors"
+                        className="p-3 rounded-lg bg-slate-900/60 hover:bg-slate-850 border border-slate-800 flex items-center justify-between gap-3 transition-colors"
                       >
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="p-1.5 rounded bg-slate-800 text-slate-300 flex-shrink-0">
                             <Icon className="w-3.5 h-3.5" />
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <p className="text-xs font-semibold text-white truncate">
                               {item.title}
                             </p>
-                            <div className="flex items-center gap-1.5 text-xs text-slate-400 pt-0.5">
-                              <span>{meta.label}</span>
-                              <span>•</span>
-                              <span>{item.timestamp}</span>
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400 pt-0.5 truncate whitespace-nowrap">
+                              <span className="truncate">{meta.label}</span>
+                              <span className="text-slate-600 flex-shrink-0">•</span>
+                              <span className="flex-shrink-0 tabular-nums">{item.timestamp}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2.5 flex-shrink-0">
-                          <span className="text-xs font-bold text-white tabular-nums">
+                        <div className="flex items-center gap-2.5 flex-shrink-0 ml-2">
+                          <span className="text-xs sm:text-sm font-bold text-white tabular-nums whitespace-nowrap">
                             {formatCurrency(item.amount, state.currencySymbol)}
                           </span>
                           <button
                             onClick={() => handleDeleteExpense(item.id)}
-                            className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                            className="p-1.5 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer flex-shrink-0"
                             title="Delete this expense"
                             aria-label={`Delete ${item.title}`}
                           >
@@ -926,22 +832,22 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                                 return (
                                   <div
                                     key={item.id}
-                                    className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800"
+                                    className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800 gap-2.5"
                                   >
-                                    <div className="flex items-center gap-2 min-w-0">
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
                                       <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
                                         <Icon className={`w-3.5 h-3.5 ${meta?.color || 'text-slate-300'}`} />
                                       </div>
-                                      <div className="min-w-0">
+                                      <div className="min-w-0 flex-1">
                                         <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
-                                        <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                                          <span>{meta?.label || item.category}</span>
-                                          <span>•</span>
-                                          <span>{item.timestamp || 'Recorded'}</span>
+                                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5 truncate whitespace-nowrap">
+                                          <span className="truncate">{meta?.label || item.category}</span>
+                                          <span className="text-slate-600 flex-shrink-0">•</span>
+                                          <span className="flex-shrink-0 tabular-nums">{item.timestamp || 'Recorded'}</span>
                                         </div>
                                       </div>
                                     </div>
-                                    <span className="text-xs font-semibold text-white tabular-nums flex-shrink-0 ml-2">
+                                    <span className="text-xs font-semibold text-white tabular-nums flex-shrink-0 ml-2 whitespace-nowrap">
                                       {formatCurrency(item.amount, state.currencySymbol)}
                                     </span>
                                   </div>
@@ -1046,28 +952,28 @@ export const DailyBudgetTracker: React.FC<DailyBudgetTrackerProps> = ({
                                     return (
                                       <div
                                         key={item.id}
-                                        className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800"
+                                        className="flex items-center justify-between p-2 rounded bg-slate-900 border border-slate-800 gap-2.5"
                                       >
-                                        <div className="flex items-center gap-2 min-w-0">
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
                                           <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${meta?.bgColor || 'bg-slate-800'}`}>
                                             <Icon className={`w-3.5 h-3.5 ${meta?.color || 'text-slate-300'}`} />
                                           </div>
-                                          <div className="min-w-0">
+                                          <div className="min-w-0 flex-1">
                                             <div className="text-xs font-medium text-slate-200 truncate">{item.title}</div>
-                                            <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                                              <span>{meta?.label || item.category}</span>
-                                              <span>•</span>
-                                              <span>{item.timestamp || 'Recorded'}</span>
+                                            <div className="text-[11px] text-slate-500 flex items-center gap-1.5 truncate whitespace-nowrap">
+                                              <span className="truncate">{meta?.label || item.category}</span>
+                                              <span className="text-slate-600 flex-shrink-0">•</span>
+                                              <span className="flex-shrink-0 tabular-nums">{item.timestamp || 'Recorded'}</span>
                                               {item.paymentMethod && (
                                                 <>
-                                                  <span>•</span>
-                                                  <span className="uppercase">{item.paymentMethod}</span>
+                                                  <span className="text-slate-600 flex-shrink-0">•</span>
+                                                  <span className="uppercase flex-shrink-0">{item.paymentMethod}</span>
                                                 </>
                                               )}
                                             </div>
                                           </div>
                                         </div>
-                                        <span className="text-xs font-semibold text-white tabular-nums flex-shrink-0 ml-2">
+                                        <span className="text-xs font-semibold text-white tabular-nums flex-shrink-0 ml-2 whitespace-nowrap">
                                           {formatCurrency(item.amount, state.currencySymbol)}
                                         </span>
                                       </div>

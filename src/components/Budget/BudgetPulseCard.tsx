@@ -3,8 +3,7 @@ import {
   Wallet, 
   Flame, 
   ArrowRight,
-  ArrowLeftRight,
-  Star
+  ArrowLeftRight
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { BudgetTrackerState, ExpenseItem } from '../../types/budget';
@@ -14,7 +13,6 @@ import {
   getTodayDateString 
 } from '../../utils/budgetStorage';
 import { soundFx } from '../../utils/sound';
-import { getBudgetRatingImpact } from '../../utils/dayRating';
 
 interface BudgetPulseCardProps {
   budgetState: BudgetTrackerState;
@@ -47,13 +45,6 @@ export const BudgetPulseCard: React.FC<BudgetPulseCardProps> = ({
   const savings = dailyLimit - todaySpent;
   const isUnderBudget = savings >= 0;
   const spentPercentage = Math.min(Math.round((todaySpent / dailyLimit) * 100), 999);
-  const hasZeroSpendLogged = budgetState.expenses.some((exp) => Number(exp.amount) === 0);
-  const ratingImpact = getBudgetRatingImpact(
-    todaySpent,
-    Number(budgetState.dailyLimit) || 0,
-    hasZeroSpendLogged,
-    budgetState.currencySymbol
-  );
 
   const handleQuickAdd = (amount: number, label: string = 'Quick Expense') => {
     soundFx.playCrystalChime(950);
@@ -153,28 +144,6 @@ export const BudgetPulseCard: React.FC<BudgetPulseCardProps> = ({
         <div className="flex justify-between items-center text-xs text-slate-400 pt-0.5 tabular-nums">
           <span>{spentPercentage}% of limit used</span>
           <span>{budgetState.expenses.length} transaction{budgetState.expenses.length === 1 ? '' : 's'}</span>
-        </div>
-
-        {/* Live Day Rating System Effect */}
-        <div className={`mt-2 p-2 rounded-lg border flex items-center justify-between text-xs transition-colors ${
-          ratingImpact.impact > 0
-            ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
-            : ratingImpact.impact === 0
-            ? 'bg-slate-900/60 border-slate-800 text-slate-300'
-            : 'bg-rose-500/10 border-rose-500/25 text-rose-300'
-        }`}>
-          <div className="flex items-center gap-1.5">
-            <Star className="w-3.5 h-3.5 fill-current flex-shrink-0" />
-            <span className="font-semibold text-white">Day Rating Effect:</span>
-          </div>
-          <div className="flex items-center gap-1.5 font-bold tabular-nums">
-            <span className={ratingImpact.impact > 0 ? 'text-emerald-400' : ratingImpact.impact === 0 ? 'text-slate-400' : 'text-rose-400'}>
-              {ratingImpact.impact > 0 ? `+${ratingImpact.impact.toFixed(1)} pts` : ratingImpact.impact === 0 ? '0.0 pts' : `${ratingImpact.impact.toFixed(1)} pts`}
-            </span>
-            <span className="text-[10px] font-medium text-slate-400">
-              ({ratingImpact.tier === 'high_savings' || ratingImpact.tier === 'zero_spend' ? '≤50%' : ratingImpact.tier === 'under_budget' ? '50-100%' : ratingImpact.tier === 'over_budget_mild' ? '100-200%' : '&gt;200%'})
-            </span>
-          </div>
         </div>
       </div>
 

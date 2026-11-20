@@ -169,8 +169,8 @@ test('calculateDayRating: rest till under limit (spends 50% - 100%) yields +0.2 
   assert.equal(result.breakdown.budgetImpact, 0.2);
 });
 
-test('calculateDayRating: budget exceeded under 100% reduces rating by -0.8 pts', () => {
-  // Limit 500, spent 750 (overspent 250 = 50% excess, which is between 100% and 200% of limit) -> -0.8 pts
+test('calculateDayRating: budget exceeded under 100% reduces rating by -0.6 pts', () => {
+  // Limit 500, spent 750 (overspent 250 = 50% excess, which is between 100% and 200% of limit) -> -0.6 pts
   const moderateOverspendState: BudgetTrackerState = {
     ...SAMPLE_BUDGET,
     dailyLimit: 500,
@@ -187,7 +187,7 @@ test('calculateDayRating: budget exceeded under 100% reduces rating by -0.8 pts'
   });
 
   assert.equal(result.isUnderBudget, false);
-  assert.equal(result.breakdown.budgetImpact, -0.8);
+  assert.equal(result.breakdown.budgetImpact, -0.6);
   assert.equal(result.budgetInsights.status, 'over_budget');
   assert.equal(result.budgetInsights.totalSpent, 750);
 });
@@ -422,13 +422,13 @@ test('getBudgetRatingImpact: exact tier compliance per user specifications', () 
   assert.equal(exactLimit.impact, 0.2);
   assert.equal(exactLimit.tier, 'under_budget');
 
-  // 3. Overspends by 100% to 200% (1x to 2x limit, i.e. 1001 to 2000) -> -0.8 pts
+  // 3. Overspends by 100% to 200% (1x to 2x limit, i.e. 1001 to 2000) -> -0.6 pts
   const mildOverspend = getBudgetRatingImpact(1500, limit);
-  assert.equal(mildOverspend.impact, -0.8);
+  assert.equal(mildOverspend.impact, -0.6);
   assert.equal(mildOverspend.tier, 'over_budget_mild');
 
   const doubleLimit = getBudgetRatingImpact(2000, limit);
-  assert.equal(doubleLimit.impact, -0.8);
+  assert.equal(doubleLimit.impact, -0.6);
   assert.equal(doubleLimit.tier, 'over_budget_mild');
 
   // 4. Overspends more than 200% (> 2x limit, i.e. > 2000) -> -1.0 pt

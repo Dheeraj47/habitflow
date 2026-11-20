@@ -176,10 +176,10 @@ export function getBudgetRatingImpact(
     // Total spent between 100% and 200% of limit
     const overrunPct = Math.round((overspent / dailyLimit) * 100);
     return {
-      impact: -0.8,
-      label: '-0.8 pts (100%–200% Overspent)',
+      impact: -0.6,
+      label: '-0.6 pts (100%–200% Overspent)',
       tier: 'over_budget_mild',
-      description: `Exceeded daily limit by ${currencySymbol}${overspent} (${overrunPct}% excess). Rating reduced by 0.8 pts.`,
+      description: `Exceeded daily limit by ${currencySymbol}${overspent} (${overrunPct}% excess). Rating reduced by 0.6 pts.`,
     };
   }
 
@@ -305,8 +305,8 @@ export function calculateDayRating({
         insightMessage = `Budget Exceeded (-1.0 pt): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 1.0 pt.`;
       } else {
         // Exceeded by 100% to 200% of daily budget limit (<= 2x limit)
-        budgetImpact = -0.8;
-        insightMessage = `Budget Exceeded (-0.8 pts): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 0.8 pts.`;
+        budgetImpact = -0.6;
+        insightMessage = `Budget Exceeded (-0.6 pts): Over daily limit by ${currencySymbol}${overspent} (${overrunPercentage}% excess). Rating reduced by 0.6 pts.`;
       }
     }
   }
@@ -398,7 +398,7 @@ export function calculateDayRating({
     } else if (totalSpent > limit * 2) {
       highlights.push(`Heavy Deficit: Exceeded daily limit by more than 100% (-1.0 pt rating penalty)`);
     } else {
-      highlights.push(`Budget Warning: Exceeded daily limit by ${currencySymbol}${totalSpent - limit} (-0.8 pts rating penalty)`);
+      highlights.push(`Budget Warning: Exceeded daily limit by ${currencySymbol}${totalSpent - limit} (-0.6 pts rating penalty)`);
     }
   }
 

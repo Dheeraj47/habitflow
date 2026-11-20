@@ -34,7 +34,6 @@ import { useAuth } from '../../context/AuthContext';
 
 interface SectionViewProps {
   tab: ActiveTab;
-  onOpenCoachModal: () => void;
   onGoToDashboard: () => void;
   habits?: Habit[];
   onToggleHabit?: (id: string) => void;
@@ -49,7 +48,6 @@ interface SectionViewProps {
 
 export const SectionView: React.FC<SectionViewProps> = ({
   tab,
-  onOpenCoachModal,
   onGoToDashboard,
   habits = [],
   onToggleHabit = () => {},
@@ -176,13 +174,6 @@ export const SectionView: React.FC<SectionViewProps> = ({
                 <p className="text-xs text-slate-400">Execution performance, timing distributions, and consistency trends</p>
               </div>
             </div>
-            <button
-              onClick={onOpenCoachModal}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer self-start sm:self-auto"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Consult AI Advisor</span>
-            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

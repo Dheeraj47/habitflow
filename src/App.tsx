@@ -5,8 +5,6 @@ import { DailyFocusCard } from './components/Dashboard/DailyFocusCard';
 import { DayRatingModal } from './components/Rating/DayRatingModal';
 import { HabitList } from './components/HabitList';
 import { StatsAndCharts } from './components/StatsAndCharts';
-import { AICoachCard } from './components/AICoachCard';
-import { AICoachModal } from './components/AICoachModal';
 import { AddHabitModal } from './components/AddHabitModal';
 import { AuthModal } from './components/Auth/AuthModal';
 import { SectionView } from './components/Views/SectionView';
@@ -112,8 +110,6 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isCoachModalOpen, setIsCoachModalOpen] = useState(false);
-  const [coachPrompt, setCoachPrompt] = useState<string | undefined>(undefined);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const toastCounterRef = useRef<number>(1);
@@ -485,11 +481,6 @@ export function App() {
     });
   };
 
-  const handleOpenCoach = (prompt?: string) => {
-    setCoachPrompt(prompt);
-    setIsCoachModalOpen(true);
-  };
-
   return (
     <div className="min-h-screen bg-[#0b0d14] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-indigo-500/25 selection:text-indigo-200">
       {/* 1. Global Scroll Progress Indicator */}
@@ -502,11 +493,7 @@ export function App() {
       <Sidebar
         activeTab={activeTab}
         onSelectTab={(tab) => {
-          if (tab === 'coach') {
-            handleOpenCoach();
-          } else {
-            setActiveTab(tab);
-          }
+          setActiveTab(tab);
         }}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -616,10 +603,10 @@ export function App() {
                   />
                 </div>
 
-                {/* 1. Daily Command Hub (Focus Dial, Budget Pulse & AI Companion) */}
+                {/* 1. Daily Command Hub (Focus Dial & Budget Pulse) */}
                 <section
                   id="daily-focus-section"
-                  className="order-2 sm:order-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 items-stretch scroll-mt-24"
+                  className="order-2 sm:order-1 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 items-stretch scroll-mt-24"
                   aria-label="Daily Command Hub"
                 >
                   <motion.div
@@ -651,19 +638,6 @@ export function App() {
                       budgetState={budgetState}
                       onBudgetChange={handleBudgetChange}
                       onScrollToBudget={handleScrollToBudget}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-30px' }}
-                    transition={{ duration: 0.45, delay: 0.12 }}
-                    className="flex flex-col h-full md:col-span-2 lg:col-span-1"
-                  >
-                    <AICoachCard
-                      onOpenCoachModal={handleOpenCoach}
-                      completionRate={completionRate}
                     />
                   </motion.div>
                 </section>
@@ -738,7 +712,6 @@ export function App() {
               >
                 <SectionView
                   tab={activeTab}
-                  onOpenCoachModal={() => handleOpenCoach()}
                   onGoToDashboard={() => setActiveTab('dashboard')}
                   habits={habits}
                   onToggleHabit={handleToggleHabit}
@@ -784,7 +757,6 @@ export function App() {
         totalCount={totalHabits}
         topStreak={highestStreak}
         onOpenAddModal={() => setIsAddModalOpen(true)}
-        onOpenCoachModal={() => handleOpenCoach()}
         onNavigateToDebts={handleNavigateToDebts}
         pendingDebtsCount={pendingDebtsCount}
       />
@@ -815,17 +787,6 @@ export function App() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddHabit={handleAddHabit}
-      />
-
-      <AICoachModal
-        isOpen={isCoachModalOpen}
-        onClose={() => {
-          setIsCoachModalOpen(false);
-          setCoachPrompt(undefined);
-        }}
-        completionRate={completionRate}
-        streakCount={highestStreak}
-        initialPrompt={coachPrompt}
       />
 
       {/* Toast Notification Container */}

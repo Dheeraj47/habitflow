@@ -8,7 +8,6 @@ interface ScrollHUDProps {
   totalCount: number;
   topStreak?: number;
   onOpenAddModal: () => void;
-  onOpenCoachModal?: () => void;
   onNavigateToDebts?: () => void;
   pendingDebtsCount?: number;
 }

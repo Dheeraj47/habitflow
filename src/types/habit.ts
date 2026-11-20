@@ -30,13 +30,6 @@ export interface HeatmapCell {
   count: number;
 }
 
-export interface AICoachMessage {
-  id: string;
-  sender: 'ai' | 'user';
-  text: string;
-  timestamp: string;
-}
-
 export type ActiveTab = 
   | 'dashboard'
   | 'habits'
@@ -45,7 +38,6 @@ export type ActiveTab =
   | 'debts'
   | 'calendar'
   | 'insights'
-  | 'coach'
   | 'friends'
   | 'achievements'
   | 'settings';
