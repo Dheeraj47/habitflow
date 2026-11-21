@@ -21,6 +21,7 @@ import type { Habit, ActiveTab, SanctuaryLifetimeStats } from './types/habit';
 import type { BudgetTrackerState } from './types/budget';
 import { loadBudgetTrackerState, saveBudgetTrackerState } from './utils/budgetStorage';
 import { calculateDayRating, saveDayRating, getRatingDateString } from './utils/dayRating';
+import { calculateCentralizedStreak } from './utils/streakManager';
 import {
   loadSanctuaryStats,
   saveSanctuaryStats,
@@ -265,11 +266,20 @@ export function App() {
     });
   };
 
+  const todayDateStr = getRatingDateString();
+
   // Derived metrics
   const totalHabits = habits.length;
   const completedHabits = habits.filter((h) => h.completed).length;
   const completionRate = totalHabits > 0 ? Math.round((completedHabits / totalHabits) * 100) : 0;
-  const highestStreak = habits.length > 0 ? Math.max(...habits.map((h) => h.streak), 0) : 0;
+
+  // Centralized streak calculation engine enforcing the >= 50% streak rule across the application
+  const streakResult = useMemo(() => {
+    return calculateCentralizedStreak(habits, lifetimeStats, PAST_WEEK_ACTIVITY, todayDateStr);
+  }, [habits, lifetimeStats, todayDateStr]);
+
+  const centralizedCurrentStreak = streakResult.currentStreak;
+  const highestStreak = centralizedCurrentStreak;
 
   // Scroll directly to Today's Rituals (Habit Checklist) from the Hero CTA
   const handleScrollToRituals = () => {
@@ -329,7 +339,6 @@ export function App() {
   // Football-inspired Matchday Player Rating State
   const [isDayRatingModalOpen, setIsDayRatingModalOpen] = useState(false);
   const [challengeCheckinRevision, setChallengeCheckinRevision] = useState(0);
-  const todayDateStr = getRatingDateString();
 
   // Synchronize challenge check-in events across guest and authenticated sessions
   useEffect(() => {
@@ -378,7 +387,7 @@ export function App() {
     }
   }, [authUser, todayRating, habits]);
 
-  // Toggle habit completion with Undo Toast and streak tracking
+  // Toggle habit completion with Undo Toast and centralized streak tracking
   const handleToggleHabit = (id: string) => {
     const target = habits.find((h) => h.id === id);
     if (!target) return;
@@ -386,32 +395,38 @@ export function App() {
     const willBeCompleted = !target.completed;
     const todayStr = getTodayDateString();
 
-    setHabits((prev) =>
-      prev.map((habit) => {
-        if (habit.id === id) {
-          return {
-            ...habit,
-            completed: willBeCompleted,
-            streak: willBeCompleted ? habit.streak + 1 : Math.max(0, habit.streak - 1),
-            completedThisWeek: willBeCompleted
-              ? habit.completedThisWeek + 1
-              : Math.max(0, habit.completedThisWeek - 1),
-          };
-        }
-        return habit;
-      })
-    );
+    const nextHabits = habits.map((habit) => {
+      if (habit.id === id) {
+        return {
+          ...habit,
+          completed: willBeCompleted,
+          completedThisWeek: willBeCompleted
+            ? habit.completedThisWeek + 1
+            : Math.max(0, habit.completedThisWeek - 1),
+        };
+      }
+      return habit;
+    });
 
     // Update lifetime completion tracking
-    setLifetimeStats((prev) =>
-      recordHabitToggleInStats(prev, id, willBeCompleted, todayStr)
-    );
+    const nextLifetime = recordHabitToggleInStats(lifetimeStats, id, willBeCompleted, todayStr);
+    setLifetimeStats(nextLifetime);
+
+    // Calculate new centralized streak based on the updated habit state and 50% rule
+    const nextStreakResult = calculateCentralizedStreak(nextHabits, nextLifetime, PAST_WEEK_ACTIVITY, todayStr);
+
+    // Keep individual habit streak attributes synchronized with centralized streak
+    const syncedHabits = nextHabits.map((h) => ({
+      ...h,
+      streak: nextStreakResult.currentStreak,
+    }));
+    setHabits(syncedHabits);
 
     if (willBeCompleted) {
       setUserXP((prev) => prev + 50);
-      const remainingIncomplete = habits.filter((h) => h.id !== id && !h.completed).length;
+      const remainingIncomplete = nextHabits.filter((h) => !h.completed).length;
 
-      if (remainingIncomplete === 0 && habits.length > 0) {
+      if (remainingIncomplete === 0 && nextHabits.length > 0) {
         // 100% Rituals Completed Today Grand Finale!
         soundFx.playSingingBowl();
         confetti({
@@ -437,10 +452,14 @@ export function App() {
           onAction: () => handleToggleHabit(id),
         });
       } else {
+        const subtext = nextStreakResult.todayStats.isSuccessful
+          ? '+50 XP earned • Momentum streak extended'
+          : '+50 XP earned • Complete 50%+ to extend streak';
+
         addToast({
           type: 'success',
           message: `Marked "${target.title}" done!`,
-          subtext: '+50 XP earned • Momentum streak extended',
+          subtext,
           actionLabel: 'Undo',
           onAction: () => handleToggleHabit(id),
         });
@@ -736,6 +755,7 @@ export function App() {
                     totalHabitsCount={totalHabits}
                     bestActiveStreak={highestStreak}
                     lifetimeStats={lifetimeStats}
+                    habits={habits}
                   />
                 </motion.section>
               </motion.div>

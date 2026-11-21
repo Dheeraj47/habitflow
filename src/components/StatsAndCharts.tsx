@@ -7,7 +7,9 @@ import {
   buildFullYearHeatmap,
   formatHeatmapTooltipDate,
   type HeatmapDay,
-  formatLocalDateStr
+  formatLocalDateStr,
+  rateToGreenLevel,
+  getGreenHeatmapColor,
 } from '../utils/heatmapGenerator';
 
 interface StatsAndChartsProps {
@@ -27,6 +29,7 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
   totalHabitsCount,
   bestActiveStreak,
   lifetimeStats,
+  habits,
 }) => {
   const [hoveredCell, setHoveredCell] = useState<HeatmapDay | null>(null);
   const [selectedYear, setSelectedYear] = useState<'current' | '2026' | '2025'>('current');
@@ -36,14 +39,20 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
 
   // Merge real habit completion history without any mock/random values
   const mergedCells = useMemo(() => {
-    const map = new Map<string, HeatmapCell>();
+    const map = new Map<string, HeatmapCell & { scheduledCount?: number }>();
+    const effectiveTotalHabits = totalHabitsCount > 0 ? totalHabitsCount : (habits?.length || 6);
 
     // 1. Incorporate verified past week activity
     for (const day of pastWeek) {
       if (day.habitsDone > 0) {
-        const level: 0 | 1 | 2 | 3 | 4 =
-          day.habitsDone <= 2 ? 1 : day.habitsDone <= 4 ? 2 : day.habitsDone <= 6 ? 3 : 4;
-        map.set(day.date, { date: day.date, count: day.habitsDone, level });
+        const sched = day.habitsTotal || effectiveTotalHabits;
+        const level = rateToGreenLevel(day.habitsDone, sched);
+        map.set(day.date, {
+          date: day.date,
+          count: day.habitsDone,
+          scheduledCount: sched,
+          level,
+        });
       }
     }
 
@@ -51,7 +60,12 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
     if (heatmapData) {
       for (const cell of heatmapData) {
         if (cell.count > 0) {
-          map.set(cell.date, { ...cell });
+          const sched = effectiveTotalHabits;
+          map.set(cell.date, {
+            ...cell,
+            scheduledCount: sched,
+            level: rateToGreenLevel(cell.count, sched),
+          });
         }
       }
     }
@@ -61,34 +75,37 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
       for (const [dateStr, record] of Object.entries(lifetimeStats.historyByDate)) {
         const count = record.count || record.completedHabitIds.length;
         if (count > 0) {
-          const level: 0 | 1 | 2 | 3 | 4 =
-            count <= 2 ? 1 : count <= 4 ? 2 : count <= 6 ? 3 : 4;
-          map.set(dateStr, { date: dateStr, count, level });
+          const sched = effectiveTotalHabits;
+          const level = rateToGreenLevel(count, sched);
+          map.set(dateStr, {
+            date: dateStr,
+            count,
+            scheduledCount: sched,
+            level,
+          });
         }
       }
     }
 
     // 4. Ensure today's live completion count is accurately synchronized in real-time
-    const liveTodayLevel: 0 | 1 | 2 | 3 | 4 =
-      completedTodayCount <= 0 ? 0 :
-      completedTodayCount <= 2 ? 1 :
-      completedTodayCount <= 4 ? 2 :
-      completedTodayCount <= 6 ? 3 : 4;
+    const liveTodayLevel = rateToGreenLevel(completedTodayCount, effectiveTotalHabits);
 
     map.set(todayDateStr, {
       date: todayDateStr,
       count: completedTodayCount,
+      scheduledCount: effectiveTotalHabits,
       level: liveTodayLevel,
     });
 
     return Array.from(map.values());
-  }, [pastWeek, heatmapData, lifetimeStats, completedTodayCount, todayDateStr]);
+  }, [pastWeek, heatmapData, lifetimeStats, completedTodayCount, totalHabitsCount, habits, todayDateStr]);
 
-  // Build the 53-week HabitFlow contribution grid
-  // Integrates directly with the user's current streak (bestActiveStreak)
+  // Build the 53-week HabitFlow green contribution grid
+  // Integrates directly with the user's current streak (bestActiveStreak) and 50% streak rule
   const fullYearResult = useMemo(() => {
-    return buildFullYearHeatmap(mergedCells, todayDateStr, selectedYear, bestActiveStreak);
-  }, [mergedCells, todayDateStr, selectedYear, bestActiveStreak]);
+    const effectiveTotal = totalHabitsCount > 0 ? totalHabitsCount : (habits?.length || 6);
+    return buildFullYearHeatmap(mergedCells, todayDateStr, selectedYear, bestActiveStreak, effectiveTotal);
+  }, [mergedCells, todayDateStr, selectedYear, bestActiveStreak, totalHabitsCount, habits]);
 
   // Auto-scroll to the current week on initial render or year change
   useEffect(() => {
@@ -97,38 +114,9 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
     }
   }, [selectedYear]);
 
-  // HabitFlow purple accent intensity scale
+  // GitHub-style green intensity palette classes
   const getCellColor = (level: number, isFuture?: boolean, isCurrentStreakDay?: boolean) => {
-    if (isFuture) {
-      return 'opacity-15 bg-slate-800/40 border-slate-800/20 pointer-events-none';
-    }
-
-    let baseClasses = '';
-    switch (level) {
-      case 0:
-        baseClasses = 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700';
-        break;
-      case 1:
-        baseClasses = 'bg-purple-950/70 border-purple-900/60 hover:border-purple-600';
-        break;
-      case 2:
-        baseClasses = 'bg-purple-900/90 border-purple-700/60 hover:border-purple-500';
-        break;
-      case 3:
-        baseClasses = 'bg-purple-600 border-purple-500 hover:border-purple-400';
-        break;
-      case 4:
-        baseClasses = 'bg-purple-400 border-purple-300 hover:border-white shadow-[0_0_8px_rgba(192,132,252,0.45)]';
-        break;
-      default:
-        baseClasses = 'bg-slate-900/60 border-slate-800/80';
-    }
-
-    if (isCurrentStreakDay) {
-      return `${baseClasses} ring-1 ring-amber-400/50 shadow-[0_0_4px_rgba(251,191,36,0.3)]`;
-    }
-
-    return baseClasses;
+    return getGreenHeatmapColor(level, isFuture, isCurrentStreakDay);
   };
 
   const statCards: Array<{
@@ -343,21 +331,44 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
         {/* Hover Detail Status Banner */}
         <div className="flex items-center justify-between text-xs min-h-[22px]">
           {hoveredCell ? (
-            <div className="flex items-center gap-2 animate-in fade-in">
+            <div className="flex items-center gap-2 animate-in fade-in flex-wrap">
               <span className="text-slate-400">
                 {formatHeatmapTooltipDate(hoveredCell.date)}:
               </span>
               <span
                 className={`px-2 py-0.5 rounded border text-[11px] font-semibold tabular-nums ${
                   hoveredCell.level === 0
-                    ? 'text-slate-400 bg-slate-800/60 border-slate-700/60'
-                    : 'text-purple-200 bg-purple-950/80 border-purple-500/40'
+                    ? 'text-slate-400 bg-[#161b22] border-[#262c36]'
+                    : hoveredCell.level === 1
+                    ? 'text-emerald-300 bg-[#0e4429] border-[#006d32]/60'
+                    : hoveredCell.level === 2
+                    ? 'text-emerald-200 bg-[#006d32] border-[#26a641]/60'
+                    : hoveredCell.level === 3
+                    ? 'text-white bg-[#26a641] border-[#39d353]/70'
+                    : 'text-white bg-[#39d353] border-[#7ee787]'
                 }`}
               >
-                {hoveredCell.count > 0
-                  ? `${hoveredCell.count} ${hoveredCell.count === 1 ? 'habit' : 'habits'} completed`
-                  : 'No habits completed'}
+                {hoveredCell.scheduledCount > 0
+                  ? `${hoveredCell.count} of ${hoveredCell.scheduledCount} habits completed (${hoveredCell.completionRate}%)`
+                  : `${hoveredCell.count} habits completed`}
               </span>
+              {hoveredCell.scheduledCount > 0 && (
+                <span
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${
+                    hoveredCell.isSuccessful
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                      : hoveredCell.count > 0
+                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                  }`}
+                >
+                  {hoveredCell.isSuccessful
+                    ? '✓ Goal Met (Streak Preserved)'
+                    : hoveredCell.count > 0
+                    ? '✗ <50% (Streak Broken)'
+                    : 'Inactive'}
+                </span>
+              )}
               {hoveredCell.isToday && (
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                   Today
@@ -372,7 +383,7 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
             </div>
           ) : (
             <span className="text-slate-500 text-[11px]">
-              Hover over any day square for habit completion details
+              Hover over any day square for habit completion details &bull; &ge;50% preserves streak
             </span>
           )}
         </div>
@@ -432,7 +443,7 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
                         )} ${
                           day.isToday ? 'ring-1.5 ring-indigo-400 shadow-[0_0_6px_rgba(99,102,241,0.6)]' : ''
                         }`}
-                        title={`${formatHeatmapTooltipDate(day.date)}: ${day.count} ${day.count === 1 ? 'habit' : 'habits'}${day.isCurrentStreakDay ? ' (Active streak)' : ''}`}
+                        title={`${formatHeatmapTooltipDate(day.date)}: ${day.count}/${day.scheduledCount} habits (${day.completionRate}%)${day.isCurrentStreakDay ? ' • Active streak' : ''}`}
                       />
                     ))}
                   </div>
@@ -456,28 +467,28 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
             </span>
           </div>
 
-          {/* HabitFlow Purple Activity Legend */}
+          {/* GitHub Green Activity Legend */}
           <div className="flex items-center gap-1.5 select-none">
             <span className="text-[11px] text-slate-400">Less</span>
             <span
-              className="w-3 h-3 rounded-[2px] bg-slate-900/60 border border-slate-800/80"
-              title="0 habits completed (Inactive)"
+              className="w-3 h-3 rounded-[2px] bg-[#161b22] border border-[#262c36]"
+              title="<50% completed (Inactive / Streak Broken)"
             />
             <span
-              className="w-3 h-3 rounded-[2px] bg-purple-950/70 border border-purple-900/60"
-              title="1–2 habits completed"
+              className="w-3 h-3 rounded-[2px] bg-[#0e4429] border border-[#006d32]/60"
+              title="50%–64% completed (Streak Preserved)"
             />
             <span
-              className="w-3 h-3 rounded-[2px] bg-purple-900/90 border border-purple-700/60"
-              title="3–4 habits completed"
+              className="w-3 h-3 rounded-[2px] bg-[#006d32] border border-[#26a641]/60"
+              title="65%–79% completed"
             />
             <span
-              className="w-3 h-3 rounded-[2px] bg-purple-600 border border-purple-500"
-              title="5–6 habits completed"
+              className="w-3 h-3 rounded-[2px] bg-[#26a641] border border-[#39d353]/70"
+              title="80%–99% completed"
             />
             <span
-              className="w-3 h-3 rounded-[2px] bg-purple-400 border border-purple-300 shadow-[0_0_4px_rgba(192,132,252,0.45)]"
-              title="7+ habits completed"
+              className="w-3 h-3 rounded-[2px] bg-[#39d353] border border-[#7ee787] shadow-[0_0_4px_rgba(57,211,83,0.45)]"
+              title="100% completed (Flawless)"
             />
             <span className="text-[11px] text-slate-400">More</span>
           </div>
