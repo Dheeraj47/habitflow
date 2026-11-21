@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { 
   Home, 
   FileText, 
@@ -11,12 +11,21 @@ import { WorkspaceHeader } from './WorkspaceHeader';
 import { WorkspaceSidebar } from './WorkspaceSidebar';
 import { WorkspaceHome } from '../home/WorkspaceHome';
 import { TaskManagerPlaceholder } from '../tasks/TaskManagerPlaceholder';
-import { PagesPlaceholder } from '../pages/PagesPlaceholder';
-import { KnowledgeGraphPlaceholder } from '../graph/KnowledgeGraphPlaceholder';
-import { WorkspaceCalendarPlaceholder } from '../calendar/WorkspaceCalendarPlaceholder';
-import { PersonalVaultPlaceholder } from '../vault/PersonalVaultPlaceholder';
 import { QuickSearchModal } from './QuickSearchModal';
 import { QuickCreateModal } from './QuickCreateModal';
+
+const PagesPlaceholder = lazy(() =>
+  import('../pages/PagesPlaceholder').then((m) => ({ default: m.PagesPlaceholder }))
+);
+const KnowledgeGraphPlaceholder = lazy(() =>
+  import('../graph/KnowledgeGraphPlaceholder').then((m) => ({ default: m.KnowledgeGraphPlaceholder }))
+);
+const WorkspaceCalendarPlaceholder = lazy(() =>
+  import('../calendar/WorkspaceCalendarPlaceholder').then((m) => ({ default: m.WorkspaceCalendarPlaceholder }))
+);
+const PersonalVaultPlaceholder = lazy(() =>
+  import('../vault/PersonalVaultPlaceholder').then((m) => ({ default: m.PersonalVaultPlaceholder }))
+);
 
 interface WorkspaceShellProps {
   onBackToHabitFlow: () => void;
@@ -120,92 +129,101 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({ onBackToHabitFlo
         />
 
         {/* View Content Area */}
-        <main className="flex-1 overflow-y-auto px-2.5 sm:px-6 md:px-8 py-3 sm:py-6 pb-20 md:pb-6">
-          {activeView === 'home' && (
-            <WorkspaceHome
-              pages={pages}
-              tasks={tasks}
-              quickNotes={quickNotes}
-              onSelectView={setActiveView}
-              onSelectPage={(id) => {
-                setActivePageId(id);
-                setActiveView('pages');
-              }}
-              onCreatePage={() => {
-                const page = createPage();
-                setActivePageId(page.id);
-                setActiveView('pages');
-              }}
-              onCreateTask={(title) => createTask(title)}
-              onToggleTask={toggleTaskStatus}
-              onCreateQuickNote={createQuickNote}
-              onDeleteQuickNote={deleteQuickNote}
-              onOpenQuickCreate={() => setIsQuickCreateOpen(true)}
-            />
-          )}
+        <main className="flex-1 overflow-y-auto px-2.5 sm:px-6 md:px-8 py-3 sm:py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-3">
+                <div className="w-7 h-7 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                <span className="text-xs text-slate-400 font-medium">Loading view...</span>
+              </div>
+            }
+          >
+            {activeView === 'home' && (
+              <WorkspaceHome
+                pages={pages}
+                tasks={tasks}
+                quickNotes={quickNotes}
+                onSelectView={setActiveView}
+                onSelectPage={(id) => {
+                  setActivePageId(id);
+                  setActiveView('pages');
+                }}
+                onCreatePage={() => {
+                  const page = createPage();
+                  setActivePageId(page.id);
+                  setActiveView('pages');
+                }}
+                onCreateTask={(title) => createTask(title)}
+                onToggleTask={toggleTaskStatus}
+                onCreateQuickNote={createQuickNote}
+                onDeleteQuickNote={deleteQuickNote}
+                onOpenQuickCreate={() => setIsQuickCreateOpen(true)}
+              />
+            )}
 
-          {activeView === 'tasks' && (
-            <TaskManagerPlaceholder
-              tasks={tasks}
-              onToggleTask={toggleTaskStatus}
-              onCreateTask={(title, priority, due, desc) => createTask(title, priority, due, desc)}
-              onUpdateTask={updateTask}
-              onDeleteTask={deleteTask}
-              focusedTaskId={focusedTaskId}
-              onClearFocusedTask={() => setFocusedTaskId(null)}
-            />
-          )}
+            {activeView === 'tasks' && (
+              <TaskManagerPlaceholder
+                tasks={tasks}
+                onToggleTask={toggleTaskStatus}
+                onCreateTask={(title, priority, due, desc) => createTask(title, priority, due, desc)}
+                onUpdateTask={updateTask}
+                onDeleteTask={deleteTask}
+                focusedTaskId={focusedTaskId}
+                onClearFocusedTask={() => setFocusedTaskId(null)}
+              />
+            )}
 
-          {activeView === 'pages' && (
-            <PagesPlaceholder
-              page={activePage}
-              allPages={pages}
-              onSelectPage={(id) => setActivePageId(id)}
-              onUpdatePage={updatePage}
-              onDeletePage={deletePage}
-              onToggleFavorite={toggleFavoritePage}
-              onTogglePin={togglePinPage}
-              onCreatePage={(title, parentId) => {
-                createPage(title, parentId || undefined);
-              }}
-              saveStatus={saveStatus}
-            />
-          )}
+            {activeView === 'pages' && (
+              <PagesPlaceholder
+                page={activePage}
+                allPages={pages}
+                onSelectPage={(id) => setActivePageId(id)}
+                onUpdatePage={updatePage}
+                onDeletePage={deletePage}
+                onToggleFavorite={toggleFavoritePage}
+                onTogglePin={togglePinPage}
+                onCreatePage={(title, parentId) => {
+                  createPage(title, parentId || undefined);
+                }}
+                saveStatus={saveStatus}
+              />
+            )}
 
-          {activeView === 'graph' && (
-            <KnowledgeGraphPlaceholder
-              pages={pages}
-              onSelectPage={(id) => {
-                setActivePageId(id);
-                setActiveView('pages');
-              }}
-            />
-          )}
+            {activeView === 'graph' && (
+              <KnowledgeGraphPlaceholder
+                pages={pages}
+                onSelectPage={(id) => {
+                  setActivePageId(id);
+                  setActiveView('pages');
+                }}
+              />
+            )}
 
-          {activeView === 'calendar' && (
-            <WorkspaceCalendarPlaceholder
-              tasks={tasks}
-              onToggleTask={toggleTaskStatus}
-              onCreateTask={(title, priority, due) => createTask(title, priority, due)}
-            />
-          )}
+            {activeView === 'calendar' && (
+              <WorkspaceCalendarPlaceholder
+                tasks={tasks}
+                onToggleTask={toggleTaskStatus}
+                onCreateTask={(title, priority, due) => createTask(title, priority, due)}
+              />
+            )}
 
-          {activeView === 'vault' && (
-            <PersonalVaultPlaceholder
-              pages={pages}
-              tags={tags}
-              quickNotes={quickNotes}
-              onSelectPage={(id) => {
-                setActivePageId(id);
-                setActiveView('pages');
-              }}
-              onCreatePage={(title) => {
-                createPage(title);
-              }}
-              onCreateQuickNote={createQuickNote}
-              onDeleteQuickNote={deleteQuickNote}
-            />
-          )}
+            {activeView === 'vault' && (
+              <PersonalVaultPlaceholder
+                pages={pages}
+                tags={tags}
+                quickNotes={quickNotes}
+                onSelectPage={(id) => {
+                  setActivePageId(id);
+                  setActiveView('pages');
+                }}
+                onCreatePage={(title) => {
+                  createPage(title);
+                }}
+                onCreateQuickNote={createQuickNote}
+                onDeleteQuickNote={deleteQuickNote}
+              />
+            )}
+          </Suspense>
         </main>
 
         {/* Status notice footer (Desktop only to maximize mobile vertical editing space) */}
@@ -226,7 +244,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({ onBackToHabitFlo
         {/* Mobile Bottom Navigation Bar (<md only) */}
         <nav 
           aria-label="Mobile workspace quick navigation" 
-          className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0b0e17]/95 backdrop-blur-lg border-t border-slate-800/90 px-3 py-1 flex items-center justify-around shadow-2xl safe-area-inset-bottom"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0b0e17]/95 backdrop-blur-lg border-t border-slate-800/90 px-3 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-2xl"
         >
           <button
             type="button"

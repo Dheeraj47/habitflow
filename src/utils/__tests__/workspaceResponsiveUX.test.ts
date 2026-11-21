@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import type { 
   WorkspacePage, 
   WorkspaceTask, 
-  WorkspaceView,
-  WorkspaceTaskStatus 
+  WorkspaceView
 } from '../../features/workspace/types/workspace.ts';
 
 test('Mobile UX: Breadcrumb calculation clamps long hierarchies gracefully', () => {

@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import TaskList from '@tiptap/extension-task-list';
-import TaskItem from '@tiptap/extension-task-item';
-import Placeholder from '@tiptap/extension-placeholder';
+import { getWorkspaceEditorExtensions } from './editorConfig';
 import { 
   Bold, 
   Italic, 
@@ -18,6 +14,8 @@ import {
   CheckSquare, 
   Quote, 
   Code, 
+  Terminal,
+  Link2,
   Minus, 
   Undo, 
   Redo, 
@@ -39,6 +37,7 @@ import {
 import type { WorkspacePage } from '../types/workspace';
 import { blocksToHtml } from '../services/workspaceLocalStorage';
 import { ImageCropModal } from '../components/ImageCropModal';
+import { buildWikiLinkContent } from '../services/workspaceWikiLink';
 
 interface DocumentEditorProps {
   page: WorkspacePage | null;
@@ -186,46 +185,101 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     [page, onUpdatePage]
   );
 
-  // Initialize Tiptap Editor
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
+  // Safe HTML accessor that guards against null/destroyed editor or null schema
+  const safeGetEditorHTML = useCallback((ed: ReturnType<typeof useEditor>): string => {
+    if (!ed || ed.isDestroyed || !ed.schema) return '';
+    try {
+      return ed.getHTML();
+    } catch (err) {
+      console.warn('Failed to retrieve editor HTML safely:', err);
+      return '';
+    }
+  }, []);
+
+  // Initialize Tiptap Editor with single-registration shared extensions & safe mount lifecycle
+  const editor = useEditor(
+    {
+      extensions: getWorkspaceEditorExtensions(),
+      content: page ? (page.content_html || blocksToHtml(page)) : '',
+      immediatelyRender: false,
+      onUpdate: ({ editor: ed }) => {
+        if (!ed || ed.isDestroyed || !ed.schema) return;
+        const html = safeGetEditorHTML(ed);
+        const text = ed.getText();
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        handleContentUpdate(html, words);
+      },
+      editorProps: {
+        attributes: {
+          class: 'prose-workspace focus:outline-none min-h-[320px] text-slate-200 text-sm sm:text-base leading-relaxed',
         },
-      }),
-      Underline,
-      TaskList,
-      TaskItem.configure({
-        nested: true,
-      }),
-      Placeholder.configure({
-        placeholder: 'Write your thoughts or use the toolbar above...',
-      }),
-    ],
-    content: page ? (page.content_html || blocksToHtml(page)) : '',
-    onUpdate: ({ editor: ed }) => {
-      const html = ed.getHTML();
-      const text = ed.getText();
-      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-      handleContentUpdate(html, words);
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose-workspace focus:outline-none min-h-[320px] text-slate-200 text-sm sm:text-base leading-relaxed',
       },
     },
-  });
+    [page?.id]
+  );
 
-  // Re-set editor content when active page changes
+  // Insert or wrap text in Obsidian-style [[Wiki Link]] safely preserving text literally
+  const handleInsertWikiLink = useCallback(() => {
+    if (!editor || editor.isDestroyed || !editor.schema) return;
+    const { from, to, empty } = editor.state.selection;
+    const selectedText = !empty ? editor.state.doc.textBetween(from, to, ' ') : '';
+    editor
+      .chain()
+      .focus()
+      .insertContent(buildWikiLinkContent(selectedText))
+      .run();
+  }, [editor]);
+
+  // Keyboard navigation for toolbar (WAI-ARIA toolbar pattern with Arrow keys and Tab)
+  const handleToolbarKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Home' || e.key === 'End') {
+      const container = e.currentTarget;
+      const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('button:not([disabled])'));
+      if (buttons.length === 0) return;
+
+      const activeIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
+      if (activeIndex === -1) return;
+
+      e.preventDefault();
+      let nextIndex = activeIndex;
+
+      if (e.key === 'ArrowRight') {
+        nextIndex = (activeIndex + 1) % buttons.length;
+      } else if (e.key === 'ArrowLeft') {
+        nextIndex = (activeIndex - 1 + buttons.length) % buttons.length;
+      } else if (e.key === 'Home') {
+        nextIndex = 0;
+      } else if (e.key === 'End') {
+        nextIndex = buttons.length - 1;
+      }
+
+      buttons[nextIndex]?.focus();
+    }
+  }, []);
+
+  // Ref tracking which page ID is currently mounted in the editor
+  const loadedPageIdRef = useRef<string | null>(null);
+
+  // Synchronize editor content when active page changes or newly loads
   useEffect(() => {
-    if (editor && page) {
+    if (!editor || editor.isDestroyed || !editor.schema || !page) return;
+
+    if (loadedPageIdRef.current !== page.id) {
+      loadedPageIdRef.current = page.id;
       const targetHtml = page.content_html || blocksToHtml(page);
-      if (editor.getHTML() !== targetHtml) {
+      const currentHtml = safeGetEditorHTML(editor);
+      if (currentHtml !== targetHtml) {
         editor.commands.setContent(targetHtml);
       }
     }
-  }, [page?.id, editor]);
+  }, [page?.id, page?.content_html, editor, safeGetEditorHTML]);
+
+  // Clean up loaded page ref when component unmounts
+  useEffect(() => {
+    return () => {
+      loadedPageIdRef.current = null;
+    };
+  }, []);
 
   if (!page) {
     return (
@@ -610,18 +664,20 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         )}
       </div>
 
-      {/* 5. Tiptap WYSIWYG Editor Toolbar (Touch-friendly & Horizontally Scrollable on Mobile) */}
-      {editor && (
+      {/* 5. Tiptap WYSIWYG Editor Toolbar (Keyboard Accessible, Touch-friendly & Horizontally Scrollable on Mobile) */}
+      {editor && !editor.isDestroyed && editor.schema && (
         <div 
-          className="sticky top-12 sm:top-14 z-10 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-[#0d1017]/95 backdrop-blur-md border border-slate-800 shadow-lg overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap"
+          role="toolbar"
           aria-label="Rich text editor toolbar"
+          onKeyDown={handleToolbarKeyDown}
+          className="sticky top-12 sm:top-14 z-10 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-[#0d1017]/95 backdrop-blur-md border border-slate-800 shadow-lg overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap"
         >
           {/* Text Style Dropdown / Buttons */}
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('heading', { level: 1 })
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -636,7 +692,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('heading', { level: 2 })
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -651,7 +707,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('heading', { level: 3 })
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -669,7 +725,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('bold')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -684,7 +740,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('italic')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -699,7 +755,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('underline')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -714,7 +770,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleStrike().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('strike')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -725,6 +781,21 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             <Strikethrough className="w-4 h-4" />
           </button>
 
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => editor.chain().focus().toggleCode().run()}
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
+              editor.isActive('code')
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+            }`}
+            title="Inline Code"
+            aria-label="Inline Code"
+          >
+            <Code className="w-4 h-4" />
+          </button>
+
           <div className="w-[1px] h-5 bg-slate-800 mx-0.5 flex-shrink-0" />
 
           {/* Lists */}
@@ -732,7 +803,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('bulletList')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -747,7 +818,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('orderedList')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -762,7 +833,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleTaskList().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('taskList')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -780,7 +851,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('blockquote')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -795,7 +866,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none ${
               editor.isActive('codeBlock')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -803,14 +874,25 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             title="Code Block"
             aria-label="Code Block"
           >
-            <Code className="w-4 h-4" />
+            <Terminal className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleInsertWikiLink}
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none"
+            title="Insert Obsidian Wiki Link [[Page]]"
+            aria-label="Insert Wiki Link"
+          >
+            <Link2 className="w-4 h-4" />
           </button>
 
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none"
             title="Horizontal Divider"
             aria-label="Horizontal Divider"
           >
@@ -825,7 +907,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
-            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none"
             title="Undo (Ctrl+Z)"
             aria-label="Undo"
           >
@@ -837,7 +919,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
-            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 touch-manipulation select-none"
             title="Redo (Ctrl+Y)"
             aria-label="Redo"
           >
@@ -848,11 +930,22 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
       {/* 6. Main Tiptap Editing Surface */}
       <div 
-        onClick={() => editor?.commands.focus()}
+        onClick={() => {
+          if (editor && !editor.isDestroyed && editor.schema) {
+            editor.commands.focus();
+          }
+        }}
         className="min-h-[320px] sm:min-h-[380px] p-3.5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl bg-[#0e111a] border border-slate-800 hover:border-slate-700/80 transition-colors shadow-sm cursor-text overflow-x-hidden"
       >
         <div className="prose prose-invert max-w-none text-sm sm:text-base leading-relaxed break-words [&_pre]:overflow-x-auto [&_code]:break-words [&_table]:overflow-x-auto [&_table]:block">
-          <EditorContent editor={editor} />
+          {editor && !editor.isDestroyed && editor.schema ? (
+            <EditorContent editor={editor} />
+          ) : (
+            <div className="flex items-center justify-center min-h-[240px] text-slate-500 text-xs">
+              <span className="w-4 h-4 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin mr-2" />
+              <span>Initializing editor...</span>
+            </div>
+          )}
         </div>
       </div>
 

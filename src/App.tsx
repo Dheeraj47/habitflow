@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DailyFocusCard } from './components/Dashboard/DailyFocusCard';
@@ -7,7 +7,11 @@ import { HabitList } from './components/HabitList';
 import { StatsAndCharts } from './components/StatsAndCharts';
 import { AddHabitModal } from './components/AddHabitModal';
 import { AuthModal } from './components/Auth/AuthModal';
-import { WorkspaceShell } from './features/workspace/components/WorkspaceShell';
+const WorkspaceShell = lazy(() =>
+  import('./features/workspace/components/WorkspaceShell').then((m) => ({
+    default: m.WorkspaceShell,
+  }))
+);
 import { SectionView } from './components/Views/SectionView';
 import { CinematicHero } from './components/Hero/CinematicHero';
 import { MobileGlanceHero } from './components/Hero/MobileGlanceHero';
@@ -559,14 +563,25 @@ export function App() {
   if (activeTab === 'workspace') {
     return (
       <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-indigo-500/25 selection:text-indigo-200">
-        <WorkspaceShell 
-          onBackToHabitFlow={() => {
-            if (typeof window !== 'undefined') {
-              window.location.hash = '';
-            }
-            setActiveTab('dashboard');
-          }} 
-        />
+        <Suspense
+          fallback={
+            <div className="min-h-screen bg-[#090d16] flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                <span className="text-xs text-slate-400 font-medium tracking-wide">Loading Workspace...</span>
+              </div>
+            </div>
+          }
+        >
+          <WorkspaceShell 
+            onBackToHabitFlow={() => {
+              if (typeof window !== 'undefined') {
+                window.location.hash = '';
+              }
+              setActiveTab('dashboard');
+            }} 
+          />
+        </Suspense>
         <AuthModal />
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       </div>

@@ -731,7 +731,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
       </div>
 
       {/* 4. Footer: Return to HabitFlow & Storage Status - FIXED AT BOTTOM */}
-      <div className="p-3 border-t border-slate-800/80 space-y-2 flex-shrink-0 bg-[#090b10] mt-auto">
+      <div className="p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-slate-800/80 space-y-2 flex-shrink-0 bg-[#090b10] mt-auto">
         <div className="flex items-center justify-between text-[11px] text-slate-500">
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
