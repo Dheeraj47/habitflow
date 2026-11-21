@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { 
   Flame, 
-  Users, 
-  User, 
   Calendar, 
   CheckCircle2, 
   Sparkles, 
@@ -74,30 +72,15 @@ export const ChallengeCard: React.FC<ChallengeCardProps> = ({
       className="group relative p-5 rounded-xl bg-[#11141f] border border-slate-800 hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-sm flex flex-col justify-between overflow-hidden"
     >
       <div>
-        {/* Top Badges */}
+        {/* Top Header: Category & Current Day / Status Tag */}
         <div className="flex items-center justify-between gap-2 mb-3.5">
-          <div className="flex items-center gap-2">
-            <span
-              className={`px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider border ${getCategoryColor(
-                challenge.category
-              )}`}
-            >
-              {challenge.category}
-            </span>
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-slate-900 border border-slate-700/80 text-slate-300">
-              {challenge.mode === 'friends' ? (
-                <>
-                  <Users className="w-3 h-3 text-indigo-400" />
-                  <span>Friends</span>
-                </>
-              ) : (
-                <>
-                  <User className="w-3 h-3 text-slate-400" />
-                  <span>Solo</span>
-                </>
-              )}
-            </span>
-          </div>
+          <span
+            className={`px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider border ${getCategoryColor(
+              challenge.category
+            )}`}
+          >
+            {challenge.category}
+          </span>
 
           {/* Current Day / Status Tag */}
           {isUpcoming ? (

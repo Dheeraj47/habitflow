@@ -7,10 +7,12 @@
 export type WorkspaceView = 
   | 'home' 
   | 'tasks' 
+  | 'notes'
   | 'pages' 
   | 'graph' 
   | 'calendar' 
-  | 'vault';
+  | 'vault'
+  | 'more';
 
 export type WorkspaceTaskStatus = 'todo' | 'in_progress' | 'completed';
 export type WorkspaceTaskPriority = 'low' | 'medium' | 'high';

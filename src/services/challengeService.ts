@@ -12,8 +12,7 @@ import type {
 import { 
   getTodayDateStringIST, 
   calculateChallengeEndDate, 
-  getChallengeDayProgress,
-  calculateConsistencyPct 
+  getChallengeDayProgress 
 } from '../utils/challengeTime';
 
 export type ChallengeUser = AuthUser | User | { id: string } | null;
@@ -155,6 +154,7 @@ export const challengeService = {
           created_at,
           updated_at
         `)
+        .eq('creator_id', user.id)
         .order('start_date', { ascending: false });
 
       if (fetchErr) {
@@ -228,7 +228,7 @@ export const challengeService = {
   },
 
   /**
-   * Creates a new 21-day challenge (Solo or Friends).
+   * Creates a new strictly personal 21-day challenge.
    */
   async createChallenge(
     user: ChallengeUser,
@@ -236,7 +236,7 @@ export const challengeService = {
       title: string;
       description?: string;
       category: ChallengeCategory;
-      mode: ChallengeMode;
+      mode?: ChallengeMode;
       startDate: string; // YYYY-MM-DD in IST
       linkedHabitId?: string;
     }
@@ -245,7 +245,7 @@ export const challengeService = {
     const startDate = params.startDate || todayIST;
     const endDate = calculateChallengeEndDate(startDate);
 
-    // 1. Guest Mode (Local Storage)
+    // 1. Guest Mode (Local Storage - Personal Challenge)
     if (!user || !supabase) {
       const newGuestChallenge: Challenge = {
         id: `guest_ch_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -253,7 +253,7 @@ export const challengeService = {
         title: params.title.trim(),
         description: params.description?.trim() || '',
         category: params.category,
-        mode: params.mode,
+        mode: 'solo',
         startDate,
         endDate,
         timezone: 'Asia/Kolkata',
@@ -274,7 +274,7 @@ export const challengeService = {
       return { success: true, challenge: newGuestChallenge };
     }
 
-    // 2. Authenticated Mode (Supabase)
+    // 2. Authenticated Mode (Supabase - Strictly Personal Solo)
     try {
       const { data, error } = await supabase
         .from('challenges')
@@ -283,7 +283,7 @@ export const challengeService = {
           title: params.title.trim(),
           description: params.description?.trim() || null,
           category: params.category,
-          mode: params.mode,
+          mode: 'solo',
           start_date: startDate,
           end_date: endDate,
           timezone: 'Asia/Kolkata',
@@ -523,129 +523,37 @@ export const challengeService = {
   },
 
   /**
-   * Fetches the real-time leaderboard for a Friends Challenge.
+   * Leaderboard disabled for personal challenges (returns empty array).
    */
-  async getLeaderboard(user: ChallengeUser, challengeId: string): Promise<LeaderboardEntry[]> {
-    if (!user || !supabase) {
-      // Guest demo leaderboard entry
-      const checkins = loadGuestCheckins().filter((c) => c.challengeId === challengeId);
-      const ch = loadGuestChallenges().find((c) => c.id === challengeId);
-      const progress = ch ? getChallengeDayProgress(ch.startDate, ch.endDate) : { elapsedDays: 1 };
-
-      return [
-        {
-          userId: 'guest_user',
-          displayName: 'Guest Explorer (You)',
-          role: 'creator',
-          participationStatus: 'active',
-          completedDays: checkins.length,
-          elapsedDays: progress.elapsedDays || 1,
-          consistencyPct: calculateConsistencyPct(checkins.length, progress.elapsedDays || 1),
-          rank: 1,
-          isCurrentUser: true,
-        },
-      ];
-    }
-
-    try {
-      const { data, error } = await supabase.rpc('fn_get_challenge_leaderboard', {
-        p_challenge_id: challengeId,
-      });
-
-      if (error) {
-        console.warn('[HabitFlow] Leaderboard RPC failed:', error.message);
-        return [];
-      }
-
-      return (data || []).map((row: {
-        user_id: string;
-        display_name: string;
-        avatar_url?: string;
-        role: string;
-        participation_status: string;
-        completed_days: number;
-        elapsed_days: number;
-        consistency_pct: number;
-        last_checkin_at?: string;
-        rank: number;
-      }) => ({
-        userId: row.user_id,
-        displayName: row.display_name || 'HabitFlow Member',
-        avatarUrl: row.avatar_url,
-        role: row.role as 'creator' | 'participant',
-        participationStatus: row.participation_status as 'active' | 'abandoned',
-        completedDays: row.completed_days,
-        elapsedDays: row.elapsed_days,
-        consistencyPct: Number(row.consistency_pct),
-        lastCheckinAt: row.last_checkin_at,
-        rank: Number(row.rank),
-        isCurrentUser: row.user_id === user.id,
-      }));
-    } catch (e) {
-      console.warn('Failed to load leaderboard:', e);
-      return [];
-    }
+  async getLeaderboard(_user: ChallengeUser, _challengeId: string): Promise<LeaderboardEntry[]> {
+    return [];
   },
 
   /**
-   * Creates an invitation for a Friends Challenge via server-side CSPRNG & SHA-256 hashing.
+   * Challenge invitations permanently disabled (challenges are strictly personal).
    */
   async createInvitation(
-    user: ChallengeUser,
-    challengeId: string,
-    inviteeEmail?: string
+    _user: ChallengeUser,
+    _challengeId: string,
+    _inviteeEmail?: string
   ): Promise<{ success: boolean; inviteLink?: string; error?: string }> {
-    if (!user || !supabase) {
-      return { success: false, error: 'Sign in to invite friends to challenges' };
-    }
-
-    try {
-      const { data, error } = await supabase.rpc('fn_create_challenge_invitation', {
-        p_challenge_id: challengeId,
-        p_invitee_email: inviteeEmail?.trim() || null,
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      const res = data as { raw_token: string };
-      const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-      const inviteLink = `${origin}/#join-challenge?token=${res.raw_token}`;
-
-      return { success: true, inviteLink };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to generate invitation';
-      return { success: false, error: msg };
-    }
+    return { 
+      success: false, 
+      error: '21-Day Challenges are strictly personal. Invitations and group challenges are disabled.' 
+    };
   },
 
   /**
-   * Joins a Friends Challenge via invitation token.
+   * Joining challenges permanently disabled (challenges are strictly personal).
    */
   async joinByToken(
-    user: ChallengeUser,
-    rawToken: string
+    _user: ChallengeUser,
+    _rawToken: string
   ): Promise<{ success: boolean; message: string; challengeId?: string }> {
-    if (!user || !supabase) {
-      return { success: false, message: 'Please sign in to accept this challenge invitation' };
-    }
-
-    try {
-      const { data, error } = await supabase.rpc('fn_join_challenge_by_token', {
-        p_token: rawToken,
-      });
-
-      if (error) {
-        return { success: false, message: error.message };
-      }
-
-      const res = data as { status: string; challenge_id: string; message: string };
-      return { success: true, message: res.message, challengeId: res.challenge_id };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to join challenge';
-      return { success: false, message: msg };
-    }
+    return { 
+      success: false, 
+      message: '21-Day Challenges are strictly personal and cannot be joined.' 
+    };
   },
 
   /**

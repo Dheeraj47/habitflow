@@ -1,12 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { 
-  FileText, 
-  CheckSquare, 
-  Calendar as CalendarIcon, 
-  StickyNote, 
-  Clock, 
   Plus, 
-  Search, 
   ChevronRight, 
   ChevronDown, 
   MoreHorizontal, 
@@ -16,19 +10,16 @@ import {
   FolderTree, 
   Edit3, 
   X, 
-  ArrowRight,
-  Menu,
-  Check,
-  FolderPlus,
-  Minimize2,
-  Maximize2
+  Check, 
+  FolderPlus, 
+  Folder, 
+  FileText
 } from 'lucide-react';
 import type { 
   WorkspacePage, 
   WorkspaceView 
 } from '../types/workspace';
 import { 
-  getPagePreviewText, 
   formatMobileRelativeDate, 
   getEligibleParentPages, 
   buildMobilePageTree 
@@ -72,7 +63,6 @@ const MobileTreeNode: React.FC<MobileTreeNodeProps> = ({
   onCreateChild,
   onOpenActionSheet,
 }) => {
-  // Cycle protection & safety depth threshold
   if (visited.has(page.id) || depth > 20) return null;
 
   const children = childrenByParentId.get(page.id) || [];
@@ -82,18 +72,18 @@ const MobileTreeNode: React.FC<MobileTreeNodeProps> = ({
   const nextVisited = new Set(visited);
   nextVisited.add(page.id);
 
-  // Responsive capped indentation: max 42px on mobile to guarantee readability on 320px
-  const indentPx = Math.min(depth * 13, 42);
+  // Indentation capped at 36px on mobile so deeply nested docs are always readable at 320px
+  const indentPx = Math.min(depth * 13, 36);
 
   return (
     <div className="space-y-0.5">
       <div 
-        className="group flex items-center justify-between py-1.5 px-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-850/80 active:bg-slate-800 transition-colors select-none min-h-[40px]"
-        style={{ paddingLeft: `${indentPx + 8}px` }}
+        className="group flex items-center justify-between py-2 px-2 rounded-xl text-slate-200 hover:text-white hover:bg-slate-850/80 active:bg-slate-800 transition-colors select-none min-h-[42px]"
+        style={{ paddingLeft: `${indentPx + 4}px` }}
       >
         {/* Left: Chevron + Icon + Title */}
         <div 
-          className="flex items-center gap-1.5 min-w-0 flex-1 cursor-pointer"
+          className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
           onClick={() => onSelectPage(page.id)}
         >
           {hasChildren ? (
@@ -103,19 +93,17 @@ const MobileTreeNode: React.FC<MobileTreeNodeProps> = ({
                 e.stopPropagation();
                 onToggleExpand(page.id);
               }}
-              className="w-6 h-6 -ml-1 text-slate-400 hover:text-white flex items-center justify-center rounded-lg hover:bg-slate-800 flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
+              className="w-5 h-5 -ml-0.5 text-slate-400 hover:text-white flex items-center justify-center rounded flex-shrink-0 cursor-pointer active:scale-95 transition-transform"
               aria-label={isExpanded ? `Collapse ${page.title}` : `Expand ${page.title}`}
             >
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-slate-300" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-300" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
               )}
             </button>
           ) : (
-            <span className="w-6 h-6 -ml-1 flex items-center justify-center flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-            </span>
+            <span className="w-5 h-5 -ml-0.5 flex-shrink-0" />
           )}
 
           <span className="text-base flex-shrink-0 leading-none">{page.icon || '📄'}</span>
@@ -129,7 +117,7 @@ const MobileTreeNode: React.FC<MobileTreeNodeProps> = ({
           )}
         </div>
 
-        {/* Right: Quick-add Child Page Button & Three-dot Action Menu */}
+        {/* Right: Quick-add Child Button & Three-dot Action Menu */}
         <div className="flex items-center gap-0.5 flex-shrink-0">
           <button
             type="button"
@@ -137,7 +125,7 @@ const MobileTreeNode: React.FC<MobileTreeNodeProps> = ({
               e.stopPropagation();
               onCreateChild(page.id);
             }}
-            className="w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
+            className="w-7 h-7 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
             title={`Add child page under ${page.title}`}
             aria-label={`Add child page under ${page.title}`}
           >
@@ -150,7 +138,7 @@ const MobileTreeNode: React.FC<MobileTreeNodeProps> = ({
               e.stopPropagation();
               onOpenActionSheet(page);
             }}
-            className="w-7 h-7 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
+            className="w-7 h-7 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 flex items-center justify-center cursor-pointer active:scale-95 transition-all"
             title="Page actions"
             aria-label={`Actions for ${page.title}`}
           >
@@ -159,9 +147,9 @@ const MobileTreeNode: React.FC<MobileTreeNodeProps> = ({
         </div>
       </div>
 
-      {/* Recursive Nested Children */}
+      {/* Recursive Children with clean guide line */}
       {hasChildren && isExpanded && (
-        <div className="space-y-0.5 border-l border-slate-800/80 ml-3.5 pl-0.5 animate-in fade-in duration-100">
+        <div className="space-y-0.5 border-l border-slate-800/80 ml-3 pl-0.5 animate-in fade-in duration-100">
           {children.map((child) => (
             <MobileTreeNode
               key={child.id}
@@ -191,14 +179,12 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
   onDeletePage,
   onToggleFavoritePage,
   onTogglePinPage,
-  onOpenSearch,
-  onOpenQuickCreate,
-  onOpenMobileNav,
-  onBackToHabitFlow,
 }) => {
   // Tree expansion state
-  const [expandedTree, setExpandedTree] = useState<Record<string, boolean>>({});
-  const [isAllExpanded, setIsAllExpanded] = useState(false);
+  const [expandedTree, setExpandedTree] = useState<Record<string, boolean>>({
+    'ws-page-welcome': true,
+    'ws-page-project': true,
+  });
 
   // Action sheet state
   const [actionPage, setActionPage] = useState<WorkspacePage | null>(null);
@@ -219,7 +205,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
       .slice(0, 8);
   }, [pages]);
 
-  // Handle expand/collapse toggle
   const handleToggleExpand = useCallback((pageId: string) => {
     setExpandedTree((prev) => ({
       ...prev,
@@ -227,22 +212,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
     }));
   }, []);
 
-  // Handle expand all / collapse all
-  const handleToggleAllExpanded = useCallback(() => {
-    if (isAllExpanded) {
-      setExpandedTree({});
-      setIsAllExpanded(false);
-    } else {
-      const all: Record<string, boolean> = {};
-      pages.forEach((p) => {
-        all[p.id] = true;
-      });
-      setExpandedTree(all);
-      setIsAllExpanded(true);
-    }
-  }, [isAllExpanded, pages]);
-
-  // Handle quick create child page
   const handleCreateChild = useCallback((parentId: string) => {
     onCreatePage('Untitled Document', parentId);
     setExpandedTree((prev) => ({
@@ -251,7 +220,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
     }));
   }, [onCreatePage]);
 
-  // Handle opening action sheet
   const handleOpenActionSheet = useCallback((page: WorkspacePage) => {
     setActionPage(page);
     setNewTitle(page.title);
@@ -259,7 +227,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
     setIsMoving(false);
   }, []);
 
-  // Handle renaming submission
   const handleSaveRename = useCallback(() => {
     if (!actionPage || !onUpdatePage) return;
     const trimmed = newTitle.trim();
@@ -270,7 +237,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
     setActionPage(null);
   }, [actionPage, newTitle, onUpdatePage]);
 
-  // Handle moving page to new parent
   const handleMovePage = useCallback((targetParentId: string | null) => {
     if (!actionPage || !onUpdatePage) return;
     onUpdatePage(actionPage.id, { parent_page_id: targetParentId });
@@ -281,130 +247,30 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
     setActionPage(null);
   }, [actionPage, onUpdatePage]);
 
-  // Eligible parent pages for moving
   const eligibleParents = useMemo(() => {
     if (!actionPage) return [];
     return getEligibleParentPages(pages, actionPage.id);
   }, [pages, actionPage]);
 
-  const activePagesCount = pages.filter((p) => !p.is_archived).length;
-
   return (
-    <div className="space-y-6 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] max-w-lg mx-auto">
+    <div className="space-y-6 pb-24 max-w-lg mx-auto">
       {/* ========================================================= */}
-      {/* A. TOP NAVIGATION: Workspace Identity & Destination Pills */}
-      {/* ========================================================= */}
-      <section className="space-y-3 pt-1">
-        {/* Workspace Identity Bar */}
-        <div className="flex items-center justify-between gap-3 px-1">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-base shadow-md shadow-indigo-500/20 flex-shrink-0">
-              🧠
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-bold text-white tracking-tight truncate">
-                  Personal Workspace
-                </h1>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex-shrink-0">
-                  Private
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-400 truncate">
-                Notion-style knowledge sanctuary
-              </p>
-            </div>
-          </div>
-
-          {onBackToHabitFlow && (
-            <button
-              type="button"
-              onClick={onBackToHabitFlow}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-850 border border-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer flex-shrink-0"
-              title="Return to HabitFlow Habit Tracker"
-            >
-              <span>HabitFlow</span>
-              <ArrowRight className="w-3.5 h-3.5 text-indigo-400" />
-            </button>
-          )}
-        </div>
-
-        {/* Rounded Touch-Friendly Destination Navigation Pills */}
-        <div 
-          role="navigation"
-          aria-label="Workspace destinations" 
-          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5"
-        >
-          {/* Home (Active) */}
-          <button
-            type="button"
-            onClick={() => onSelectView('home')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow-md shadow-indigo-500/30 flex-shrink-0 cursor-pointer active:scale-95 transition-all"
-          >
-            <span>Home</span>
-          </button>
-
-          {/* Docs / Notes */}
-          <button
-            type="button"
-            onClick={() => {
-              if (pages.length > 0) {
-                onSelectPage(pages[0].id);
-              }
-              onSelectView('pages');
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0e111a] hover:bg-slate-800 border border-slate-800/90 text-slate-300 hover:text-white text-xs font-medium flex-shrink-0 cursor-pointer active:scale-95 transition-all"
-          >
-            <FileText className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Docs</span>
-          </button>
-
-          {/* Task Manager */}
-          <button
-            type="button"
-            onClick={() => onSelectView('tasks')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0e111a] hover:bg-slate-800 border border-slate-800/90 text-slate-300 hover:text-white text-xs font-medium flex-shrink-0 cursor-pointer active:scale-95 transition-all"
-          >
-            <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Tasks</span>
-          </button>
-
-          {/* Calendar */}
-          <button
-            type="button"
-            onClick={() => onSelectView('calendar')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0e111a] hover:bg-slate-800 border border-slate-800/90 text-slate-300 hover:text-white text-xs font-medium flex-shrink-0 cursor-pointer active:scale-95 transition-all"
-          >
-            <CalendarIcon className="w-3.5 h-3.5 text-amber-400" />
-            <span>Calendar</span>
-          </button>
-
-          {/* Vault */}
-          <button
-            type="button"
-            onClick={() => onSelectView('vault')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#0e111a] hover:bg-slate-800 border border-slate-800/90 text-slate-300 hover:text-white text-xs font-medium flex-shrink-0 cursor-pointer active:scale-95 transition-all"
-          >
-            <StickyNote className="w-3.5 h-3.5 text-purple-400" />
-            <span>Vault</span>
-          </button>
-        </div>
-      </section>
-
-      {/* ========================================================= */}
-      {/* B. RECENTLY OPENED PAGES: Horizontal Scrolling Cards     */}
+      {/* 1. RECENTLY OPENED SECTION (Horizontal Carousel)           */}
       {/* ========================================================= */}
       <section className="space-y-2.5">
         <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-indigo-400" />
-            <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-              Recently Opened
-            </h2>
-          </div>
-          <span className="text-[10px] text-slate-500 font-medium">
-            {recentPages.length} {recentPages.length === 1 ? 'page' : 'pages'}
-          </span>
+          <h2 className="text-sm font-bold text-white tracking-tight">
+            Recently opened
+          </h2>
+          <button
+            type="button"
+            onClick={() => onSelectView('notes')}
+            className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title="View all notes"
+            aria-label="View all notes"
+          >
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          </button>
         </div>
 
         {recentPages.length > 0 ? (
@@ -420,26 +286,26 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                   onSelectPage(page.id);
                   onSelectView('pages');
                 }}
-                className="w-[145px] min-w-[145px] max-w-[160px] h-[124px] p-3 rounded-2xl bg-[#0e111a] hover:bg-[#121624] border border-slate-800/90 active:scale-[0.97] transition-all cursor-pointer flex flex-col justify-between shadow-sm flex-shrink-0 snap-start select-none relative group"
+                className="w-[140px] min-w-[140px] max-w-[150px] h-[122px] p-3 rounded-2xl bg-[#0e111a] hover:bg-[#121624] border border-slate-800/90 active:scale-[0.97] transition-all cursor-pointer flex flex-col justify-between shadow-sm flex-shrink-0 snap-start select-none relative group"
               >
-                {/* Card Top: Icon & Favorite Indicator */}
+                {/* Top: Icon & Star */}
                 <div className="flex items-start justify-between">
                   <span className="text-2xl leading-none">{page.icon || '📄'}</span>
                   {page.is_favorite && (
-                    <Star className="w-3 h-3 text-amber-400 fill-amber-400/50" />
+                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                   )}
                 </div>
 
-                {/* Card Middle: Title */}
-                <div className="min-w-0 my-1">
+                {/* Middle: Title */}
+                <div className="min-w-0 my-0.5">
                   <h3 className="text-xs font-semibold text-slate-100 group-hover:text-white line-clamp-2 leading-snug break-words">
                     {page.title}
                   </h3>
                 </div>
 
-                {/* Card Bottom: Content Preview or Relative Date */}
-                <div className="text-[10px] text-slate-400 truncate">
-                  {getPagePreviewText(page, 28) || formatMobileRelativeDate(page.updated_at)}
+                {/* Bottom: Relative Time */}
+                <div className="text-[10px] text-slate-500 truncate">
+                  Edited {formatMobileRelativeDate(page.updated_at)}
                 </div>
               </div>
             ))}
@@ -460,52 +326,30 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
       </section>
 
       {/* ========================================================= */}
-      {/* C. PRIVATE WORKSPACE PAGE TREE: Hierarchical Documents    */}
+      {/* 2. MY WORKSPACE PAGE TREE SECTION (Matches Reference UI)  */}
       {/* ========================================================= */}
-      <section className="p-3.5 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3">
-        {/* Page Tree Section Header */}
-        <div className="flex items-center justify-between pb-1 border-b border-slate-800/80">
+      <section className="space-y-2">
+        {/* Section Header: 📁 My Workspace + '+' Button */}
+        <div className="flex items-center justify-between px-1 pb-1">
           <div className="flex items-center gap-2">
-            <FolderTree className="w-4 h-4 text-indigo-400" />
-            <h2 className="text-xs font-bold text-white uppercase tracking-wider">
-              Workspace Pages
+            <Folder className="w-4 h-4 text-indigo-400 fill-indigo-400/20" />
+            <h2 className="text-sm font-bold text-white tracking-tight">
+              My Workspace
             </h2>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
-              {activePagesCount}
-            </span>
           </div>
 
-          <div className="flex items-center gap-1">
-            {/* Expand / Collapse All */}
-            <button
-              type="button"
-              onClick={handleToggleAllExpanded}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title={isAllExpanded ? 'Collapse All Pages' : 'Expand All Pages'}
-              aria-label={isAllExpanded ? 'Collapse All Pages' : 'Expand All Pages'}
-            >
-              {isAllExpanded ? (
-                <Minimize2 className="w-3.5 h-3.5" />
-              ) : (
-                <Maximize2 className="w-3.5 h-3.5" />
-              )}
-            </button>
-
-            {/* Quick Add Root Page */}
-            <button
-              type="button"
-              onClick={() => onCreatePage('Untitled Document', null)}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-medium transition-colors cursor-pointer active:scale-95"
-              title="Create new top-level page"
-              aria-label="Create new top-level page"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span className="text-[11px]">New Page</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => onCreatePage('Untitled Document', null)}
+            className="w-7 h-7 rounded-lg text-indigo-400 hover:text-white hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+            title="Create new top-level page"
+            aria-label="Create new top-level page"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+          </button>
         </div>
 
-        {/* Tree Container */}
+        {/* Tree List */}
         <div className="space-y-0.5">
           {rootPages.map((rootPage) => (
             <MobileTreeNode
@@ -542,49 +386,7 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
       </section>
 
       {/* ========================================================= */}
-      {/* D. FIXED BOTTOM ACTION BAR: Search, Quick-Create & Drawer */}
-      {/* ========================================================= */}
-      <div 
-        role="toolbar"
-        aria-label="Mobile workspace action bar"
-        className="fixed bottom-0 left-0 right-0 z-30 bg-[#0b0e17]/95 backdrop-blur-xl border-t border-slate-800/90 px-4 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between shadow-2xl"
-      >
-        {/* Search Entry Point */}
-        <button
-          type="button"
-          onClick={onOpenSearch}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white text-xs font-medium cursor-pointer active:scale-95 transition-all shadow-sm min-h-[40px]"
-          aria-label="Search Workspace (Ctrl+K)"
-        >
-          <Search className="w-4 h-4 text-indigo-400" />
-          <span>Search</span>
-        </button>
-
-        {/* Quick Create Entry Point (Prominent Action) */}
-        <button
-          type="button"
-          onClick={onOpenQuickCreate}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 cursor-pointer active:scale-95 transition-all min-h-[40px]"
-          aria-label="Quick Create New Document or Task"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5]" />
-          <span>New</span>
-        </button>
-
-        {/* Workspace Navigation Drawer Toggle */}
-        <button
-          type="button"
-          onClick={onOpenMobileNav}
-          className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white cursor-pointer active:scale-95 transition-all shadow-sm min-h-[40px] flex items-center justify-center"
-          title="Open Navigation Menu"
-          aria-label="Open Navigation Menu"
-        >
-          <Menu className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* ========================================================= */}
-      {/* MOBILE THREE-DOT ACTION SHEET / BOTTOM MODAL              */}
+      {/* 3. THREE-DOT ACTION SHEET MODAL                          */}
       {/* ========================================================= */}
       {actionPage && (
         <div 
@@ -595,7 +397,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
             className="p-4 sm:p-5 bg-[#0e111a] border-t border-slate-800 rounded-t-3xl space-y-3.5 shadow-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Sheet Header: Page Identity & Close Button */}
             <div className="flex items-center justify-between pb-2 border-b border-slate-800">
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="text-xl flex-shrink-0">{actionPage.icon || '📄'}</span>
@@ -609,14 +410,13 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
               <button
                 type="button"
                 onClick={() => setActionPage(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer transition-colors"
-                aria-label="Close page actions"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer"
+                aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Inline Rename Box */}
             {isRenaming ? (
               <div className="space-y-2 p-3 rounded-xl bg-slate-900 border border-slate-800">
                 <label className="text-[11px] font-semibold text-slate-300 block">
@@ -652,7 +452,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                 </div>
               </div>
             ) : isMoving ? (
-              /* Inline Move Destination Selector */
               <div className="space-y-2.5 p-3 rounded-xl bg-slate-900 border border-slate-800">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold text-slate-300">
@@ -668,7 +467,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                 </div>
 
                 <div className="space-y-1 max-h-48 overflow-y-auto no-scrollbar">
-                  {/* Option: Top-Level Root */}
                   <button
                     type="button"
                     onClick={() => handleMovePage(null)}
@@ -685,7 +483,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                     {actionPage.parent_page_id === null && <Check className="w-3.5 h-3.5" />}
                   </button>
 
-                  {/* Other Eligible Parent Pages */}
                   {eligibleParents.map((parent) => (
                     <button
                       key={parent.id}
@@ -707,9 +504,7 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                 </div>
               </div>
             ) : (
-              /* Primary Action Sheet Options */
               <div className="space-y-1">
-                {/* 1. Open Document */}
                 <button
                   type="button"
                   onClick={() => {
@@ -723,7 +518,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                   <span className="text-xs sm:text-sm font-medium">Open Document</span>
                 </button>
 
-                {/* 2. Rename Document */}
                 <button
                   type="button"
                   onClick={() => setIsRenaming(true)}
@@ -733,7 +527,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                   <span className="text-xs sm:text-sm font-medium">Rename Page</span>
                 </button>
 
-                {/* 3. Add Sub-Page */}
                 <button
                   type="button"
                   onClick={() => {
@@ -746,7 +539,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                   <span className="text-xs sm:text-sm font-medium">Add Child Page</span>
                 </button>
 
-                {/* 4. Favorite Toggle */}
                 {onToggleFavoritePage && (
                   <button
                     type="button"
@@ -769,7 +561,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                   </button>
                 )}
 
-                {/* 5. Pin Toggle */}
                 {onTogglePinPage && (
                   <button
                     type="button"
@@ -792,7 +583,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                   </button>
                 )}
 
-                {/* 6. Move Document */}
                 <button
                   type="button"
                   onClick={() => setIsMoving(true)}
@@ -802,7 +592,6 @@ export const MobileWorkspaceHome: React.FC<MobileWorkspaceHomeProps> = ({
                   <span className="text-xs sm:text-sm font-medium">Move Page...</span>
                 </button>
 
-                {/* 7. Delete Document */}
                 {onDeletePage && (
                   <button
                     type="button"

@@ -270,36 +270,6 @@ export function App() {
     prevLevelRef.current = currentLevel;
   }, [userXP]);
 
-  // Check for 21-day challenge invite token in URL
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    let token = url.searchParams.get('token') || url.searchParams.get('join');
-    if (!token && window.location.hash.includes('token=')) {
-      const match = window.location.hash.match(/token=([a-f0-9]+)/i);
-      if (match) token = match[1];
-    }
-
-    if (token) {
-      challengeService.joinByToken(authUser, token).then((res) => {
-        setActiveTab('challenges');
-        if (res.success) {
-          addToast({
-            type: 'success',
-            message: 'Joined Challenge!',
-            subtext: res.message,
-          });
-        } else {
-          addToast({
-            type: 'info',
-            message: 'Challenge Invitation',
-            subtext: res.message,
-          });
-        }
-      });
-    }
-  }, [authUser]);
-
   // Handle Challenge XP rewards
   const handleChallengeReward = (xp: number, message: string) => {
     setUserXP((prev) => prev + xp);

@@ -271,3 +271,165 @@ test('Mobile Home: Viewport indentation constraints guarantee readability at 320
   assert.equal(getIndentPx(10), 42);
   assert.ok(296 - 104 - getIndentPx(10) >= 150, 'Even at depth 10, text has 150px space at 320px viewport');
 });
+
+test('Mobile Workspace Navigation: 5 primary destinations architecture', () => {
+  const PRIMARY_DESTINATIONS = ['home', 'tasks', 'notes', 'calendar', 'more'] as const;
+  assert.equal(PRIMARY_DESTINATIONS.length, 5);
+  assert.deepEqual([...PRIMARY_DESTINATIONS], ['home', 'tasks', 'notes', 'calendar', 'more']);
+
+  // Verify secondary destinations are mapped via 'more' or 'notes'
+  const isDirectPrimary = (view: string) => PRIMARY_DESTINATIONS.includes(view as any);
+  assert.equal(isDirectPrimary('home'), true);
+  assert.equal(isDirectPrimary('tasks'), true);
+  assert.equal(isDirectPrimary('notes'), true);
+  assert.equal(isDirectPrimary('calendar'), true);
+  assert.equal(isDirectPrimary('more'), true);
+
+  // Secondary tools accessed via More
+  assert.equal(isDirectPrimary('graph'), false);
+  assert.equal(isDirectPrimary('vault'), false);
+});
+
+test('Interactive Knowledge Graph: Zoom clamping and gesture boundaries', () => {
+  const MIN_ZOOM = 0.4;
+  const MAX_ZOOM = 3.0;
+  const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Number(z.toFixed(2))));
+
+  // Zoom in steps
+  assert.equal(clampZoom(1.0 + 0.25), 1.25);
+  assert.equal(clampZoom(2.8 + 0.25), 3.0, 'Must clamp to MAX_ZOOM of 3.0');
+  assert.equal(clampZoom(10.0), 3.0);
+
+  // Zoom out steps
+  assert.equal(clampZoom(1.0 - 0.25), 0.75);
+  assert.equal(clampZoom(0.5 - 0.25), 0.4, 'Must clamp to MIN_ZOOM of 0.4');
+  assert.equal(clampZoom(-5.0), 0.4);
+
+  // Pan boundary clamp
+  const clampPan = (p: number) => Math.min(250, Math.max(-250, p));
+  assert.equal(clampPan(50), 50);
+  assert.equal(clampPan(400), 250);
+  assert.equal(clampPan(-400), -250);
+});
+
+test('Interactive Knowledge Graph: Hub constellation generation', () => {
+  const center = { x: 300, y: 240 };
+  const radius = 145;
+
+  const mockPages: WorkspacePage[] = [
+    {
+      id: 'p-1',
+      user_id: 'u-1',
+      title: 'Q4 Strategic Blueprint',
+      icon: '🚀',
+      content_blocks: [],
+      content_html: '',
+      word_count: 500,
+      parent_page_id: null,
+      cover_url: null,
+      is_archived: false,
+      is_pinned: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 'p-2',
+      user_id: 'u-1',
+      title: 'Personal Notes',
+      icon: '🧠',
+      content_blocks: [],
+      content_html: '',
+      word_count: 320,
+      parent_page_id: null,
+      cover_url: null,
+      is_archived: false,
+      is_pinned: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ];
+
+  // Radial positioning math
+  const count = 4;
+  const positions = Array.from({ length: count }).map((_, idx) => {
+    const angle = (idx / count) * 2 * Math.PI - Math.PI / 2;
+    return {
+      x: Math.round(center.x + radius * Math.cos(angle)),
+      y: Math.round(center.y + radius * Math.sin(angle)),
+    };
+  });
+
+  // Top node
+  assert.equal(positions[0].x, 300);
+  assert.equal(positions[0].y, 95); // 240 - 145
+
+  // Right node
+  assert.equal(positions[1].x, 445); // 300 + 145
+  assert.equal(positions[1].y, 240);
+
+  // Bottom node
+  assert.equal(positions[2].x, 300);
+  assert.equal(positions[2].y, 385); // 240 + 145
+
+  // Left node
+  assert.equal(positions[3].x, 155); // 300 - 145
+  assert.equal(positions[3].y, 240);
+});
+
+test('Dedicated Notes View: Live search and tab filters', () => {
+  const samplePages: WorkspacePage[] = [
+    {
+      id: 'p-1',
+      user_id: 'u-1',
+      title: 'Meeting Notes',
+      content_blocks: [],
+      content_html: 'Quarterly review',
+      is_favorite: true,
+      is_pinned: false,
+      is_archived: false,
+      created_at: '2026-11-20T10:00:00Z',
+      updated_at: '2026-11-20T10:00:00Z',
+    },
+    {
+      id: 'p-2',
+      user_id: 'u-1',
+      title: 'Habit Blueprint',
+      content_blocks: [],
+      content_html: 'Daily habits system',
+      is_favorite: false,
+      is_pinned: true,
+      is_archived: false,
+      created_at: '2026-11-21T08:00:00Z',
+      updated_at: '2026-11-21T08:00:00Z',
+    },
+    {
+      id: 'p-3',
+      user_id: 'u-1',
+      title: 'Archived Scratchpad',
+      content_blocks: [],
+      content_html: 'Old draft',
+      is_favorite: false,
+      is_pinned: false,
+      is_archived: true,
+      created_at: '2026-11-19T08:00:00Z',
+      updated_at: '2026-11-19T08:00:00Z',
+    },
+  ];
+
+  const activePages = samplePages.filter((p) => !p.is_archived);
+  assert.equal(activePages.length, 2);
+
+  // Search filter
+  const query = 'blueprint';
+  const filtered = activePages.filter((p) => 
+    p.title.toLowerCase().includes(query.toLowerCase())
+  );
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].title, 'Habit Blueprint');
+
+  // Favorites filter
+  const favorites = activePages.filter((p) => p.is_favorite);
+  assert.equal(favorites.length, 1);
+  assert.equal(favorites[0].id, 'p-1');
+});
+

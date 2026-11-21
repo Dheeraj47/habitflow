@@ -15,8 +15,7 @@ import type {
   Challenge, 
   ChallengeTemplate, 
   ChallengeCategory, 
-  ChallengeMode, 
-  LeaderboardEntry 
+  ChallengeMode
 } from '../../types/challenge';
 import type { Habit } from '../../types/habit';
 import { challengeService } from '../../services/challengeService';
@@ -53,8 +52,6 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
   }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [totalXP, setTotalXP] = useState(0);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
   // Load challenges and total XP
   const loadData = useCallback(async () => {
@@ -83,26 +80,7 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
 
   useEffect(() => {
     loadData();
-  }, [authUser]);
-
-  // Load leaderboard when selected challenge is multiplayer
-  const loadSelectedLeaderboard = useCallback(async (challengeId: string) => {
-    try {
-      setIsLoadingLeaderboard(true);
-      const data = await challengeService.getLeaderboard(authUser, challengeId);
-      setLeaderboard(data);
-    } catch (e) {
-      console.warn('Failed to load leaderboard:', e);
-    } finally {
-      setIsLoadingLeaderboard(false);
-    }
-  }, [authUser]);
-
-  useEffect(() => {
-    if (selectedChallenge && selectedChallenge.mode === 'friends') {
-      loadSelectedLeaderboard(selectedChallenge.id);
-    }
-  }, [selectedChallenge, loadSelectedLeaderboard]);
+  }, [loadData]);
 
   // Handle Daily Check-in
   const handleCheckin = async (challenge: Challenge, _notes?: string) => {
@@ -129,7 +107,7 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
     await loadData();
   };
 
-  // Handle Challenge Creation
+  // Handle Challenge Creation (strictly personal solo)
   const handleCreateChallenge = async (params: {
     title: string;
     description: string;
@@ -138,7 +116,10 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
     startDate: string;
     linkedHabitId?: string;
   }) => {
-    const result = await challengeService.createChallenge(authUser, params);
+    const result = await challengeService.createChallenge(authUser, {
+      ...params,
+      mode: 'solo',
+    });
     if (result.success && result.challenge) {
       confetti({
         particleCount: 60,
@@ -154,12 +135,12 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
   };
 
   // Handle Template Selection from Explore
-  const handleStartTemplate = (template: ChallengeTemplate, mode: 'solo' | 'friends') => {
+  const handleStartTemplate = (template: ChallengeTemplate) => {
     setModalDefaultValues({
       title: template.title,
       description: template.description,
       category: template.category,
-      mode,
+      mode: 'solo',
     });
     setIsCreateModalOpen(true);
   };
@@ -169,15 +150,6 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
     await challengeService.abandonChallenge(authUser, challenge.id);
     await loadData();
     setSelectedChallenge(null);
-  };
-
-  // Handle Invite Generation
-  const handleGenerateInvite = async (challengeId: string) => {
-    const res = await challengeService.createInvitation(authUser, challengeId);
-    if (res.success && res.inviteLink) {
-      return res.inviteLink;
-    }
-    return undefined;
   };
 
   // Filter Active vs Archived Challenges
@@ -212,10 +184,6 @@ export const ChallengesDashboard: React.FC<ChallengesDashboardProps> = ({
           onBack={() => setSelectedChallenge(null)}
           onCheckin={handleCheckin}
           onAbandon={handleAbandon}
-          onGenerateInvite={handleGenerateInvite}
-          leaderboard={leaderboard}
-          isLoadingLeaderboard={isLoadingLeaderboard}
-          onRefreshLeaderboard={() => loadSelectedLeaderboard(selectedChallenge.id)}
           linkedHabitTitle={linkedHabit?.title}
           isGuest={!isAuthenticated}
         />

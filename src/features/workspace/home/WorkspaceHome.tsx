@@ -124,7 +124,7 @@ export const WorkspaceHome: React.FC<WorkspaceHomeProps> = ({
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-indigo-400">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Personal Knowledge &amp; Productivity Sanctuary</span>
+                <span>Personal Knowledge &amp; Productivity Engine</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Personal Workspace

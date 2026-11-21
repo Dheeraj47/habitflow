@@ -7,8 +7,6 @@ import {
   BookOpen, 
   Moon, 
   Flame, 
-  Users, 
-  User, 
   Check 
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -17,7 +15,7 @@ import type { ChallengeTemplate } from '../../types/challenge';
 import { soundFx } from '../../utils/sound';
 
 interface ExploreChallengesProps {
-  onStartTemplate: (template: ChallengeTemplate, mode: 'solo' | 'friends') => void;
+  onStartTemplate: (template: ChallengeTemplate) => void;
   activeChallengeTitles?: string[];
 }
 
@@ -148,39 +146,25 @@ export const ExploreChallenges: React.FC<ExploreChallengesProps> = ({
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-5 pt-4 border-t border-slate-800 flex items-center gap-2">
+              {/* Action Button */}
+              <div className="mt-5 pt-4 border-t border-slate-800 flex items-center">
                 {isAlreadyActive ? (
                   <div className="w-full py-2 px-3 rounded-lg bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-xs font-semibold flex items-center justify-center gap-1.5">
                     <Check className="w-3.5 h-3.5 text-indigo-400" />
                     <span>Already Active in Your Dashboard</span>
                   </div>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFx.playCrystalChime(880);
-                        onStartTemplate(template, 'solo');
-                      }}
-                      className="flex-1 py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
-                    >
-                      <User className="w-3.5 h-3.5" />
-                      <span>Start Solo</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundFx.playCrystalChime(880);
-                        onStartTemplate(template, 'friends');
-                      }}
-                      className="flex-1 py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
-                    >
-                      <Users className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>With Friends</span>
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundFx.playCrystalChime(880);
+                      onStartTemplate(template);
+                    }}
+                    className="w-full py-2.5 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Start 21-Day Sprint</span>
+                  </button>
                 )}
               </div>
             </motion.div>

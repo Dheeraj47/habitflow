@@ -12,6 +12,7 @@ interface PagesPlaceholderProps {
   onTogglePin: (pageId: string) => void;
   onCreatePage: (title?: string, parentId?: string | null) => void;
   saveStatus?: 'saved' | 'saving' | 'error';
+  onBackToNotes?: () => void;
 }
 
 export const PagesPlaceholder: React.FC<PagesPlaceholderProps> = (props) => {

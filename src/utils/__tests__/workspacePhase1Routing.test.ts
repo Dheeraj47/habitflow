@@ -96,7 +96,7 @@ test('Workspace Phase 1: Hierarchical page structure supports nesting without cy
     id: 'page-root',
     user_id: 'usr-1',
     parent_page_id: null,
-    title: 'Workspace Sanctuary Root',
+    title: 'Workspace Root Document',
     icon: '🧠',
     content_blocks: [],
     is_favorite: true,

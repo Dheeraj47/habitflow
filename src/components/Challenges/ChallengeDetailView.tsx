@@ -7,32 +7,23 @@ import {
   Clock, 
   Trophy, 
   Sparkles, 
-  Users, 
-  User, 
-  Copy, 
-  Check, 
   AlertTriangle,
   Link as LinkIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import type { Challenge, LeaderboardEntry } from '../../types/challenge';
+import type { Challenge } from '../../types/challenge';
 import { 
   getChallengeDayProgress, 
   getTodayDateStringIST,
   calculateConsistencyPct 
 } from '../../utils/challengeTime';
 import { soundFx } from '../../utils/sound';
-import { ChallengeLeaderboard } from './ChallengeLeaderboard';
 
 interface ChallengeDetailViewProps {
   challenge: Challenge;
   onBack: () => void;
   onCheckin: (challenge: Challenge, notes?: string) => Promise<void>;
   onAbandon: (challenge: Challenge) => Promise<void>;
-  onGenerateInvite?: (challengeId: string) => Promise<string | undefined>;
-  leaderboard?: LeaderboardEntry[];
-  isLoadingLeaderboard?: boolean;
-  onRefreshLeaderboard?: () => Promise<void>;
   linkedHabitTitle?: string;
   isGuest?: boolean;
 }
@@ -42,18 +33,12 @@ export const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({
   onBack,
   onCheckin,
   onAbandon,
-  onGenerateInvite,
-  leaderboard = [],
-  isLoadingLeaderboard = false,
-  onRefreshLeaderboard,
   linkedHabitTitle,
-  isGuest = false,
+  isGuest: _isGuest = false,
 }) => {
   const [reflectionNote, setReflectionNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAbandonConfirm, setShowAbandonConfirm] = useState(false);
-  const [copiedInvite, setCopiedInvite] = useState(false);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'leaderboard'>('timeline');
 
   const todayIST = getTodayDateStringIST();
   const progress = getChallengeDayProgress(challenge.startDate, challenge.endDate, todayIST);
@@ -70,17 +55,6 @@ export const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({
       setReflectionNote('');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleCreateInviteLink = async () => {
-    if (!onGenerateInvite) return;
-    const link = await onGenerateInvite(challenge.id);
-    if (link) {
-      await navigator.clipboard.writeText(link);
-      setCopiedInvite(true);
-      soundFx.playCrystalChime(880);
-      setTimeout(() => setCopiedInvite(false), 3000);
     }
   };
 
@@ -120,19 +94,6 @@ export const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="px-3 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/25">
                 {challenge.category}
-              </span>
-              <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-900 border border-slate-800 text-slate-300">
-                {challenge.mode === 'friends' ? (
-                  <>
-                    <Users className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Multiplayer Challenge</span>
-                  </>
-                ) : (
-                  <>
-                    <User className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Solo Journey</span>
-                  </>
-                )}
               </span>
 
               {linkedHabitTitle && (
@@ -260,234 +221,159 @@ export const ChallengeDetailView: React.FC<ChallengeDetailViewProps> = ({
         </div>
       </div>
 
-      {/* Mode Subtabs for Multiplayer */}
-      {challenge.mode === 'friends' && (
-        <div className="flex items-center gap-2 p-1 bg-slate-900 border border-slate-800 rounded-xl w-fit">
-          <button
-            type="button"
-            onClick={() => setActiveTab('timeline')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              activeTab === 'timeline'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            21-Day Timeline &amp; Check-In
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('leaderboard')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'leaderboard'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Friends Leaderboard</span>
-          </button>
-        </div>
-      )}
-
-      {/* Main Content Area */}
-      {activeTab === 'timeline' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 21-Day Matrix / Visualizer (2 Columns on large) */}
-          <div className="lg:col-span-2 p-6 rounded-2xl bg-[#11141f] border border-slate-800 shadow-sm space-y-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-white tracking-tight">
-                  21-Day Journey Map
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Every continuous day rewires your neural habits
-                </p>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <span>Done</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-                  <span>Today</span>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-                  <span>Upcoming</span>
-                </span>
-              </div>
+      {/* Main Content Area: 21-Day Journey Map & Daily Check-In Station */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 21-Day Matrix / Visualizer (2 Columns on large) */}
+        <div className="lg:col-span-2 p-6 rounded-2xl bg-[#11141f] border border-slate-800 shadow-sm space-y-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-white tracking-tight">
+                21-Day Journey Map
+              </h3>
+              <p className="text-xs text-slate-400">
+                Every continuous day rewires your neural habits
+              </p>
             </div>
-
-            {/* 21-Day Circular/Card Grid (7 columns x 3 rows) */}
-            <div className="grid grid-cols-3 sm:grid-cols-7 gap-2.5 pt-2">
-              {Array.from({ length: 21 }, (_, i) => {
-                const dayNum = i + 1;
-                const isPast = dayNum < currentDay;
-                const isToday = dayNum === currentDay;
-                const isDone = dayNum <= completedCount; // Note: In strict check-ins, completed count tracks checked days
-                const isMilestone = dayNum === 7 || dayNum === 14 || dayNum === 21;
-
-                let cellBg = 'bg-slate-900/60 border-slate-800 text-slate-500';
-                if (isDone) {
-                  cellBg = 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300';
-                } else if (isToday) {
-                  cellBg = 'bg-indigo-950/40 border-indigo-500/60 text-indigo-200 ring-1 ring-indigo-500/30';
-                } else if (isPast && !isDone) {
-                  cellBg = 'bg-rose-950/20 border-rose-500/25 text-rose-400/70';
-                }
-
-                return (
-                  <motion.div
-                    key={dayNum}
-                    whileHover={{ scale: 1.03 }}
-                    className={`relative p-3 rounded-xl border flex flex-col items-center justify-center text-center min-h-[76px] transition-all ${cellBg}`}
-                  >
-                    {isMilestone && (
-                      <span className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-amber-500 text-black shadow-sm">
-                        <Sparkles className="w-2.5 h-2.5" />
-                      </span>
-                    )}
-
-                    <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
-                      Day
-                    </span>
-                    <span className="text-base font-extrabold">{dayNum}</span>
-
-                    <div className="mt-1">
-                      {isDone ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                      ) : isToday ? (
-                        <span className="text-xs font-bold text-indigo-400">TODAY</span>
-                      ) : isPast ? (
-                        <span className="text-xs text-slate-600">—</span>
-                      ) : (
-                        <Clock className="w-3.5 h-3.5 text-slate-600" />
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-              <span>Timezone authority: Asia/Kolkata (IST UTC+05:30)</span>
-              <span className="text-indigo-400 font-medium">Daily reset at 00:00:00 IST</span>
+            <div className="flex items-center gap-3 text-xs text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                <span>Done</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                <span>Today</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-slate-700" />
+                <span>Upcoming</span>
+              </span>
             </div>
           </div>
 
-          {/* Today's Action Center & Check-In Panel (1 Column) */}
-          <div className="p-6 rounded-2xl bg-[#11141f] border border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  <Flame className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white">Daily Check-In Station</h4>
-                  <p className="text-xs text-slate-400">Day {currentDay} of 21</p>
-                </div>
-              </div>
+          {/* 21-Day Circular/Card Grid (7 columns x 3 rows) */}
+          <div className="grid grid-cols-3 sm:grid-cols-7 gap-2.5 pt-2">
+            {Array.from({ length: 21 }, (_, i) => {
+              const dayNum = i + 1;
+              const isPast = dayNum < currentDay;
+              const isToday = dayNum === currentDay;
+              const isDone = dayNum <= completedCount;
+              const isMilestone = dayNum === 7 || dayNum === 14 || dayNum === 21;
 
-              {challenge.isCheckedInToday ? (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-2">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
-                  <h5 className="text-sm font-bold text-white">Day {currentDay} Check-In Logged!</h5>
-                  <p className="text-xs text-slate-400">
-                    Outstanding consistency! You earned +10 XP today. Tomorrow's check-in unlocks at midnight IST.
-                  </p>
-                </div>
-              ) : progress.status === 'upcoming' ? (
-                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center space-y-2">
-                  <Clock className="w-8 h-8 text-amber-400 mx-auto" />
-                  <h5 className="text-sm font-bold text-white">Upcoming Challenge</h5>
-                  <p className="text-xs text-slate-400">
-                    This challenge kicks off on {challenge.startDate} IST. Get mentally ready!
-                  </p>
-                </div>
-              ) : progress.status === 'ended' ? (
-                <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-center space-y-2">
-                  <Trophy className="w-8 h-8 text-indigo-400 mx-auto" />
-                  <h5 className="text-sm font-bold text-white">Challenge Concluded</h5>
-                  <p className="text-xs text-slate-400">
-                    21 days complete. You logged {completedCount} check-ins!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3.5">
-                  <p className="text-xs text-slate-300">
-                    Did you complete your daily habit today? Add an optional reflection and lock in your check-in:
-                  </p>
+              let cellBg = 'bg-slate-900/60 border-slate-800 text-slate-500';
+              if (isDone) {
+                cellBg = 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300';
+              } else if (isToday) {
+                cellBg = 'bg-indigo-950/40 border-indigo-500/60 text-indigo-200 ring-1 ring-indigo-500/30';
+              } else if (isPast && !isDone) {
+                cellBg = 'bg-rose-950/20 border-rose-500/25 text-rose-400/70';
+              }
 
-                  <textarea
-                    value={reflectionNote}
-                    onChange={(e) => setReflectionNote(e.target.value)}
-                    placeholder="Brief reflection or milestone note (e.g. Read chapter 4, felt energized)..."
-                    rows={3}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={handlePerformCheckin}
-                    disabled={isSubmitting}
-                    className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>
-                      {isSubmitting ? 'Recording Check-In...' : `Complete Day ${currentDay} Check-In (+10 XP)`}
+              return (
+                <motion.div
+                  key={dayNum}
+                  whileHover={{ scale: 1.03 }}
+                  className={`relative p-3 rounded-xl border flex flex-col items-center justify-center text-center min-h-[76px] transition-all ${cellBg}`}
+                >
+                  {isMilestone && (
+                    <span className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full bg-amber-500 text-black shadow-sm">
+                      <Sparkles className="w-2.5 h-2.5" />
                     </span>
-                  </button>
-                </div>
-              )}
+                  )}
+
+                  <span className="text-xs font-semibold uppercase tracking-wider opacity-70">
+                    Day
+                  </span>
+                  <span className="text-base font-extrabold">{dayNum}</span>
+
+                  <div className="mt-1">
+                    {isDone ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : isToday ? (
+                      <span className="text-xs font-bold text-indigo-400">TODAY</span>
+                    ) : isPast ? (
+                      <span className="text-xs text-slate-600">—</span>
+                    ) : (
+                      <Clock className="w-3.5 h-3.5 text-slate-600" />
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+            <span>Timezone authority: Asia/Kolkata (IST UTC+05:30)</span>
+            <span className="text-indigo-400 font-medium">Daily reset at 00:00:00 IST</span>
+          </div>
+        </div>
+
+        {/* Today's Action Center & Check-In Panel (1 Column) */}
+        <div className="p-6 rounded-2xl bg-[#11141f] border border-slate-800 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                <Flame className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Daily Check-In Station</h4>
+                <p className="text-xs text-slate-400">Day {currentDay} of 21</p>
+              </div>
             </div>
 
-            {/* Friend Invite Shortcut if Multiplayer */}
-            {challenge.mode === 'friends' && (
-              <div className="pt-4 border-t border-slate-800 space-y-2.5">
-                <div className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>Challenge Friends</span>
-                </div>
+            {challenge.isCheckedInToday ? (
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center space-y-2">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto" />
+                <h5 className="text-sm font-bold text-white">Day {currentDay} Check-In Logged!</h5>
+                <p className="text-xs text-slate-400">
+                  Outstanding consistency! You earned +10 XP today. Tomorrow's check-in unlocks at midnight IST.
+                </p>
+              </div>
+            ) : progress.status === 'upcoming' ? (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center space-y-2">
+                <Clock className="w-8 h-8 text-amber-400 mx-auto" />
+                <h5 className="text-sm font-bold text-white">Upcoming Challenge</h5>
+                <p className="text-xs text-slate-400">
+                  This challenge kicks off on {challenge.startDate} IST. Get mentally ready!
+                </p>
+              </div>
+            ) : progress.status === 'ended' ? (
+              <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-center space-y-2">
+                <Trophy className="w-8 h-8 text-indigo-400 mx-auto" />
+                <h5 className="text-sm font-bold text-white">Challenge Concluded</h5>
+                <p className="text-xs text-slate-400">
+                  21 days complete. You logged {completedCount} check-ins!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                <p className="text-xs text-slate-300">
+                  Did you complete your daily habit today? Add an optional reflection and lock in your check-in:
+                </p>
 
-                {isGuest ? (
-                  <p className="text-xs text-slate-400 italic">
-                    Sign in with your email or Google to generate shareable invite links for your friends.
-                  </p>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleCreateInviteLink}
-                    className="w-full py-2 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    {copiedInvite ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span className="text-emerald-400">Invite Link Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>Copy Friend Invite Link</span>
-                      </>
-                    )}
-                  </button>
-                )}
+                <textarea
+                  value={reflectionNote}
+                  onChange={(e) => setReflectionNote(e.target.value)}
+                  placeholder="Brief reflection or milestone note (e.g. Read chapter 4, felt energized)..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none"
+                />
+
+                <button
+                  type="button"
+                  onClick={handlePerformCheckin}
+                  disabled={isSubmitting}
+                  className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <span>
+                    {isSubmitting ? 'Recording Check-In...' : `Complete Day ${currentDay} Check-In (+10 XP)`}
+                  </span>
+                </button>
               </div>
             )}
           </div>
         </div>
-      ) : (
-        /* Multiplayer Friends Leaderboard */
-        <ChallengeLeaderboard
-          challenge={challenge}
-          leaderboard={leaderboard}
-          isLoading={isLoadingLeaderboard}
-          onRefresh={onRefreshLeaderboard}
-          onGenerateInvite={onGenerateInvite}
-          isGuest={isGuest}
-        />
-      )}
+      </div>
 
       {/* Abandon Confirmation Modal */}
       <AnimatePresence>

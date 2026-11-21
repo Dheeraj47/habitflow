@@ -346,7 +346,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             </h2>
             <div className="flex items-center gap-1 text-[10px] text-emerald-400 mt-0.5">
               <Lock className="w-2.5 h-2.5" />
-              <span>Private Sanctuary</span>
+              <span>Private Workspace</span>
             </div>
           </div>
         </div>

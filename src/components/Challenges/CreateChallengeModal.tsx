@@ -3,8 +3,6 @@ import {
   X, 
   Flame, 
   Sparkles, 
-  Users, 
-  User, 
   Link as LinkIcon 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -54,7 +52,6 @@ const CreateChallengeForm: React.FC<FormInnerProps> = ({
   const [category, setCategory] = useState<ChallengeCategory>(
     defaultValues?.category || 'productivity'
   );
-  const [mode, setMode] = useState<ChallengeMode>(defaultValues?.mode || 'solo');
   const [startDateChoice, setStartDateChoice] = useState<'today' | 'tomorrow' | 'custom'>('today');
   const [customStartDate, setCustomStartDate] = useState(todayIST);
   const [linkedHabitId, setLinkedHabitId] = useState<string>('');
@@ -84,7 +81,7 @@ const CreateChallengeForm: React.FC<FormInnerProps> = ({
         title: title.trim(),
         description: description.trim(),
         category,
-        mode,
+        mode: 'solo',
         startDate: finalStartDate,
         linkedHabitId: linkedHabitId || undefined,
       });
@@ -190,40 +187,6 @@ const CreateChallengeForm: React.FC<FormInnerProps> = ({
                 {cat.label}
               </button>
             ))}
-          </div>
-        </div>
-
-        {/* Mode: Solo vs Friends */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-slate-300">Challenge Format</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setMode('solo')}
-              className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                mode === 'solo'
-                  ? 'bg-indigo-950/40 border-indigo-500/50 text-white shadow-sm'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-              }`}
-            >
-              <User className="w-4 h-4 text-indigo-400" />
-              <span className="text-xs font-bold">Solo Journey</span>
-              <span className="text-xs text-slate-400">Personal discipline</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMode('friends')}
-              className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                mode === 'friends'
-                  ? 'bg-indigo-950/40 border-indigo-500/50 text-white shadow-sm'
-                  : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
-              }`}
-            >
-              <Users className="w-4 h-4 text-indigo-400" />
-              <span className="text-xs font-bold">With Friends</span>
-              <span className="text-xs text-slate-400">Shared leaderboard</span>
-            </button>
           </div>
         </div>
 

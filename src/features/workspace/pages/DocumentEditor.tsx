@@ -49,6 +49,7 @@ interface DocumentEditorProps {
   onTogglePin: (pageId: string) => void;
   onCreatePage: (title?: string, parentId?: string | null) => void;
   saveStatus?: 'saved' | 'saving' | 'error';
+  onBackToNotes?: () => void;
 }
 
 const COVER_PRESETS = [
@@ -68,6 +69,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   onTogglePin,
   onCreatePage,
   saveStatus = 'saved',
+  onBackToNotes,
 }) => {
   const [titleInput, setTitleInput] = useState(page?.title || '');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -511,9 +513,21 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         </div>
       )}
 
-      {/* 2. Parent Breadcrumb (Hierarchy Navigation) */}
-      {parentPage && (
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+      {/* 2. Parent & Notes Breadcrumbs (Hierarchy Navigation) */}
+      <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+        {onBackToNotes && (
+          <button
+            type="button"
+            onClick={onBackToNotes}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer font-medium"
+            title="Back to Notes & Documents"
+            aria-label="Back to Notes"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Notes</span>
+          </button>
+        )}
+        {parentPage && (
           <button
             type="button"
             onClick={() => onSelectPage(parentPage.id)}
@@ -522,8 +536,8 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             <ArrowLeft className="w-3.5 h-3.5 text-indigo-400" />
             <span>Back to {parentPage.icon} {parentPage.title}</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 3. Document Meta & Actions Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">

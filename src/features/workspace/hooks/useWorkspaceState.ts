@@ -245,7 +245,7 @@ function getInitialNav(): { view: WorkspaceView; pageId: string | null } {
     if (hash.startsWith('#workspace')) {
       const parts = hash.replace(/^#workspace\/?/, '').split('?');
       const viewPart = parts[0] as WorkspaceView;
-      const validViews: WorkspaceView[] = ['home', 'tasks', 'pages', 'graph', 'calendar', 'vault'];
+      const validViews: WorkspaceView[] = ['home', 'tasks', 'notes', 'pages', 'graph', 'calendar', 'vault', 'more'];
       
       let view: WorkspaceView = validViews.includes(viewPart) ? viewPart : 'home';
       let pageId: string | null = null;
