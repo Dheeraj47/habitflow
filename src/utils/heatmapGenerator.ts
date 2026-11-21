@@ -10,6 +10,7 @@ export interface HeatmapDay {
   level: 0 | 1 | 2 | 3 | 4;
   isToday: boolean;
   isFuture: boolean;
+  isCurrentStreakDay: boolean;
 }
 
 export interface WeekColumn {
@@ -18,23 +19,11 @@ export interface WeekColumn {
   days: HeatmapDay[];
 }
 
-export interface MonthMilestone {
-  monthName: string;
-  monthIndex: number;
-  weekIndex: number;
-  adherenceRate: number; // 0 to 100
-  activeDays: number;
-  totalDays: number;
-}
-
 export interface FullYearHeatmapResult {
   weeks: WeekColumn[];
   totalCompletions: number;
   activeDaysCount: number;
-  maxStreak: number;
-  currentStreak: number;
   totalTrackedDays: number;
-  milestones: MonthMilestone[];
 }
 
 export const MONTH_NAMES_SHORT = [
@@ -45,7 +34,7 @@ export const MONTH_NAMES_SHORT = [
 /**
  * Returns date in YYYY-MM-DD format using local time.
  */
-export function formatLocalDateStr(d: Date): string {
+export function formatLocalDateStr(d: Date = new Date()): string {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -65,14 +54,34 @@ export function formatHeatmapTooltipDate(dateStr: string): string {
 }
 
 /**
- * Builds the 53-week GitHub & LeetCode style grid.
- * Organizes days into columns of 7 days (Sunday to Saturday),
- * aligned with month header labels, active days count, streaks, and milestones.
+ * Maps the number of completed habits to an activity level (0 to 4).
+ * 0 habits = inactive
+ * 1–2 habits = level 1 (light)
+ * 3–4 habits = level 2 (moderate)
+ * 5–6 habits = level 3 (high)
+ * 7+ habits  = level 4 (peak)
+ */
+export function countToActivityLevel(count: number): 0 | 1 | 2 | 3 | 4 {
+  if (count <= 0) return 0;
+  if (count <= 2) return 1;
+  if (count <= 4) return 2;
+  if (count <= 6) return 3;
+  return 4;
+}
+
+/**
+ * Builds the 53-week HabitFlow contribution heatmap grid.
+ * Organizes days into 53 columns of 7 days (Sunday to Saturday),
+ * aligned with month header labels, active days count, and visual streak highlighting.
+ *
+ * Source of truth: Existing HabitFlow daily habit completion records.
+ * Streak integration: Connected to HabitFlow's current streak without separate re-calculation.
  */
 export function buildFullYearHeatmap(
   cells: HeatmapCell[],
   todayDateStr: string = formatLocalDateStr(new Date()),
-  yearOption: 'current' | '2026' | '2025' = 'current'
+  yearOption: 'current' | '2026' | '2025' = 'current',
+  currentStreak: number = 0
 ): FullYearHeatmapResult {
   const cellsMap = new Map<string, HeatmapCell>();
   for (const cell of cells) {
@@ -116,12 +125,10 @@ export function buildFullYearHeatmap(
 
   let totalCompletions = 0;
   let activeDaysCount = 0;
-  let maxStreak = 0;
-  let currentStreakCounter = 0;
   let totalTrackedDays = 0;
 
-  // Track month stats for milestone badges
-  const monthStatsMap = new Map<number, { activeDays: number; totalDays: number; firstWeek: number; name: string }>();
+  // Flattened array to easily compute streak highlighting
+  const allDays: HeatmapDay[] = [];
 
   while (currentDate <= gridEnd && weekIndex < 54) {
     const weekDays: HeatmapDay[] = [];
@@ -138,35 +145,17 @@ export function buildFullYearHeatmap(
         totalTrackedDays++;
         const cell = cellsMap.get(dateStr);
         if (cell) {
-          count = cell.count;
-          level = cell.level;
+          count = Math.max(0, cell.count);
+          level = countToActivityLevel(count);
         }
 
         if (count > 0) {
           totalCompletions += count;
           activeDaysCount++;
-          currentStreakCounter++;
-          if (currentStreakCounter > maxStreak) {
-            maxStreak = currentStreakCounter;
-          }
-        } else {
-          currentStreakCounter = 0;
         }
-
-        // Tally month stats
-        const m = currentDate.getMonth();
-        const existingMonth = monthStatsMap.get(m) || {
-          activeDays: 0,
-          totalDays: 0,
-          firstWeek: weekIndex,
-          name: MONTH_NAMES_SHORT[m],
-        };
-        existingMonth.totalDays++;
-        if (count > 0) existingMonth.activeDays++;
-        monthStatsMap.set(m, existingMonth);
       }
 
-      weekDays.push({
+      const dayObj: HeatmapDay = {
         date: dateStr,
         dayOfWeek: currentDate.getDay(),
         dayOfMonth: currentDate.getDate(),
@@ -176,14 +165,17 @@ export function buildFullYearHeatmap(
         level,
         isToday,
         isFuture,
-      });
+        isCurrentStreakDay: false,
+      };
+
+      weekDays.push(dayObj);
+      allDays.push(dayObj);
 
       // Next day
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Determine month label for this week column
-    // We check mid-week day (Wednesday, index 3)
+    // Determine month label for this week column based on mid-week day (Wednesday, index 3)
     const midWeekDay = weekDays[3];
     let monthLabel: string | null = null;
     if (midWeekDay && midWeekDay.month !== lastLabeledMonth) {
@@ -200,41 +192,41 @@ export function buildFullYearHeatmap(
     weekIndex++;
   }
 
-  // Calculate current streak (consecutive active days ending on today)
-  let currentStreak = 0;
-  // Scan backwards from today
-  const allDaysFlat = weeks.flatMap((w) => w.days).filter((d) => !d.isFuture);
-  for (let i = allDaysFlat.length - 1; i >= 0; i--) {
-    if (allDaysFlat[i].count > 0) {
-      currentStreak++;
-    } else {
-      break;
+  // Visual Streak Integration:
+  // If currentStreak > 0, highlight the consecutive active days corresponding to the current streak
+  if (currentStreak > 0) {
+    const trackedDays = allDays.filter((d) => !d.isFuture);
+    const todayIndex = trackedDays.findIndex((d) => d.date === todayDateStr);
+
+    let streakAnchorIndex = -1;
+    if (todayIndex >= 0) {
+      if (trackedDays[todayIndex].count > 0) {
+        // Today has completed habits, streak anchors on today
+        streakAnchorIndex = todayIndex;
+      } else if (todayIndex > 0 && trackedDays[todayIndex - 1].count > 0) {
+        // Today is not completed yet, streak anchors on yesterday
+        streakAnchorIndex = todayIndex - 1;
+      }
+    }
+
+    if (streakAnchorIndex >= 0) {
+      let streakCountRemaining = currentStreak;
+      for (let i = streakAnchorIndex; i >= 0 && streakCountRemaining > 0; i--) {
+        if (trackedDays[i].count > 0) {
+          trackedDays[i].isCurrentStreakDay = true;
+          streakCountRemaining--;
+        } else {
+          // Unbroken chain broke
+          break;
+        }
+      }
     }
   }
-
-  // Build Month Milestones (LeetCode style badges)
-  const milestones: MonthMilestone[] = [];
-  monthStatsMap.forEach((stats, mIdx) => {
-    if (stats.totalDays >= 7) {
-      const rate = Math.round((stats.activeDays / stats.totalDays) * 100);
-      milestones.push({
-        monthName: stats.name,
-        monthIndex: mIdx,
-        weekIndex: stats.firstWeek,
-        adherenceRate: rate,
-        activeDays: stats.activeDays,
-        totalDays: stats.totalDays,
-      });
-    }
-  });
 
   return {
     weeks,
     totalCompletions,
     activeDaysCount,
-    maxStreak,
-    currentStreak,
     totalTrackedDays,
-    milestones,
   };
 }

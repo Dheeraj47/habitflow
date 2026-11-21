@@ -1,4 +1,5 @@
 import type { Habit, DayActivity, HeatmapCell } from '../types/habit';
+import { loadSanctuaryStats } from '../utils/sanctuaryGrowth';
 
 export const INITIAL_HABITS: Habit[] = [
   {
@@ -91,57 +92,48 @@ export const PAST_WEEK_ACTIVITY: DayActivity[] = [
   { date: '2026-10-24', dayName: 'Today', completionRate: 50, habitsDone: 3, habitsTotal: 6 },
 ];
 
-// Generate a full year GitHub & LeetCode style heatmap (371 days / 53 weeks)
+// Generates baseline heatmap cells from verified past week activity and stored records.
+// Pure real data: no pseudo-random values or invented historical activity.
 export const generateHeatmapData = (): HeatmapCell[] => {
-  const cells: HeatmapCell[] = [];
-  const today = new Date();
+  const cellsMap = new Map<string, HeatmapCell>();
 
-  function pseudoRandom(seed: number) {
-    const x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
-  }
-
-  for (let i = 370; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-
-    let lvl: 0 | 1 | 2 | 3 | 4 = 3;
-    let count = 0;
-
-    if (i < 27) {
-      // Current active streak (honors the 27-day streak on dashboard)
-      lvl = i === 0 ? 4 : (pseudoRandom(i * 17 + 3) > 0.4 ? 4 : 3);
-      count = lvl === 4 ? (i === 0 ? 10 : 8) : 5;
-    } else {
-      const r = pseudoRandom(i * 13 + 7);
-      if (r < 0.10) {
-        // Rest day (~10% of days)
-        lvl = 0;
-        count = 0;
-      } else if (r < 0.35) {
-        lvl = 1;
-        count = 2;
-      } else if (r < 0.65) {
-        lvl = 2;
-        count = 4;
-      } else if (r < 0.88) {
-        lvl = 3;
-        count = 6;
-      } else {
-        lvl = 4;
-        count = 8;
-      }
+  // Include verified past week activity
+  for (const day of PAST_WEEK_ACTIVITY) {
+    if (day.habitsDone > 0) {
+      const level: 0 | 1 | 2 | 3 | 4 =
+        day.habitsDone <= 2 ? 1 : day.habitsDone <= 4 ? 2 : day.habitsDone <= 6 ? 3 : 4;
+      cellsMap.set(day.date, {
+        date: day.date,
+        count: day.habitsDone,
+        level,
+      });
     }
-
-    cells.push({
-      date: dateStr,
-      level: lvl,
-      count,
-    });
   }
 
-  return cells;
+  // Include genuine stored sanctuary lifetime records if in browser
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const stats = loadSanctuaryStats();
+      if (stats.historyByDate) {
+        for (const [dateStr, record] of Object.entries(stats.historyByDate)) {
+          const count = record.count || record.completedHabitIds.length;
+          if (count > 0) {
+            const level: 0 | 1 | 2 | 3 | 4 =
+              count <= 2 ? 1 : count <= 4 ? 2 : count <= 6 ? 3 : 4;
+            cellsMap.set(dateStr, {
+              date: dateStr,
+              count,
+              level,
+            });
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback
+    }
+  }
+
+  return Array.from(cellsMap.values());
 };
 
 export const AI_SUGGESTIONS = [
