@@ -69,7 +69,7 @@ export const PersonalVaultPlaceholder: React.FC<PersonalVaultPlaceholderProps> =
         </div>
 
         {/* Tab switcher */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 overflow-x-auto no-scrollbar flex-nowrap">
           <button
             type="button"
             onClick={() => setActiveTab('all')}

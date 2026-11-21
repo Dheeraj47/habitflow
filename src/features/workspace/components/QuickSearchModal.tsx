@@ -230,11 +230,11 @@ export const QuickSearchModal: React.FC<QuickSearchModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-20 px-3 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-3 sm:pt-20 px-2 sm:px-3 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-xl bg-[#0f1420] border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+        className="w-full max-w-xl bg-[#0f1420] border border-slate-800 rounded-2xl sm:rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh] sm:max-h-[80vh]"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >

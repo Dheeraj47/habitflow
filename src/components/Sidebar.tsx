@@ -19,6 +19,7 @@ import {
 import type { ActiveTab } from '../types/habit';
 import { soundFx } from '../utils/sound';
 import { useAuth } from '../context/AuthContext';
+import { calculateProgression } from '../utils/progressionManager';
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -68,8 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isVisible, handleClose]);
 
-  const currentLevel = Math.floor(userXP / 100);
-  const xpIntoCurrentLevel = userXP % 100;
+  const progression = calculateProgression(userXP);
 
   const navItems: NavItemConfig[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -213,7 +213,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {isAuthenticated && authUser ? authUser.fullName : 'Guest Explorer'}
                   </div>
                   <div className="text-xs text-slate-400 truncate">
-                    Lvl {currentLevel} • {userXP} XP {!isAuthenticated && '(Local)'}
+                    {progression.isMaxLevel
+                      ? `MAX LEVEL • ${progression.totalXP.toLocaleString()} XP`
+                      : `Lvl ${progression.level} • ${progression.currentLevelProgress.toLocaleString()} / ${progression.xpNeeded.toLocaleString()} XP`}{' '}
+                    {!isAuthenticated && '(Local)'}
                   </div>
                 </div>
               </div>
@@ -252,7 +255,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-                  style={{ width: `${xpIntoCurrentLevel}%` }}
+                  style={{ width: `${progression.progressPercentage}%` }}
+                  title={
+                    progression.isMaxLevel
+                      ? 'Maximum Level 99 reached (100%)'
+                      : `${progression.progressPercentage.toFixed(1)}% to Level ${progression.level + 1}`
+                  }
                 />
               </div>
             </div>

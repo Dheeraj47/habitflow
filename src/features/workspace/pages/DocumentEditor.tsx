@@ -472,20 +472,21 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       )}
 
       {/* 3. Document Meta & Actions Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+        <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-slate-400 flex-wrap">
           <span className="flex items-center gap-1">
             <Clock className="w-3.5 h-3.5 text-slate-500" />
             <span>Updated {new Date(page.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
           </span>
-          <span>•</span>
-          <span>Rev {page.revision}</span>
+          <span className="hidden sm:inline">•</span>
+          <span className="hidden sm:inline">Rev {page.revision}</span>
           <span>•</span>
           <span className="text-slate-300 font-semibold">{page.word_count || 0} words</span>
           <span>•</span>
           <span className="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 font-medium">
             <Check className="w-3 h-3" />
-            {saveStatus === 'saving' ? 'Saving...' : 'Saved locally (Not synced)'}
+            <span className="hidden sm:inline">{saveStatus === 'saving' ? 'Saving...' : 'Saved locally (Not synced)'}</span>
+            <span className="sm:hidden">{saveStatus === 'saving' ? 'Saving...' : 'Saved'}</span>
           </span>
         </div>
 
@@ -494,12 +495,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           <button
             type="button"
             onClick={() => onToggleFavorite(page.id)}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg border transition-colors cursor-pointer min-w-[34px] min-h-[34px] flex items-center justify-center ${
               page.is_favorite
                 ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
             title={page.is_favorite ? 'Favorited' : 'Add to Favorites'}
+            aria-label={page.is_favorite ? 'Favorited' : 'Add to Favorites'}
           >
             <Star className={`w-3.5 h-3.5 ${page.is_favorite ? 'fill-amber-400' : ''}`} />
           </button>
@@ -508,12 +510,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           <button
             type="button"
             onClick={() => onTogglePin(page.id)}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg border transition-colors cursor-pointer min-w-[34px] min-h-[34px] flex items-center justify-center ${
               page.is_pinned
                 ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
                 : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
             title={page.is_pinned ? 'Pinned to Home' : 'Pin to Home'}
+            aria-label={page.is_pinned ? 'Pinned to Home' : 'Pin to Home'}
           >
             <Pin className={`w-3.5 h-3.5 ${page.is_pinned ? 'fill-indigo-400' : ''}`} />
           </button>
@@ -522,8 +525,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           <button
             type="button"
             onClick={() => onCreatePage('Untitled Child Document', page.id)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium cursor-pointer transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium cursor-pointer transition-colors min-h-[34px]"
             title="Create nested sub-document under this page"
+            aria-label="Add sub-document"
           >
             <Plus className="w-3.5 h-3.5 text-indigo-400" />
             <span className="hidden sm:inline">Add Sub-page</span>
@@ -533,8 +537,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           <button
             type="button"
             onClick={() => setIsDeleteConfirmOpen(true)}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-rose-950/60 border border-slate-800 hover:border-rose-800 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 rounded-lg bg-slate-900 hover:bg-rose-950/60 border border-slate-800 hover:border-rose-800 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer min-w-[34px] min-h-[34px] flex items-center justify-center"
             title="Delete Document"
+            aria-label="Delete Document"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -572,7 +577,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
       {/* 4. Page Icon & Editable Title */}
       <div className="space-y-2">
-        <span className="text-4xl block cursor-pointer select-none" title="Page Icon">
+        <span className="text-3xl sm:text-4xl block cursor-pointer select-none" title="Page Icon">
           {page.icon || '📄'}
         </span>
 
@@ -591,13 +596,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 }
               }}
               autoFocus
-              className="text-2xl sm:text-4xl font-extrabold text-white bg-slate-900 border border-indigo-500 px-3 py-1.5 rounded-xl w-full focus:outline-none"
+              className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white bg-slate-900 border border-indigo-500 px-3 py-1.5 rounded-xl w-full focus:outline-none"
             />
           </div>
         ) : (
           <h1
             onClick={() => setIsEditingTitle(true)}
-            className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight hover:bg-slate-900/60 p-1 -ml-1 rounded-xl cursor-text transition-colors"
+            className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight hover:bg-slate-900/60 p-1 -ml-1 rounded-xl cursor-text transition-colors break-words"
             title="Click to rename document"
           >
             {page.title}
@@ -605,203 +610,236 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         )}
       </div>
 
-      {/* 5. Tiptap WYSIWYG Editor Toolbar */}
+      {/* 5. Tiptap WYSIWYG Editor Toolbar (Touch-friendly & Horizontally Scrollable on Mobile) */}
       {editor && (
-        <div className="sticky top-14 z-10 flex items-center gap-1 p-1.5 rounded-xl bg-[#0d1017]/95 backdrop-blur-md border border-slate-800 flex-wrap shadow-lg">
+        <div 
+          className="sticky top-12 sm:top-14 z-10 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-[#0d1017]/95 backdrop-blur-md border border-slate-800 shadow-lg overflow-x-auto no-scrollbar flex-nowrap sm:flex-wrap"
+          aria-label="Rich text editor toolbar"
+        >
           {/* Text Style Dropdown / Buttons */}
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('heading', { level: 1 })
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Heading 1 (Ctrl+Alt+1)"
+            aria-label="Heading 1"
           >
             <Heading1 className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('heading', { level: 2 })
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Heading 2 (Ctrl+Alt+2)"
+            aria-label="Heading 2"
           >
             <Heading2 className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('heading', { level: 3 })
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Heading 3 (Ctrl+Alt+3)"
+            aria-label="Heading 3"
           >
             <Heading3 className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-5 bg-slate-800 mx-0.5" />
+          <div className="w-[1px] h-5 bg-slate-800 mx-0.5 flex-shrink-0" />
 
           {/* Formatting */}
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('bold')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Bold (Ctrl+B)"
+            aria-label="Bold"
           >
             <Bold className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('italic')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Italic (Ctrl+I)"
+            aria-label="Italic"
           >
             <Italic className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('underline')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Underline (Ctrl+U)"
+            aria-label="Underline"
           >
             <UnderlineIcon className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleStrike().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('strike')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Strikethrough"
+            aria-label="Strikethrough"
           >
             <Strikethrough className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-5 bg-slate-800 mx-0.5" />
+          <div className="w-[1px] h-5 bg-slate-800 mx-0.5 flex-shrink-0" />
 
           {/* Lists */}
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('bulletList')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Bullet List"
+            aria-label="Bullet List"
           >
             <List className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('orderedList')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Numbered List"
+            aria-label="Numbered List"
           >
             <ListOrdered className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleTaskList().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('taskList')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Interactive Checklist"
+            aria-label="Interactive Checklist"
           >
             <CheckSquare className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-5 bg-slate-800 mx-0.5" />
+          <div className="w-[1px] h-5 bg-slate-800 mx-0.5 flex-shrink-0" />
 
           {/* Blocks */}
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('blockquote')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Blockquote"
+            aria-label="Blockquote"
           >
             <Quote className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+            className={`p-2 sm:p-1.5 rounded-lg transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0 ${
               editor.isActive('codeBlock')
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800'
             }`}
             title="Code Block"
+            aria-label="Code Block"
           >
             <Code className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().setHorizontalRule().run()}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0"
             title="Horizontal Divider"
+            aria-label="Horizontal Divider"
           >
             <Minus className="w-4 h-4" />
           </button>
 
-          <div className="w-[1px] h-5 bg-slate-800 mx-0.5" />
+          <div className="w-[1px] h-5 bg-slate-800 mx-0.5 flex-shrink-0" />
 
           {/* History */}
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0"
             title="Undo (Ctrl+Z)"
+            aria-label="Undo"
           >
             <Undo className="w-4 h-4" />
           </button>
 
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer min-w-[32px] min-h-[32px] flex items-center justify-center flex-shrink-0"
             title="Redo (Ctrl+Y)"
+            aria-label="Redo"
           >
             <Redo className="w-4 h-4" />
           </button>
@@ -811,9 +849,11 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       {/* 6. Main Tiptap Editing Surface */}
       <div 
         onClick={() => editor?.commands.focus()}
-        className="min-h-[380px] p-5 sm:p-8 rounded-2xl bg-[#0e111a] border border-slate-800 hover:border-slate-700/80 transition-colors shadow-sm cursor-text"
+        className="min-h-[320px] sm:min-h-[380px] p-3.5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl bg-[#0e111a] border border-slate-800 hover:border-slate-700/80 transition-colors shadow-sm cursor-text overflow-x-hidden"
       >
-        <EditorContent editor={editor} />
+        <div className="prose prose-invert max-w-none text-sm sm:text-base leading-relaxed break-words [&_pre]:overflow-x-auto [&_code]:break-words [&_table]:overflow-x-auto [&_table]:block">
+          <EditorContent editor={editor} />
+        </div>
       </div>
 
       {/* 7. Child Documents Sub-Tree Panel */}

@@ -229,103 +229,149 @@ export const TaskManagerPlaceholder: React.FC<TaskManagerPlaceholderProps> = ({
 
       {/* 3. Board View (Kanban) */}
       {subView === 'kanban' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          {/* Column 1: To-Do */}
-          <div className="p-4 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
-                <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">To Do</h3>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                {todoTasks.length}
-              </span>
-            </div>
-
-            <div className="space-y-2.5 min-h-[180px]">
-              {todoTasks.length === 0 ? (
-                <div className="h-28 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl text-xs text-slate-500">
-                  No to-do tasks
-                </div>
-              ) : (
-                todoTasks.map((t) => (
-                  <TaskCard
-                    key={t.id}
-                    task={t}
-                    onToggle={onToggleTask}
-                    onEdit={() => setEditingTask(t)}
-                    onDelete={() => onDeleteTask(t.id)}
-                    onAdvance={() => onUpdateTask(t.id, { status: 'in_progress' })}
-                    advanceLabel="Start"
-                  />
-                ))
-              )}
-            </div>
+        <div className="space-y-3 pt-1">
+          {/* Mobile Kanban Column Jump Pills (<md only) */}
+          <div className="flex md:hidden items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 overflow-x-auto no-scrollbar">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('kanban-col-todo');
+                el?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+              }}
+              className="flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold text-center whitespace-nowrap bg-slate-850 text-slate-200 hover:text-white transition-colors"
+            >
+              To Do ({todoTasks.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('kanban-col-progress');
+                el?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+              }}
+              className="flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold text-center whitespace-nowrap bg-slate-850 text-amber-300 hover:text-amber-200 transition-colors"
+            >
+              In Progress ({inProgressTasks.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('kanban-col-completed');
+                el?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+              }}
+              className="flex-1 py-1.5 px-2 rounded-lg text-xs font-semibold text-center whitespace-nowrap bg-slate-850 text-emerald-300 hover:text-emerald-200 transition-colors"
+            >
+              Done ({completedTasks.length})
+            </button>
           </div>
 
-          {/* Column 2: In Progress */}
-          <div className="p-4 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-                <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">In Progress</h3>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400">
-                {inProgressTasks.length}
-              </span>
-            </div>
-
-            <div className="space-y-2.5 min-h-[180px]">
-              {inProgressTasks.length === 0 ? (
-                <div className="h-28 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl text-xs text-slate-500">
-                  No active tasks
+          {/* Kanban Columns: Horizontal Snap on Mobile (<md), 3-Column Grid on Desktop */}
+          <div className="flex md:grid md:grid-cols-3 gap-3.5 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-3 no-scrollbar">
+            {/* Column 1: To-Do */}
+            <div 
+              id="kanban-col-todo"
+              className="w-[86vw] sm:w-[320px] md:w-auto shrink-0 snap-center md:shrink p-3.5 sm:p-4 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3"
+            >
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">To Do</h3>
                 </div>
-              ) : (
-                inProgressTasks.map((t) => (
-                  <TaskCard
-                    key={t.id}
-                    task={t}
-                    onToggle={onToggleTask}
-                    onEdit={() => setEditingTask(t)}
-                    onDelete={() => onDeleteTask(t.id)}
-                    onAdvance={() => onUpdateTask(t.id, { status: 'completed' })}
-                    advanceLabel="Complete"
-                  />
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Column 3: Completed */}
-          <div className="p-4 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Completed</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                  {todoTasks.length}
+                </span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
-                {completedTasks.length}
-              </span>
+
+              <div className="space-y-2.5 min-h-[180px]">
+                {todoTasks.length === 0 ? (
+                  <div className="h-28 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl text-xs text-slate-500">
+                    No to-do tasks
+                  </div>
+                ) : (
+                  todoTasks.map((t) => (
+                    <TaskCard
+                      key={t.id}
+                      task={t}
+                      onToggle={onToggleTask}
+                      onEdit={() => setEditingTask(t)}
+                      onDelete={() => onDeleteTask(t.id)}
+                      onAdvance={() => onUpdateTask(t.id, { status: 'in_progress' })}
+                      advanceLabel="Start"
+                    />
+                  ))
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2.5 min-h-[180px]">
-              {completedTasks.length === 0 ? (
-                <div className="h-28 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl text-xs text-slate-500">
-                  No completed tasks
+            {/* Column 2: In Progress */}
+            <div 
+              id="kanban-col-progress"
+              className="w-[86vw] sm:w-[320px] md:w-auto shrink-0 snap-center md:shrink p-3.5 sm:p-4 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3"
+            >
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">In Progress</h3>
                 </div>
-              ) : (
-                completedTasks.map((t) => (
-                  <TaskCard
-                    key={t.id}
-                    task={t}
-                    onToggle={onToggleTask}
-                    onEdit={() => setEditingTask(t)}
-                    onDelete={() => onDeleteTask(t.id)}
-                    onAdvance={() => onUpdateTask(t.id, { status: 'todo' })}
-                    advanceLabel="Re-open"
-                  />
-                ))
-              )}
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400">
+                  {inProgressTasks.length}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 min-h-[180px]">
+                {inProgressTasks.length === 0 ? (
+                  <div className="h-28 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl text-xs text-slate-500">
+                    No active tasks
+                  </div>
+                ) : (
+                  inProgressTasks.map((t) => (
+                    <TaskCard
+                      key={t.id}
+                      task={t}
+                      onToggle={onToggleTask}
+                      onEdit={() => setEditingTask(t)}
+                      onDelete={() => onDeleteTask(t.id)}
+                      onAdvance={() => onUpdateTask(t.id, { status: 'completed' })}
+                      advanceLabel="Complete"
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Column 3: Completed */}
+            <div 
+              id="kanban-col-completed"
+              className="w-[86vw] sm:w-[320px] md:w-auto shrink-0 snap-center md:shrink p-3.5 sm:p-4 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3"
+            >
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Completed</h3>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
+                  {completedTasks.length}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 min-h-[180px]">
+                {completedTasks.length === 0 ? (
+                  <div className="h-28 flex items-center justify-center border border-dashed border-slate-800/80 rounded-xl text-xs text-slate-500">
+                    No completed tasks
+                  </div>
+                ) : (
+                  completedTasks.map((t) => (
+                    <TaskCard
+                      key={t.id}
+                      task={t}
+                      onToggle={onToggleTask}
+                      onEdit={() => setEditingTask(t)}
+                      onDelete={() => onDeleteTask(t.id)}
+                      onAdvance={() => onUpdateTask(t.id, { status: 'todo' })}
+                      advanceLabel="Re-open"
+                    />
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -420,16 +466,19 @@ export const TaskManagerPlaceholder: React.FC<TaskManagerPlaceholderProps> = ({
         </div>
       )}
 
-      {/* 5. Comprehensive Task Edit Modal */}
+      {/* 5. Comprehensive Task Edit Modal (Responsive Bottom Sheet on Mobile) */}
       {editingTask && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/80 backdrop-blur-sm animate-in fade-in"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-3.5 bg-black/80 backdrop-blur-sm animate-in fade-in"
           onClick={handleCloseModal}
         >
           <div 
-            className="w-full max-w-lg bg-[#0f1420] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            className="w-full max-w-lg bg-[#0f1420] border-t sm:border border-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Mobile Drag Indicator */}
+            <div className="w-10 h-1 bg-slate-700/80 rounded-full mx-auto sm:hidden mt-2.5 mb-1" />
+
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800 bg-[#131926]">
               <div className="flex items-center gap-2">
@@ -439,7 +488,8 @@ export const TaskManagerPlaceholder: React.FC<TaskManagerPlaceholderProps> = ({
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="text-slate-400 hover:text-white p-1 rounded-md"
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+                aria-label="Close Edit Modal"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -651,11 +701,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <button
           type="button"
           onClick={() => onToggle(task.id)}
-          className={`w-4 h-4 rounded mt-0.5 flex-shrink-0 cursor-pointer border flex items-center justify-center transition-colors ${
+          className={`w-5 h-5 rounded mt-0.5 flex-shrink-0 cursor-pointer border flex items-center justify-center transition-colors min-w-[20px] min-h-[20px] ${
             isCompleted
               ? 'bg-emerald-500 border-emerald-500 text-white'
               : 'border-slate-600 hover:border-indigo-400'
           }`}
+          aria-label={isCompleted ? `Mark ${task.title} incomplete` : `Mark ${task.title} complete`}
         >
           {isCompleted && <CheckCircle2 className="w-3.5 h-3.5" />}
         </button>
@@ -669,21 +720,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
           {task.title}
         </span>
 
-        {/* Quick action controls */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        {/* Quick action controls (Visible on touch, hoverable on desktop) */}
+        <div className="flex items-center gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
           <button
             type="button"
             onClick={onEdit}
-            className="p-1 text-slate-400 hover:text-white rounded"
+            className="p-1.5 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition-colors"
             title="Edit task"
+            aria-label="Edit task"
           >
             <Edit3 className="w-3 h-3" />
           </button>
           <button
             type="button"
             onClick={onDelete}
-            className="p-1 text-slate-400 hover:text-rose-400 rounded"
+            className="p-1.5 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-800 transition-colors"
             title="Delete task"
+            aria-label="Delete task"
           >
             <Trash2 className="w-3 h-3" />
           </button>

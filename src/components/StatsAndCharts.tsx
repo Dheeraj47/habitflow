@@ -304,14 +304,6 @@ export const StatsAndCharts: React.FC<StatsAndChartsProps> = ({
               <span className="text-slate-400">{bestActiveStreak === 1 ? 'day' : 'days'}</span>
             </div>
 
-            {/* Active Days Badge */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">
-              <span>Active days:</span>
-              <strong className="text-white font-bold tabular-nums">
-                {fullYearResult.activeDaysCount}
-              </strong>
-            </div>
-
             {/* Year Dropdown Filter */}
             <div className="relative">
               <select

@@ -80,13 +80,16 @@ export const QuickCreateModal: React.FC<QuickCreateModalProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-3 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-lg bg-[#0f1420] border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        className="w-full max-w-lg bg-[#0f1420] border-t sm:border border-slate-800 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-none"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Drag Indicator */}
+        <div className="w-10 h-1 bg-slate-700/80 rounded-full mx-auto sm:hidden mt-2.5 mb-1" />
+
         {/* Header with Tabs */}
         <div className="flex items-center justify-between border-b border-slate-800 bg-[#131926] px-4 pt-3 pb-2">
           <div className="flex items-center gap-1.5">

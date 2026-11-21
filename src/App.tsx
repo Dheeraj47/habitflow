@@ -22,6 +22,7 @@ import type { BudgetTrackerState } from './types/budget';
 import { loadBudgetTrackerState, saveBudgetTrackerState } from './utils/budgetStorage';
 import { calculateDayRating, saveDayRating, getRatingDateString } from './utils/dayRating';
 import { calculateCentralizedStreak } from './utils/streakManager';
+import { calculateProgression } from './utils/progressionManager';
 import {
   loadSanctuaryStats,
   saveSanctuaryStats,
@@ -225,6 +226,45 @@ export function App() {
     }
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated, authUser]);
+
+  // Level progression tracking (celebrates level-up with sound & confetti, avoids duplicate on mount)
+  const prevLevelRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const progression = calculateProgression(userXP);
+    const currentLevel = progression.level;
+
+    if (prevLevelRef.current === null) {
+      prevLevelRef.current = currentLevel;
+      return;
+    }
+
+    if (currentLevel > prevLevelRef.current) {
+      const levelsGained = currentLevel - prevLevelRef.current;
+      soundFx.playSingingBowl();
+      confetti({
+        particleCount: 90,
+        spread: 80,
+        origin: { x: 0.5, y: 0.4 },
+        colors: ['#6366f1', '#a855f7', '#ec4899', '#3b82f6', '#10b981'],
+      });
+
+      addToast({
+        type: 'success',
+        message:
+          levelsGained > 1
+            ? `Leveled Up +${levelsGained} Times! Reached Level ${currentLevel}! 🎉`
+            : progression.isMaxLevel
+            ? '🏆 MAXIMUM LEVEL 99 ACHIEVED!'
+            : `Level Up! Reached Level ${currentLevel}! 🎉`,
+        subtext: progression.isMaxLevel
+          ? `Apex achieved with ${progression.totalXP.toLocaleString()} XP! Maximum rank in HabitFlow.`
+          : `Total XP: ${progression.totalXP.toLocaleString()} • Next goal: Level ${currentLevel + 1}`,
+      });
+    }
+
+    prevLevelRef.current = currentLevel;
+  }, [userXP]);
 
   // Check for 21-day challenge invite token in URL
   useEffect(() => {

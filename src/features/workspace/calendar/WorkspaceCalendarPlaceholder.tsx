@@ -95,9 +95,9 @@ export const WorkspaceCalendarPlaceholder: React.FC<WorkspaceCalendarPlaceholder
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-4 sm:p-6 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-3">
+      <div className="p-2.5 sm:p-6 rounded-2xl bg-[#0e111a] border border-slate-800 space-y-2 sm:space-y-3">
         {/* Day-of-week header */}
-        <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[11px] font-bold uppercase tracking-wider text-slate-500 pb-1">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 pb-1">
           <span>Sun</span>
           <span>Mon</span>
           <span>Tue</span>
@@ -110,7 +110,7 @@ export const WorkspaceCalendarPlaceholder: React.FC<WorkspaceCalendarPlaceholder
         {/* Days grid */}
         <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {leadingBlanks.map((b) => (
-            <div key={`blank-${b}`} className="min-h-[75px] sm:min-h-[95px] rounded-xl bg-slate-900/10 border border-transparent" />
+            <div key={`blank-${b}`} className="min-h-[48px] sm:min-h-[75px] md:min-h-[95px] rounded-lg sm:rounded-xl bg-slate-900/10 border border-transparent" />
           ))}
 
           {daysArray.map((day) => {
@@ -123,7 +123,7 @@ export const WorkspaceCalendarPlaceholder: React.FC<WorkspaceCalendarPlaceholder
               <div
                 key={`day-${day}`}
                 onClick={() => setSelectedDateStr(dateStr)}
-                className={`min-h-[75px] sm:min-h-[95px] p-2 rounded-xl border transition-all flex flex-col justify-between cursor-pointer ${
+                className={`min-h-[48px] sm:min-h-[75px] md:min-h-[95px] p-1 sm:p-2 rounded-lg sm:rounded-xl border transition-all flex flex-col justify-between cursor-pointer ${
                   isSelected
                     ? 'bg-indigo-600/15 border-indigo-500 ring-1 ring-indigo-500/40 text-white shadow-md'
                     : isToday
@@ -132,16 +132,35 @@ export const WorkspaceCalendarPlaceholder: React.FC<WorkspaceCalendarPlaceholder
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs font-bold tabular-nums ${isSelected ? 'text-indigo-300' : isToday ? 'text-indigo-400' : 'text-slate-400'}`}>
+                  <span className={`text-[11px] sm:text-xs font-bold tabular-nums ${isSelected ? 'text-indigo-300' : isToday ? 'text-indigo-400' : 'text-slate-400'}`}>
                     {day}
                   </span>
                   {dayTasks.length > 0 && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                    <span className="hidden sm:inline-block w-2 h-2 rounded-full bg-indigo-400" />
                   )}
                 </div>
 
-                {/* Day tasks micro-chips */}
-                <div className="space-y-1 mt-1 overflow-hidden">
+                {/* Mobile Task Dots Indicator (<sm) */}
+                <div className="flex sm:hidden items-center justify-center gap-0.5 mt-auto pb-0.5">
+                  {dayTasks.slice(0, 3).map((t) => (
+                    <span
+                      key={`dot-${t.id}`}
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        t.status === 'completed'
+                          ? 'bg-slate-500'
+                          : t.priority === 'high'
+                          ? 'bg-rose-400'
+                          : 'bg-indigo-400'
+                      }`}
+                    />
+                  ))}
+                  {dayTasks.length > 3 && (
+                    <span className="w-1 h-1 rounded-full bg-slate-400" />
+                  )}
+                </div>
+
+                {/* Desktop Day tasks micro-chips (>=sm) */}
+                <div className="hidden sm:block space-y-1 mt-1 overflow-hidden">
                   {dayTasks.slice(0, 2).map((t) => (
                     <div
                       key={t.id}

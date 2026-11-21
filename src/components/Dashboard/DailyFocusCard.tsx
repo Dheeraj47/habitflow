@@ -12,6 +12,7 @@ import {
 import { motion } from 'motion/react';
 import type { Habit } from '../../types/habit';
 import { soundFx } from '../../utils/sound';
+import { calculateProgression, formatLevelBadge } from '../../utils/progressionManager';
 
 interface DailyFocusCardProps {
   habits: Habit[];
@@ -32,8 +33,7 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
   userXP,
   onOpenAddModal,
 }) => {
-  const currentLevel = Math.floor(userXP / 100);
-  const xpIntoCurrentLevel = userXP % 100;
+  const progression = calculateProgression(userXP);
 
   // Breakdown by time of day
   const morningHabits = habits.filter((h) => h.timeOfDay === 'morning');
@@ -173,9 +173,13 @@ export const DailyFocusCard: React.FC<DailyFocusCardProps> = ({
             <Trophy className="w-4 h-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-bold text-white">Lvl {currentLevel}</div>
+            <div className="text-xs font-bold text-white">
+              {formatLevelBadge(progression)}
+            </div>
             <div className="text-[10px] sm:text-[11px] text-slate-400 whitespace-nowrap tabular-nums">
-              {xpIntoCurrentLevel}/100 XP
+              {progression.isMaxLevel
+                ? `${progression.totalXP.toLocaleString()} XP`
+                : `${progression.currentLevelProgress.toLocaleString()} / ${progression.xpNeeded.toLocaleString()} XP`}
             </div>
           </div>
         </div>

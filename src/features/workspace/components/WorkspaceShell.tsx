@@ -1,4 +1,11 @@
 import React, { useEffect } from 'react';
+import { 
+  Home, 
+  FileText, 
+  CheckSquare, 
+  Calendar as CalendarIcon, 
+  Menu 
+} from 'lucide-react';
 import { useWorkspaceState } from '../hooks/useWorkspaceState';
 import { WorkspaceHeader } from './WorkspaceHeader';
 import { WorkspaceSidebar } from './WorkspaceSidebar';
@@ -113,7 +120,7 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({ onBackToHabitFlo
         />
 
         {/* View Content Area */}
-        <main className="flex-1 overflow-y-auto px-3.5 sm:px-6 md:px-8 py-4 sm:py-6">
+        <main className="flex-1 overflow-y-auto px-2.5 sm:px-6 md:px-8 py-3 sm:py-6 pb-20 md:pb-6">
           {activeView === 'home' && (
             <WorkspaceHome
               pages={pages}
@@ -201,20 +208,89 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({ onBackToHabitFlo
           )}
         </main>
 
-        {/* Status notice footer */}
-        <footer className="h-7 border-t border-slate-800/80 bg-[#0b0e14] px-4 flex items-center justify-between text-[11px] text-slate-500 select-none flex-shrink-0">
+        {/* Status notice footer (Desktop only to maximize mobile vertical editing space) */}
+        <footer className="hidden md:flex h-7 border-t border-slate-800/80 bg-[#0b0e14] px-4 items-center justify-between text-[11px] text-slate-500 select-none flex-shrink-0">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-amber-300/90 font-medium">LOCAL / NOT SYNCED</span>
             <span className="text-slate-600">•</span>
             <span className="text-slate-400">Sandbox Persistence Active</span>
           </div>
-          <div className="hidden sm:flex items-center gap-3 text-slate-500">
+          <div className="flex items-center gap-3 text-slate-500">
             <span>Isolated Personal Workspace</span>
             <span>•</span>
             <span>Zero HabitFlow Coupling</span>
           </div>
         </footer>
+
+        {/* Mobile Bottom Navigation Bar (<md only) */}
+        <nav 
+          aria-label="Mobile workspace quick navigation" 
+          className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0b0e17]/95 backdrop-blur-lg border-t border-slate-800/90 px-3 py-1 flex items-center justify-around shadow-2xl safe-area-inset-bottom"
+        >
+          <button
+            type="button"
+            onClick={() => setActiveView('home')}
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
+              activeView === 'home' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
+            }`}
+            aria-label="Go to Workspace Home"
+          >
+            <Home className="w-4 h-4" />
+            <span className="text-[10px] mt-0.5 tracking-tight">Home</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!activePageId && pages.length > 0) {
+                setActivePageId(pages[0].id);
+              }
+              setActiveView('pages');
+            }}
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
+              activeView === 'pages' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
+            }`}
+            aria-label="Go to Pages & Documents"
+          >
+            <FileText className="w-4 h-4" />
+            <span className="text-[10px] mt-0.5 tracking-tight">Docs</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveView('tasks')}
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
+              activeView === 'tasks' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
+            }`}
+            aria-label="Go to Task Manager"
+          >
+            <CheckSquare className="w-4 h-4" />
+            <span className="text-[10px] mt-0.5 tracking-tight">Tasks</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveView('calendar')}
+            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
+              activeView === 'calendar' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
+            }`}
+            aria-label="Go to Workspace Calendar"
+          >
+            <CalendarIcon className="w-4 h-4" />
+            <span className="text-[10px] mt-0.5 tracking-tight">Calendar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(true)}
+            className="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 hover:text-white transition-colors cursor-pointer min-w-[56px]"
+            aria-label="Open Workspace Navigation Drawer"
+          >
+            <Menu className="w-4 h-4" />
+            <span className="text-[10px] mt-0.5 tracking-tight">Menu</span>
+          </button>
+        </nav>
       </div>
 
       {/* Universal Command Palette (Ctrl+K) */}

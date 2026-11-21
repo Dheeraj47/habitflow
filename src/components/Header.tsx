@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { soundFx } from '../utils/sound';
+import { calculateProgression, formatLevelBadge } from '../utils/progressionManager';
 import { UserMenu } from './Auth/UserMenu';
 
 interface HeaderProps {
@@ -65,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const handleMenuClick = onToggleSidebar || onOpenMobileSidebar;
-  const currentLevel = Math.floor(userXP / 100);
+  const progression = calculateProgression(userXP);
 
   return (
     <header className="sticky top-0 z-30 bg-[#0b0d14]/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-6 py-2 sm:py-2.5 transition-colors">
@@ -92,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
                   HabitFlow
                 </span>
                 <span className="hidden sm:inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60 flex-shrink-0 whitespace-nowrap">
-                  Lvl {currentLevel}
+                  {formatLevelBadge(progression)}
                 </span>
               </div>
               <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-400">

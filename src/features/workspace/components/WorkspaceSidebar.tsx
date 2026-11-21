@@ -111,7 +111,7 @@ const DocTreeNode: React.FC<DocTreeNodeProps> = ({
             <button
               type="button"
               onClick={(e) => onToggleDocTreeItem(e, page.id)}
-              className="p-0.5 -ml-1 text-slate-500 hover:text-slate-300 transition-colors flex-shrink-0 cursor-pointer rounded hover:bg-slate-800"
+              className="p-1 -ml-1 text-slate-500 hover:text-slate-300 transition-colors flex-shrink-0 cursor-pointer rounded hover:bg-slate-800 flex items-center justify-center min-w-[22px] min-h-[22px]"
               aria-label={isExpanded ? `Collapse ${page.title}` : `Expand ${page.title}`}
               title={isExpanded ? 'Collapse sub-pages' : 'Expand sub-pages'}
             >
@@ -128,7 +128,7 @@ const DocTreeNode: React.FC<DocTreeNodeProps> = ({
           <span className="truncate">{page.title}</span>
         </div>
 
-        {/* Quick Add Sub-Document Button on Hover */}
+        {/* Quick Add Sub-Document Button on Hover or Tap */}
         <button
           type="button"
           onClick={(e) => {
@@ -142,7 +142,7 @@ const DocTreeNode: React.FC<DocTreeNodeProps> = ({
               return next;
             });
           }}
-          className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-white hover:bg-slate-800 rounded transition-opacity cursor-pointer flex-shrink-0"
+          className="opacity-75 sm:opacity-0 sm:group-hover:opacity-100 p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-opacity cursor-pointer flex-shrink-0 min-w-[22px] min-h-[22px] flex items-center justify-center"
           title="Add sub-document"
           aria-label={`Add sub-document under ${page.title}`}
         >
@@ -152,7 +152,7 @@ const DocTreeNode: React.FC<DocTreeNodeProps> = ({
 
       {/* Recursive Children Container with Indentation and Guide Line */}
       {hasChildren && isExpanded && (
-        <div className="pl-3 space-y-0.5 border-l border-slate-800/70 ml-2 animate-in fade-in duration-100">
+        <div className="pl-2 sm:pl-3 space-y-0.5 border-l border-slate-800/70 ml-1.5 sm:ml-2 animate-in fade-in duration-100">
           {children.map((child) => (
             <DocTreeNode
               key={child.id}
