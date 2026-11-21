@@ -148,8 +148,8 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({ onBackToHabitFlo
                   setActivePageId(id);
                   setActiveView('pages');
                 }}
-                onCreatePage={() => {
-                  const page = createPage();
+                onCreatePage={(title, parentId) => {
+                  const page = createPage(title, parentId || undefined);
                   setActivePageId(page.id);
                   setActiveView('pages');
                 }}
@@ -158,6 +158,13 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({ onBackToHabitFlo
                 onCreateQuickNote={createQuickNote}
                 onDeleteQuickNote={deleteQuickNote}
                 onOpenQuickCreate={() => setIsQuickCreateOpen(true)}
+                onUpdatePage={updatePage}
+                onDeletePage={deletePage}
+                onToggleFavoritePage={toggleFavoritePage}
+                onTogglePinPage={togglePinPage}
+                onOpenSearch={() => setIsSearchOpen(true)}
+                onOpenMobileNav={() => setIsMobileNavOpen(true)}
+                onBackToHabitFlow={onBackToHabitFlow}
               />
             )}
 
@@ -241,74 +248,74 @@ export const WorkspaceShell: React.FC<WorkspaceShellProps> = ({ onBackToHabitFlo
           </div>
         </footer>
 
-        {/* Mobile Bottom Navigation Bar (<md only) */}
-        <nav 
-          aria-label="Mobile workspace quick navigation" 
-          className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0b0e17]/95 backdrop-blur-lg border-t border-slate-800/90 px-3 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-2xl"
-        >
-          <button
-            type="button"
-            onClick={() => setActiveView('home')}
-            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
-              activeView === 'home' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
-            }`}
-            aria-label="Go to Workspace Home"
+        {/* Mobile Bottom Navigation Bar (<md only, visible on non-home views so home uses dedicated action bar) */}
+        {activeView !== 'home' && (
+          <nav 
+            aria-label="Mobile workspace quick navigation" 
+            className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#0b0e17]/95 backdrop-blur-lg border-t border-slate-800/90 px-3 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-center justify-around shadow-2xl"
           >
-            <Home className="w-4 h-4" />
-            <span className="text-[10px] mt-0.5 tracking-tight">Home</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('home')}
+              className="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] text-slate-400 hover:text-white"
+              aria-label="Go to Workspace Home"
+            >
+              <Home className="w-4 h-4" />
+              <span className="text-[10px] mt-0.5 tracking-tight">Home</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (!activePageId && pages.length > 0) {
-                setActivePageId(pages[0].id);
-              }
-              setActiveView('pages');
-            }}
-            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
-              activeView === 'pages' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
-            }`}
-            aria-label="Go to Pages & Documents"
-          >
-            <FileText className="w-4 h-4" />
-            <span className="text-[10px] mt-0.5 tracking-tight">Docs</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!activePageId && pages.length > 0) {
+                  setActivePageId(pages[0].id);
+                }
+                setActiveView('pages');
+              }}
+              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
+                activeView === 'pages' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
+              }`}
+              aria-label="Go to Pages & Documents"
+            >
+              <FileText className="w-4 h-4" />
+              <span className="text-[10px] mt-0.5 tracking-tight">Docs</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveView('tasks')}
-            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
-              activeView === 'tasks' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
-            }`}
-            aria-label="Go to Task Manager"
-          >
-            <CheckSquare className="w-4 h-4" />
-            <span className="text-[10px] mt-0.5 tracking-tight">Tasks</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('tasks')}
+              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
+                activeView === 'tasks' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
+              }`}
+              aria-label="Go to Task Manager"
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span className="text-[10px] mt-0.5 tracking-tight">Tasks</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveView('calendar')}
-            className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
-              activeView === 'calendar' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
-            }`}
-            aria-label="Go to Workspace Calendar"
-          >
-            <CalendarIcon className="w-4 h-4" />
-            <span className="text-[10px] mt-0.5 tracking-tight">Calendar</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('calendar')}
+              className={`flex flex-col items-center justify-center py-1.5 px-2 rounded-xl transition-colors cursor-pointer min-w-[56px] ${
+                activeView === 'calendar' ? 'text-indigo-400 font-semibold' : 'text-slate-400 hover:text-white'
+              }`}
+              aria-label="Go to Workspace Calendar"
+            >
+              <CalendarIcon className="w-4 h-4" />
+              <span className="text-[10px] mt-0.5 tracking-tight">Calendar</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsMobileNavOpen(true)}
-            className="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 hover:text-white transition-colors cursor-pointer min-w-[56px]"
-            aria-label="Open Workspace Navigation Drawer"
-          >
-            <Menu className="w-4 h-4" />
-            <span className="text-[10px] mt-0.5 tracking-tight">Menu</span>
-          </button>
-        </nav>
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(true)}
+              className="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 hover:text-white transition-colors cursor-pointer min-w-[56px]"
+              aria-label="Open Workspace Navigation Drawer"
+            >
+              <Menu className="w-4 h-4" />
+              <span className="text-[10px] mt-0.5 tracking-tight">Menu</span>
+            </button>
+          </nav>
+        )}
       </div>
 
       {/* Universal Command Palette (Ctrl+K) */}
