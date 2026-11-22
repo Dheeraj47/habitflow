@@ -646,7 +646,7 @@ export function App() {
         />
 
         {/* Main Content Body */}
-        <main className="flex-1 px-3 sm:px-8 py-3 sm:py-8 max-w-7xl mx-auto w-full space-y-5 sm:space-y-8 pb-24 sm:pb-8">
+        <main className="flex-1 px-3 sm:px-8 py-3 sm:py-8 max-w-7xl mx-auto w-full space-y-5 sm:space-y-8 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] sm:pb-8">
           <AnimatePresence mode="wait">
             {activeTab === 'habits' ? (
               <motion.div

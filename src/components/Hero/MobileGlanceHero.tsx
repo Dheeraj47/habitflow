@@ -5,10 +5,12 @@ import {
   Wallet, 
   Star, 
   RotateCcw,
-  Sparkles
+  Sparkles,
+  ArrowDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { soundFx } from '../../utils/sound';
+import { useAuth } from '../../context/AuthContext';
 
 interface MobileGlanceHeroProps {
   onStartRituals: () => void;
@@ -53,6 +55,8 @@ export const MobileGlanceHero: React.FC<MobileGlanceHeroProps> = ({
 }) => {
   const [quoteIndex, setQuoteIndex] = useState(0);
   const greeting = getGreeting();
+  const { authUser } = useAuth();
+  const displayName = authUser?.fullName ? authUser.fullName.split(' ')[0] : 'Alex';
 
   const handleNextQuote = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,16 +70,17 @@ export const MobileGlanceHero: React.FC<MobileGlanceHeroProps> = ({
 
   return (
     <div className="sm:hidden space-y-3">
-      {/* Top Welcome Card */}
-      <div className="p-4 rounded-2xl bg-gradient-to-b from-[#141828] to-[#101320] border border-slate-800 shadow-md">
+      {/* 1. Main Personal Command Card */}
+      <div className="p-4 rounded-2xl bg-gradient-to-b from-[#141828] to-[#101320] border border-slate-800 shadow-md space-y-3.5">
         {/* User Greeting & Today's Rating */}
-        <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+        <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400">
-              Personal Command
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-indigo-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+              <span>Personal Command</span>
             </div>
             <h2 className="text-lg font-bold text-white tracking-tight leading-tight mt-0.5">
-              {greeting}, Alex
+              {greeting}, {displayName}
             </h2>
           </div>
 
@@ -84,79 +89,88 @@ export const MobileGlanceHero: React.FC<MobileGlanceHeroProps> = ({
               type="button"
               onClick={onOpenDayRating}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm"
-              title="Daily Rating Score"
+              title="Daily Matchday Rating (Tap to inspect breakdown)"
             >
               <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
               <span className="tabular-nums">{dayRating.toFixed(1)}</span>
-              <span className="text-[10px] text-amber-400/70 font-normal">Score</span>
+              <span className="text-[10px] text-amber-400/80 font-normal">Score</span>
             </button>
           )}
         </div>
 
-        {/* 3 Metric Glance Strip */}
-        <div className="grid grid-cols-3 gap-2 pt-3">
-          {/* 1. Ritual Progress */}
-          <button
-            type="button"
-            onClick={onStartRituals}
-            className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 text-left transition-all active:scale-98 cursor-pointer flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between text-indigo-400">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span className="text-[10px] font-bold tabular-nums text-slate-300">{completionRate}%</span>
+        {/* Primary Daily Progress Summary */}
+        <div className="space-y-1.5">
+          <div className="flex items-baseline justify-between text-xs">
+            <div className="flex items-center gap-1.5 font-semibold text-white">
+              <CheckCircle2 className="w-4 h-4 text-indigo-400" />
+              <span>
+                {completedCount} of {totalCount} Rituals Done
+              </span>
             </div>
-            <div className="mt-1">
-              <div className="text-sm font-bold text-white tabular-nums leading-tight">
-                {completedCount}/{totalCount}
-              </div>
-              <div className="text-[10px] text-slate-400">Rituals</div>
-            </div>
-          </button>
+            <span className="font-bold text-indigo-400 tabular-nums">
+              {completionRate}% Done
+            </span>
+          </div>
 
-          {/* 2. Momentum Streak */}
-          <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 text-left flex flex-col justify-between">
-            <div className="flex items-center justify-between text-amber-400">
-              <Flame className="w-3.5 h-3.5 fill-amber-400/80" />
-              <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Chain</span>
+          {/* Adherence Progress Bar */}
+          <div className="w-full h-2 bg-slate-800/90 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${completionRate}%` }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          </div>
+
+          <div className="text-[11px] text-slate-400">
+            {completionRate === 100
+              ? 'All daily rituals completed! Exceptional consistency.'
+              : `${totalCount - completedCount} habits remaining to complete today's routine.`}
+          </div>
+        </div>
+
+        {/* Companion Dual Stat Cards: Streak & Budget */}
+        <div className="grid grid-cols-2 gap-2.5 pt-1">
+          {/* Tile 1: Active Momentum */}
+          <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/90 text-left flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0 text-amber-400">
+              <Flame className="w-4 h-4 fill-amber-400/80" />
             </div>
-            <div className="mt-1">
-              <div className="text-sm font-bold text-white tabular-nums leading-tight">
-                {topStreak} Days
+            <div className="min-w-0">
+              <div className="text-xs font-bold text-white tabular-nums leading-tight">
+                {topStreak} Day Streak
               </div>
-              <div className="text-[10px] text-slate-400">Active Streak</div>
+              <div className="text-[10px] text-slate-400 truncate">Active Chain</div>
             </div>
           </div>
 
-          {/* 3. Budget Discipline */}
+          {/* Tile 2: Daily Budget Allowance */}
           {hasBudget ? (
             <button
               type="button"
               onClick={onScrollToBudget}
-              className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 text-left transition-all active:scale-98 cursor-pointer flex flex-col justify-between"
+              className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/90 text-left transition-all active:scale-98 cursor-pointer flex items-center gap-2.5"
             >
-              <div className="flex items-center justify-between text-emerald-400">
-                <Wallet className="w-3.5 h-3.5" />
-                <span className={`text-[9px] font-bold uppercase tracking-wider ${
-                  isUnderBudget ? 'text-emerald-400' : 'text-rose-400'
-                }`}>
-                  {isUnderBudget ? 'Safe' : 'Over'}
-                </span>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                isUnderBudget ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/20 text-rose-400'
+              }`}>
+                <Wallet className="w-4 h-4" />
               </div>
-              <div className="mt-1">
-                <div className={`text-xs font-bold tabular-nums truncate leading-tight ${
-                  isUnderBudget ? 'text-emerald-300' : 'text-rose-300'
-                }`}>
-                  {budgetCurrencySymbol}{budgetTodaySpent ?? 0}
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-white tabular-nums truncate leading-tight">
+                  {budgetCurrencySymbol}{budgetTodaySpent ?? 0} Spent
                 </div>
-                <div className="text-[10px] text-slate-400 truncate">
-                  of {budgetCurrencySymbol}{budgetDailyLimit}
+                <div className={`text-[10px] truncate ${isUnderBudget ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {isUnderBudget ? `+${budgetCurrencySymbol}${remainingBudget} Left` : `${budgetCurrencySymbol}${Math.abs(remainingBudget)} Over`}
                 </div>
               </div>
             </button>
           ) : (
-            <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/80 text-left flex flex-col justify-between">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-              <div className="mt-1">
+            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800/90 text-left flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 text-indigo-400">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
                 <div className="text-xs font-bold text-white leading-tight">Focus</div>
                 <div className="text-[10px] text-slate-400">On Track</div>
               </div>
@@ -164,28 +178,18 @@ export const MobileGlanceHero: React.FC<MobileGlanceHeroProps> = ({
           )}
         </div>
 
-        {/* Adherence Progress Bar */}
-        <div className="mt-3 pt-2.5 border-t border-slate-800/60">
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
-            <span className="font-medium">
-              {completionRate === 100 
-                ? 'All rituals completed today!' 
-                : `${totalCount - completedCount} habits remaining`}
-            </span>
-            <span className="font-semibold text-indigo-400 tabular-nums">{completionRate}% Done</span>
-          </div>
-          <div className="w-full h-1.5 bg-slate-800/80 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${completionRate}%` }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-            />
-          </div>
-        </div>
+        {/* Quick Action: Jump to Today's Habits */}
+        <button
+          type="button"
+          onClick={onStartRituals}
+          className="w-full py-2.5 px-3 rounded-xl bg-indigo-600/90 hover:bg-indigo-600 active:scale-[0.98] text-white text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-600/30"
+        >
+          <span>Jump to Today&apos;s Rituals</span>
+          <ArrowDown className="w-3.5 h-3.5 animate-bounce" />
+        </button>
       </div>
 
-      {/* Tappable Reflection Pill */}
+      {/* 2. Tappable Reflection Quote Pill */}
       <button
         type="button"
         onClick={handleNextQuote}

@@ -80,7 +80,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
   }, [activeView, activePage, allPages]);
 
   return (
-    <header className="sticky top-0 z-20 h-13 bg-[#0d1017]/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-5 flex items-center justify-between select-none">
+    <header className="sticky top-0 z-20 min-h-[3.25rem] pt-[max(0.45rem,env(safe-area-inset-top,0px))] pb-1.5 md:py-0 md:h-13 bg-[#0d1017]/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-5 flex items-center justify-between select-none">
       {/* ========================================================= */}
       {/* 1. Mobile Header (Matches Reference Screenshots Exactly)   */}
       {/* HabitFlow Logo + Title on Left, Search + Avatar on Right */}

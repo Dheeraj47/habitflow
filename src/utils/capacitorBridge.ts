@@ -83,6 +83,7 @@ export async function initNativeIntegrations(options?: {
     // Configure dark status bar matching HabitFlow obsidian identity (#0b0d14)
     await StatusBar.setStyle({ style: Style.Dark });
     await StatusBar.setBackgroundColor({ color: '#0b0d14' });
+    await StatusBar.setOverlaysWebView({ overlay: false });
   } catch (err) {
     console.warn('[HabitFlow Native] StatusBar configuration warning:', err);
   }

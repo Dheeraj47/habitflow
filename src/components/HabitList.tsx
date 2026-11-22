@@ -12,7 +12,8 @@ import {
   Clock, 
   Plus,
   CheckCircle2,
-  ListFilter
+  ListFilter,
+  Pencil
 } from 'lucide-react';
 import type { Habit, TimeOfDay } from '../types/habit';
 import confetti from 'canvas-confetti';
@@ -23,6 +24,7 @@ interface HabitListProps {
   habits: Habit[];
   onToggleHabit: (id: string) => void;
   onDeleteHabit: (id: string) => void;
+  onEditHabit?: (habit: Habit) => void;
   onOpenAddModal: () => void;
   completionRate: number;
 }
@@ -31,6 +33,7 @@ export const HabitList: React.FC<HabitListProps> = ({
   habits,
   onToggleHabit,
   onDeleteHabit,
+  onEditHabit,
   onOpenAddModal,
   completionRate,
 }) => {
@@ -90,17 +93,17 @@ export const HabitList: React.FC<HabitListProps> = ({
   ] as const;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5 sm:space-y-4">
       {/* Top Filter Bar & Summary */}
-      <div className="p-5 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div className="p-3.5 sm:p-5 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-3.5 sm:pb-4 border-b border-slate-800/80">
           <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">Today&apos;s Rituals</h3>
-              <span className="text-xs px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold border border-slate-700/60 tabular-nums">
+              <h3 className="text-sm sm:text-lg font-bold text-white tracking-tight">Today&apos;s Rituals</h3>
+              <span className="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold border border-slate-700/60 tabular-nums">
                 {completedCount} of {habits.length} Done
               </span>
             </div>
@@ -110,9 +113,9 @@ export const HabitList: React.FC<HabitListProps> = ({
           </div>
 
           {/* Progress Meter */}
-          <div className="flex items-center gap-3 bg-slate-900/60 px-3.5 py-2 rounded-lg border border-slate-800 self-start sm:self-auto">
-            <div className="relative w-8 h-8 flex items-center justify-center">
-              <svg className="w-8 h-8 -rotate-90" viewBox="0 0 36 36">
+          <div className="flex items-center gap-2.5 sm:gap-3 bg-slate-900/60 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg border border-slate-800 self-start sm:self-auto">
+            <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
+              <svg className="w-7 h-7 sm:w-8 sm:h-8 -rotate-90" viewBox="0 0 36 36">
                 <path
                   className="text-slate-800"
                   strokeWidth="3.5"
@@ -130,7 +133,7 @@ export const HabitList: React.FC<HabitListProps> = ({
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
               </svg>
-              <span className="absolute text-xs font-bold text-white tabular-nums">{completionRate}%</span>
+              <span className="absolute text-[10px] sm:text-xs font-bold text-white tabular-nums">{completionRate}%</span>
             </div>
             <div>
               <div className="text-xs font-semibold text-slate-200">Daily Adherence</div>
@@ -144,7 +147,7 @@ export const HabitList: React.FC<HabitListProps> = ({
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 pt-3.5 overflow-x-auto no-scrollbar touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
+        <div className="flex items-center gap-1.5 pt-3 sm:pt-3.5 overflow-x-auto no-scrollbar touch-pan-x -mx-1 px-1 sm:mx-0 sm:px-0">
           <ListFilter className="w-3.5 h-3.5 text-slate-500 mr-1 flex-shrink-0" />
           {filterTabs.map((item) => {
             const isActive = filter === item.id;
@@ -155,14 +158,14 @@ export const HabitList: React.FC<HabitListProps> = ({
                   setFilter(item.id);
                   soundFx.playCrystalChime(784);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border flex items-center gap-2 min-h-[36px] ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer border flex items-center gap-1.5 sm:gap-2 min-h-[36px] ${
                   isActive 
                     ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm' 
                     : 'bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800'
                 }`}
               >
                 <span>{item.label}</span>
-                <span className={`text-xs px-1.5 py-0.2 rounded font-semibold tabular-nums ${
+                <span className={`text-[10px] sm:text-xs px-1.5 py-0.2 rounded font-semibold tabular-nums ${
                   isActive ? 'bg-indigo-700 text-white' : 'bg-slate-800 text-slate-400'
                 }`}>
                   {item.count}
@@ -177,7 +180,7 @@ export const HabitList: React.FC<HabitListProps> = ({
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {filteredHabits.length === 0 ? (
-            <div className="p-8 text-center rounded-xl bg-[#11141f] border border-dashed border-slate-800">
+            <div className="p-6 sm:p-8 text-center rounded-xl bg-[#11141f] border border-dashed border-slate-800">
               <h4 className="text-sm font-semibold text-slate-300">No habits in this category</h4>
               <p className="text-xs text-slate-500 mt-1">
                 Add a new habit to track your routine in this time slot.
@@ -201,49 +204,75 @@ export const HabitList: React.FC<HabitListProps> = ({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.18, delay: idx * 0.015 }}
-                  className={`group relative flex items-start justify-between p-3 sm:p-4 rounded-xl border transition-colors ${
+                  className={`group relative flex flex-col sm:flex-row sm:items-start justify-between p-3 sm:p-4 rounded-xl border transition-all duration-200 ${
                     isDone
-                      ? 'bg-[#0e111a]/80 border-slate-800/60 opacity-80'
-                      : 'bg-[#11141f] border-slate-800/90 hover:border-slate-700 hover:bg-[#141824]'
+                      ? 'bg-[#0d101a]/75 border-slate-800/40 border-l-[3px] border-l-emerald-500/70 opacity-80 sm:opacity-90'
+                      : 'bg-[#121626] border-slate-800/90 border-l-[3px] border-l-indigo-500/80 hover:border-slate-700 hover:bg-[#151b2e] shadow-sm'
                   }`}
                 >
-                  {/* Left: Checkbox & Habit Info */}
-                  <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0 flex-1">
-                    {/* Checkbox Control with Comfortable Touch Tap Target */}
+                  {/* Top / Main Content: Checkbox, Title, and Mobile Streak */}
+                  <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0 flex-1 w-full">
+                    {/* Checkbox Control with Comfortable 44x44px Touch Target */}
                     <button
                       onClick={() => handleToggle(habit.id)}
-                      className="relative p-1.5 -m-1.5 flex items-center justify-center cursor-pointer flex-shrink-0 mt-0.5"
+                      className="relative min-w-[44px] min-h-[44px] -ml-2 -mt-1.5 -mb-1.5 flex items-center justify-center cursor-pointer flex-shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       aria-label={`Toggle habit: ${habit.title}`}
                     >
                       <div
-                        className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${
+                        className={`w-5.5 h-5.5 rounded-md flex items-center justify-center transition-all duration-200 ${
                           isDone
-                            ? 'bg-emerald-500 text-slate-950 border border-emerald-400'
-                            : 'border border-slate-600 hover:border-indigo-400 bg-slate-900/60 hover:bg-indigo-500/10'
+                            ? 'bg-emerald-500 text-slate-950 border border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.35)]'
+                            : 'border-2 border-slate-600 hover:border-indigo-400 bg-slate-900/80 hover:bg-indigo-500/15'
                         }`}
                       >
                         {isDone && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </div>
                     </button>
 
-                    {/* Category Icon & Details */}
-                    <div className="min-w-0 flex-1 pr-1 sm:pr-2">
-                      <div className="flex items-start gap-2">
-                        <div
-                          className="p-1 rounded bg-slate-800/80 flex-shrink-0 mt-0.5"
-                          title={habit.category}
-                        >
-                          {renderHabitIcon(habit.iconName, habit.color)}
+                    {/* Habit Details (Title & Meta) */}
+                    <div className="min-w-0 flex-1 pr-0 sm:pr-2">
+                      <div className="flex items-start justify-between gap-2">
+                        {/* Title & Category Icon */}
+                        <div className="flex items-start gap-2 min-w-0 flex-1">
+                          <div
+                            className={`p-1 rounded flex-shrink-0 mt-0.5 transition-colors ${
+                              isDone
+                                ? 'bg-slate-900/60 opacity-70'
+                                : 'bg-slate-800/90 text-slate-200'
+                            }`}
+                            title={habit.category}
+                          >
+                            {renderHabitIcon(habit.iconName, habit.color)}
+                          </div>
+                          <h4
+                            className={`text-xs sm:text-sm font-semibold break-words transition-colors leading-snug flex-1 ${
+                              isDone
+                                ? 'line-through text-slate-400/80 decoration-slate-500/70'
+                                : 'text-slate-100 group-hover:text-white'
+                            }`}
+                          >
+                            {habit.title}
+                          </h4>
                         </div>
-                        <h4
-                          className={`text-xs sm:text-sm font-semibold break-words transition-colors leading-snug flex-1 ${
-                            isDone
-                              ? 'line-through text-slate-500'
-                              : 'text-slate-100 group-hover:text-white'
-                          }`}
-                        >
-                          {habit.title}
-                        </h4>
+
+                        {/* Mobile Streak Badge (Compact, sits on top right of title row) */}
+                        <div className="sm:hidden flex-shrink-0">
+                          <div
+                            className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold border tabular-nums ${
+                              isDone
+                                ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
+                                : 'bg-slate-900/60 border-slate-800 text-slate-400'
+                            }`}
+                            title={`${habit.streak} day active streak`}
+                          >
+                            <Flame
+                              className={`w-3 h-3 ${
+                                isDone ? 'fill-amber-400/80 text-amber-400' : 'text-slate-500'
+                              }`}
+                            />
+                            <span>{habit.streak}d</span>
+                          </div>
+                        </div>
                       </div>
 
                       {habit.description && (
@@ -252,41 +281,67 @@ export const HabitList: React.FC<HabitListProps> = ({
                         </p>
                       )}
 
-                      {/* Meta Tags & Weekly Progress Bar */}
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-2.5 text-xs text-slate-400">
-                        <span className="flex items-center gap-1 capitalize text-slate-300 font-medium whitespace-nowrap">
-                          <Clock className="w-3 h-3 text-slate-500 flex-shrink-0" />
-                          {habit.timeOfDay}
-                        </span>
-                        <span className="text-slate-600">•</span>
-                        <span className="capitalize text-slate-400 whitespace-nowrap">{habit.category}</span>
-                        <span className="text-slate-600">•</span>
-                        
-                        {/* Weekly target bar */}
-                        <div className="flex items-center gap-2 whitespace-nowrap">
-                          <div className="w-14 h-1.5 bg-slate-800 rounded-full overflow-hidden flex-shrink-0">
-                            <div
-                              className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-                              style={{
-                                width: `${Math.min(100, Math.round((habit.completedThisWeek / habit.targetPerWeek) * 100))}%`,
-                              }}
-                            />
-                          </div>
-                          <span className="text-slate-400 font-medium tabular-nums">
-                            {habit.completedThisWeek}/{habit.targetPerWeek}w
+                      {/* Meta Tags, Weekly Progress Bar & Mobile Action Buttons */}
+                      <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-slate-800/40 sm:border-0 sm:pt-0 sm:mt-2.5">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
+                          <span className="flex items-center gap-1 capitalize text-slate-300 font-medium whitespace-nowrap">
+                            <Clock className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                            {habit.timeOfDay}
                           </span>
+                          <span className="text-slate-600">•</span>
+                          <span className="capitalize text-slate-400 whitespace-nowrap">{habit.category}</span>
+                          <span className="text-slate-600">•</span>
+                          
+                          {/* Weekly target bar */}
+                          <div className="flex items-center gap-1.5 whitespace-nowrap">
+                            <div className="w-12 sm:w-14 h-1.5 bg-slate-800 rounded-full overflow-hidden flex-shrink-0">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  isDone ? 'bg-emerald-500' : 'bg-indigo-500'
+                                }`}
+                                style={{
+                                  width: `${Math.min(100, Math.round((habit.completedThisWeek / habit.targetPerWeek) * 100))}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="text-slate-400 font-medium tabular-nums text-[11px] sm:text-xs">
+                              {habit.completedThisWeek}/{habit.targetPerWeek}w
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Mobile Action Controls (Delete / Optional Edit) */}
+                        <div className="sm:hidden flex items-center gap-1 flex-shrink-0">
+                          {onEditHabit && (
+                            <button
+                              onClick={() => onEditHabit(habit)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 active:bg-indigo-500/15 transition-colors cursor-pointer"
+                              title="Edit habit"
+                              aria-label={`Edit habit: ${habit.title}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDeleteHabit(habit.id)}
+                            className="p-1.5 -mr-1 rounded-lg text-slate-500 hover:text-rose-400 active:text-rose-400 active:bg-rose-500/15 transition-colors cursor-pointer"
+                            title="Remove habit"
+                            aria-label={`Remove habit: ${habit.title}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Right: Streak & Actions */}
-                  <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-3 flex-shrink-0 self-start mt-0.5">
+                  {/* Desktop Right: Streak & Actions */}
+                  <div className="hidden sm:flex items-center gap-2 pl-3 flex-shrink-0 self-start mt-0.5">
                     {/* Streak Badge */}
                     <div
                       className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold border tabular-nums ${
                         isDone
-                          ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                          ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
                           : 'bg-slate-900/60 border-slate-800 text-slate-400'
                       }`}
                       title={`${habit.streak} day active streak`}
@@ -299,10 +354,20 @@ export const HabitList: React.FC<HabitListProps> = ({
                       <span>{habit.streak}d</span>
                     </div>
 
-                    {/* Delete button */}
+                    {/* Desktop Actions */}
+                    {onEditHabit && (
+                      <button
+                        onClick={() => onEditHabit(habit)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                        title="Edit habit"
+                        aria-label={`Edit habit: ${habit.title}`}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => onDeleteHabit(habit.id)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-70 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
                       title="Remove habit"
                       aria-label="Remove habit"
                     >

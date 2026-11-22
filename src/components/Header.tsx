@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
   const progression = calculateProgression(userXP);
 
   return (
-    <header className="sticky top-0 z-30 bg-[#0b0d14]/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-6 py-2 sm:py-2.5 transition-colors">
+    <header className="sticky top-0 z-30 bg-[#0b0d14]/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-6 pt-[max(0.6rem,env(safe-area-inset-top,0px))] pb-2 sm:py-2.5 transition-colors">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
         {/* Left: Brand Menu & Quick Status */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-shrink">

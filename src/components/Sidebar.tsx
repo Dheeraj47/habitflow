@@ -108,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800/80">
+        <div className="pt-[max(0.85rem,env(safe-area-inset-top,0px))] pb-3 min-h-[4.25rem] flex items-center justify-between px-5 border-b border-slate-800/80 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
               <Compass className="w-4 h-4 text-indigo-400" />
