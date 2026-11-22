@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export interface AuthUser {
@@ -219,9 +221,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
+    // 3. Setup Capacitor deep link listener for OAuth callback inside Android WebView
+    let urlListenerSub: { remove: () => void } | null = null;
+    if (typeof window !== 'undefined' && Capacitor.isNativePlatform()) {
+      CapApp.addListener('appUrlOpen', async (event) => {
+        if (!event.url) return;
+        try {
+          const urlObj = new URL(event.url);
+          const hash = urlObj.hash.startsWith('#') ? urlObj.hash.substring(1) : urlObj.hash;
+          const params = new URLSearchParams(hash || urlObj.search);
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          if (accessToken && supabase) {
+            await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+          }
+        } catch (err) {
+          console.warn('[HabitFlow Auth] Deep link auth handling warning:', err);
+        }
+      }).then((sub) => {
+        urlListenerSub = sub;
+      }).catch((e) => {
+        console.warn('[HabitFlow Auth] Failed to register appUrlOpen listener:', e);
+      });
+    }
+
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      if (urlListenerSub) {
+        urlListenerSub.remove();
+      }
     };
   }, []);
 
@@ -324,7 +356,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
 
     try {
-      const redirectOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+      const isNativeApp = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+      const redirectOrigin = isNativeApp
+        ? 'com.habitflow.app://auth/callback'
+        : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173');
       
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',

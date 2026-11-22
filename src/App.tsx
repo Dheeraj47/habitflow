@@ -43,6 +43,8 @@ import { soundFx } from './utils/sound';
 import { useAuth } from './context/AuthContext';
 import { challengeService } from './services/challengeService';
 import { ratingService } from './services/ratingService';
+import { initNativeIntegrations, registerBackButtonHandler } from './utils/capacitorBridge';
+import { App as CapApp } from '@capacitor/app';
 
 const STORAGE_KEY = 'habitflow_habits_v1';
 const XP_STORAGE_KEY = 'habitflow_user_xp_v1';
@@ -137,7 +139,7 @@ export function App() {
   const toastCounterRef = useRef<number>(1);
 
   // Authentication state
-  const { authUser, isAuthenticated } = useAuth();
+  const { authUser, isAuthenticated, isAuthModalOpen, closeAuthModal } = useAuth();
   const prevAuthRef = useRef<boolean | null>(null);
 
   // Scroll Progress Bar calculation with spring damping
@@ -353,6 +355,48 @@ export function App() {
   // Football-inspired Matchday Player Rating State
   const [isDayRatingModalOpen, setIsDayRatingModalOpen] = useState(false);
   const [challengeCheckinRevision, setChallengeCheckinRevision] = useState(0);
+
+  // Initialize native device integrations when packaged via Capacitor on Android
+  useEffect(() => {
+    initNativeIntegrations({
+      onDefaultBack: () => {
+        if (activeTab !== 'dashboard') {
+          setActiveTab('dashboard');
+        } else {
+          CapApp.exitApp();
+        }
+      },
+    });
+  }, [activeTab]);
+
+  // Intercept hardware back button for active modals, drawers, and tabs
+  useEffect(() => {
+    const unregister = registerBackButtonHandler(() => {
+      if (isAuthModalOpen) {
+        closeAuthModal();
+        return true;
+      }
+      if (isAddModalOpen) {
+        setIsAddModalOpen(false);
+        return true;
+      }
+      if (isDayRatingModalOpen) {
+        setIsDayRatingModalOpen(false);
+        return true;
+      }
+      if (isSidebarOpen) {
+        setIsSidebarOpen(false);
+        return true;
+      }
+      if (activeTab !== 'dashboard') {
+        setActiveTab('dashboard');
+        return true;
+      }
+      return false;
+    });
+
+    return unregister;
+  }, [isAuthModalOpen, closeAuthModal, isAddModalOpen, isDayRatingModalOpen, isSidebarOpen, activeTab]);
 
   // Synchronize challenge check-in events across guest and authenticated sessions
   useEffect(() => {
