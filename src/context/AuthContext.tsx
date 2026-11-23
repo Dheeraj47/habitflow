@@ -3,6 +3,7 @@ import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { parseAuthUrl } from '../utils/capacitorBridge';
 
 export interface AuthUser {
   id: string;
@@ -223,29 +224,75 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // 3. Setup Capacitor deep link listener for OAuth callback inside Android WebView
     let urlListenerSub: { remove: () => void } | null = null;
+    let appStateSub: { remove: () => void } | null = null;
+
     if (typeof window !== 'undefined' && Capacitor.isNativePlatform()) {
       CapApp.addListener('appUrlOpen', async (event) => {
         if (!event.url) return;
         try {
-          const urlObj = new URL(event.url);
-          const hash = urlObj.hash.startsWith('#') ? urlObj.hash.substring(1) : urlObj.hash;
-          const params = new URLSearchParams(hash || urlObj.search);
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
-          if (accessToken && supabase) {
-            await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
+          const parsed = parseAuthUrl(event.url);
+          if (!parsed) return;
+
+          if (parsed.error || parsed.errorDescription) {
+            setError(parsed.errorDescription || parsed.error || 'Authentication failed or was cancelled.');
+            setIsActionLoading(false);
+            return;
+          }
+
+          if (parsed.code && supabase) {
+            setIsActionLoading(true);
+            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(parsed.code);
+            if (exchangeError) {
+              console.warn('[HabitFlow Auth] PKCE exchange error:', exchangeError.message);
+              setError(exchangeError.message);
+            } else if (data.session) {
+              setSession(data.session);
+              setUser(data.user);
+              setIsAuthModalOpen(false);
+              setError(null);
+            }
+            setIsActionLoading(false);
+            return;
+          }
+
+          if (parsed.accessToken && supabase) {
+            setIsActionLoading(true);
+            const { data, error: setSessionError } = await supabase.auth.setSession({
+              access_token: parsed.accessToken,
+              refresh_token: parsed.refreshToken || '',
             });
+            if (setSessionError) {
+              console.warn('[HabitFlow Auth] Set session error:', setSessionError.message);
+              setError(setSessionError.message);
+            } else if (data.session) {
+              setSession(data.session);
+              setUser(data.user);
+              setIsAuthModalOpen(false);
+              setError(null);
+            }
+            setIsActionLoading(false);
+            return;
           }
         } catch (err) {
           console.warn('[HabitFlow Auth] Deep link auth handling warning:', err);
+          setIsActionLoading(false);
         }
       }).then((sub) => {
         urlListenerSub = sub;
       }).catch((e) => {
         console.warn('[HabitFlow Auth] Failed to register appUrlOpen listener:', e);
       });
+
+      // Clear any stuck action loading when returning to app
+      CapApp.addListener('appStateChange', (state) => {
+        if (state.isActive) {
+          setTimeout(() => {
+            setIsActionLoading(false);
+          }, 2000);
+        }
+      }).then((sub) => {
+        appStateSub = sub;
+      }).catch(() => {});
     }
 
     return () => {
@@ -253,6 +300,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       subscription.unsubscribe();
       if (urlListenerSub) {
         urlListenerSub.remove();
+      }
+      if (appStateSub) {
+        appStateSub.remove();
       }
     };
   }, []);
@@ -352,6 +402,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: false, error: 'Supabase client is not configured' };
     }
 
+    if (isActionLoading) {
+      return { success: false, error: 'Authentication request already in progress' };
+    }
+
     setIsActionLoading(true);
     setError(null);
 
@@ -373,6 +427,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (oauthError) {
+        setIsActionLoading(false);
         setError(oauthError.message);
         return { success: false, error: oauthError.message };
       }
@@ -380,11 +435,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Browser will redirect to Google authentication
       return { success: true };
     } catch (err: unknown) {
+      setIsActionLoading(false);
       const msg = err instanceof Error ? err.message : 'Google sign-in failed. Please try again.';
       setError(msg);
       return { success: false, error: msg };
     } finally {
-      setIsActionLoading(false);
+      // On web the page redirects; on native Android keep loading until browser opens or app state changes
+      if (!Capacitor.isNativePlatform()) {
+        setIsActionLoading(false);
+      }
     }
   };
 

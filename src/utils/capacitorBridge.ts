@@ -49,20 +49,45 @@ export function executeBackButton(): boolean {
   return false;
 }
 
+export interface ParsedAuthUrl {
+  accessToken?: string;
+  refreshToken?: string;
+  code?: string;
+  type?: string;
+  error?: string;
+  errorDescription?: string;
+}
+
 /**
- * Parse an auth redirect URL (custom scheme or https) for OAuth tokens
+ * Parse an auth redirect URL (custom scheme or https) for OAuth tokens, PKCE codes, and errors
  */
-export function parseAuthUrl(url: string): { accessToken?: string; refreshToken?: string; type?: string } | null {
+export function parseAuthUrl(url: string): ParsedAuthUrl | null {
+  if (!url || typeof url !== 'string') return null;
   try {
     const urlObj = new URL(url);
     const hash = urlObj.hash.startsWith('#') ? urlObj.hash.substring(1) : urlObj.hash;
-    const params = new URLSearchParams(hash || urlObj.search);
-    const accessToken = params.get('access_token') || undefined;
-    const refreshToken = params.get('refresh_token') || undefined;
-    const type = params.get('type') || undefined;
+    const search = urlObj.search.startsWith('?') ? urlObj.search.substring(1) : urlObj.search;
 
-    if (accessToken || refreshToken) {
-      return { accessToken, refreshToken, type };
+    const hashParams = new URLSearchParams(hash);
+    const searchParams = new URLSearchParams(search);
+
+    const code = searchParams.get('code') || hashParams.get('code') || undefined;
+    const accessToken = hashParams.get('access_token') || searchParams.get('access_token') || undefined;
+    const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token') || undefined;
+    const type = hashParams.get('type') || searchParams.get('type') || undefined;
+    const error = searchParams.get('error') || hashParams.get('error') || undefined;
+    const rawErrorDesc = searchParams.get('error_description') || hashParams.get('error_description') || undefined;
+    const errorDescription = rawErrorDesc ? decodeURIComponent(rawErrorDesc.replace(/\+/g, ' ')) : undefined;
+
+    if (code || accessToken || refreshToken || error || errorDescription) {
+      return {
+        accessToken,
+        refreshToken,
+        code,
+        type,
+        error,
+        errorDescription,
+      };
     }
     return null;
   } catch {

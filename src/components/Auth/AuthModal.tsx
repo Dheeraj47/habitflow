@@ -11,11 +11,11 @@ import {
   CheckCircle2, 
   ArrowRight,
   ShieldCheck,
-  Compass,
   Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
+import { registerBackButtonHandler } from '../../utils/capacitorBridge';
 import { soundFx } from '../../utils/sound';
 
 const GoogleIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
@@ -75,6 +75,16 @@ export const AuthModal: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAuthModalOpen, closeAuthModal]);
+
+  // Register Android native hardware back button handler
+  useEffect(() => {
+    if (!isAuthModalOpen) return;
+    const unregister = registerBackButtonHandler(() => {
+      closeAuthModal();
+      return true;
+    });
+    return unregister;
   }, [isAuthModalOpen, closeAuthModal]);
 
   // Clear inputs and validation when switching mode
@@ -158,178 +168,273 @@ export const AuthModal: React.FC = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md overflow-y-auto pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
           onClick={closeAuthModal}
         >
-        <motion.div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="auth-modal-title"
-          onClick={(e) => e.stopPropagation()}
-          initial={{ opacity: 0, scale: 0.96, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 12 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="relative w-full max-w-md my-8 bg-[#11141f] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100"
-        >
-          {/* Close Button */}
-          <button
-            type="button"
-            onClick={closeAuthModal}
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer z-10"
-            aria-label="Close dialog"
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-modal-title"
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="relative w-full max-w-md my-auto bg-[var(--surface-base)] border border-[var(--border-subtle)] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden text-[var(--text-primary)] transition-colors duration-200"
           >
-            <X className="w-4 h-4" />
-          </button>
+            {/* Subtle Top Ambient Accent Halo */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-[var(--accent-primary)]/10 blur-2xl rounded-full pointer-events-none" />
 
-          {/* Modal Header */}
-          <div className="pt-7 px-6 pb-4 text-center relative z-10">
-            <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-500/10 border border-indigo-500/20 mb-3">
-              <Compass className="w-5 h-5 text-indigo-400" />
-            </div>
-            
-            <h2 id="auth-modal-title" className="text-xl font-bold tracking-tight text-white">
-              {authModalMode === 'signin' && 'Welcome to HabitFlow'}
-              {authModalMode === 'signup' && 'Create Your Account'}
-              {authModalMode === 'confirmation_sent' && 'Verify Your Email'}
-              {authModalMode === 'forgot_password' && 'Reset Password'}
-            </h2>
-            
-            <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-              {authModalMode === 'signin' && 'Sign in to sync your habits, rituals, and streaks across devices'}
-              {authModalMode === 'signup' && 'Begin your journey to atomic discipline and daily momentum'}
-              {authModalMode === 'confirmation_sent' && 'Please check your inbox to complete registration'}
-              {authModalMode === 'forgot_password' && "We'll send a secure password recovery link to your email"}
-            </p>
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={closeAuthModal}
+              className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 w-9 h-9 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-all cursor-pointer z-20"
+              aria-label="Close dialog"
+            >
+              <X className="w-4 h-4" />
+            </button>
 
-            {/* Mode Toggle Tabs (only in signin/signup) */}
-            {(authModalMode === 'signin' || authModalMode === 'signup') && (
-              <div className="grid grid-cols-2 p-1 bg-slate-900 border border-slate-800 rounded-xl mt-5">
-                <button
-                  type="button"
-                  onClick={() => switchMode('signin')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    authModalMode === 'signin'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => switchMode('signup')}
-                  className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-                    authModalMode === 'signup'
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  Create Account
-                </button>
+            {/* Modal Header */}
+            <div className="pt-6 sm:pt-7 px-5 sm:px-6 pb-2 text-center relative z-10">
+              <div className="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-[var(--accent-glow)] border border-[var(--accent-primary)]/25 text-[var(--accent-primary)] mb-3 shadow-sm">
+                <Sparkles className="w-5 h-5" />
               </div>
-            )}
-          </div>
+              
+              <h2 id="auth-modal-title" className="text-lg sm:text-xl font-bold tracking-tight text-[var(--text-primary)]">
+                {authModalMode === 'signin' && 'Welcome to HabitFlow'}
+                {authModalMode === 'signup' && 'Create Your Account'}
+                {authModalMode === 'confirmation_sent' && 'Verify Your Email'}
+                {authModalMode === 'forgot_password' && 'Reset Password'}
+              </h2>
+              
+              <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-xs mx-auto leading-relaxed">
+                {authModalMode === 'signin' && 'Sign in to sync your habits, ratings, and rituals seamlessly'}
+                {authModalMode === 'signup' && 'Begin your journey to atomic discipline and daily momentum'}
+                {authModalMode === 'confirmation_sent' && 'Please check your inbox to complete registration'}
+                {authModalMode === 'forgot_password' && "We'll send a secure password recovery link to your email"}
+              </p>
 
-          {/* Modal Body */}
-          <div className="px-6 pb-6 pt-1 space-y-4 relative z-10">
-            {/* Supabase Not Configured Notice (if applicable) */}
-            {!isConfigured && (
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div className="text-xs leading-relaxed">
-                  Supabase environment credentials are not detected. Guest local storage mode is active.
-                </div>
-              </div>
-            )}
-
-            {/* Error Banner */}
-            {(error || formValidationMessage) && (
-              <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-start justify-between gap-2"
-              >
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-                  <span className="text-xs leading-relaxed">
-                    {formValidationMessage || error}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    clearError();
-                    setFormValidationMessage(null);
-                  }}
-                  className="text-rose-400 hover:text-rose-200 text-xs p-0.5"
-                >
-                  ✕
-                </button>
-              </motion.div>
-            )}
-
-            {/* Email Confirmation Screen View */}
-            {authModalMode === 'confirmation_sent' ? (
-              <div className="text-center py-4 space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto">
-                  <Mail className="w-7 h-7" />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="text-sm font-semibold text-slate-200">
-                    Confirmation email sent!
-                  </div>
-                  <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
-                    We sent a verification link to{' '}
-                    <span className="text-indigo-300 font-semibold">{pendingConfirmationEmail || email}</span>.
-                    Please check your inbox (and spam folder) and click the link to confirm your account.
-                  </p>
-                  <div className="text-xs text-slate-500 pt-1">
-                    Once verified, you will be able to log in and sync all your habits.
-                  </div>
-                </div>
-
-                <div className="pt-2 flex flex-col gap-2">
+              {/* Mode Toggle Tabs (only in signin/signup) */}
+              {(authModalMode === 'signin' || authModalMode === 'signup') && (
+                <div className="grid grid-cols-2 p-1 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-xl mt-4 sm:mt-5">
                   <button
                     type="button"
                     onClick={() => switchMode('signin')}
-                    className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all cursor-pointer shadow-md"
+                    className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                      authModalMode === 'signin'
+                        ? 'bg-[var(--accent-primary)] text-white shadow-md'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
                   >
-                    Back to Sign In
+                    Sign In
                   </button>
                   <button
                     type="button"
-                    onClick={continueAsGuest}
-                    className="w-full py-2 px-4 rounded-xl text-slate-400 hover:text-slate-200 text-xs font-medium transition-colors cursor-pointer"
+                    onClick={() => switchMode('signup')}
+                    className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                      authModalMode === 'signup'
+                        ? 'bg-[var(--accent-primary)] text-white shadow-md'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                    }`}
                   >
-                    Continue as Guest for now
+                    Create Account
                   </button>
                 </div>
-              </div>
-            ) : authModalMode === 'forgot_password' ? (
-              /* Forgot Password Screen */
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {resetSent ? (
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-center space-y-2">
-                    <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto" />
-                    <div className="text-xs font-semibold">Password reset link dispatched!</div>
-                    <p className="text-xs text-slate-400">
-                      Check your email for instructions to reset your password.
+              )}
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-5 sm:px-6 pb-6 pt-2 space-y-4 relative z-10 max-h-[calc(85vh-120px)] overflow-y-auto">
+              {/* Supabase Not Configured Notice (if applicable) */}
+              {!isConfigured && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-200 text-xs flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs leading-relaxed">
+                    Supabase environment credentials are not detected. Guest local storage mode is active.
+                  </div>
+                </div>
+              )}
+
+              {/* Error Banner */}
+              {(error || formValidationMessage) && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-600 dark:text-rose-300 text-xs flex items-start justify-between gap-2"
+                >
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-xs leading-relaxed font-medium">
+                      {formValidationMessage || error}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearError();
+                      setFormValidationMessage(null);
+                    }}
+                    className="text-rose-500 dark:text-rose-400 hover:opacity-80 text-xs p-0.5 cursor-pointer"
+                    aria-label="Dismiss error"
+                  >
+                    ✕
+                  </button>
+                </motion.div>
+              )}
+
+              {/* Email Confirmation Screen View */}
+              {authModalMode === 'confirmation_sent' ? (
+                <div className="text-center py-4 space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--accent-glow)] border border-[var(--accent-primary)]/30 text-[var(--accent-primary)] flex items-center justify-center mx-auto">
+                    <Mail className="w-7 h-7" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="text-sm font-semibold text-[var(--text-primary)]">
+                      Confirmation email sent!
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)] leading-relaxed max-w-sm mx-auto">
+                      We sent a verification link to{' '}
+                      <span className="text-[var(--accent-primary)] font-semibold">{pendingConfirmationEmail || email}</span>.
+                      Please check your inbox (and spam folder) and click the link to confirm your account.
                     </p>
+                    <div className="text-xs text-[var(--text-muted)] pt-1">
+                      Once verified, you will be able to log in and sync all your habits.
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex flex-col gap-2">
                     <button
                       type="button"
                       onClick={() => switchMode('signin')}
-                      className="mt-3 text-xs text-indigo-400 hover:text-indigo-300 underline font-semibold cursor-pointer block mx-auto"
+                      className="w-full py-2.5 px-4 rounded-xl bg-[var(--accent-primary)] hover:opacity-95 text-white text-xs font-semibold transition-all cursor-pointer shadow-md min-h-[44px]"
                     >
-                      Return to Sign In
+                      Back to Sign In
+                    </button>
+                    <button
+                      type="button"
+                      onClick={continueAsGuest}
+                      className="w-full py-2 px-4 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xs font-medium transition-colors cursor-pointer min-h-[40px]"
+                    >
+                      Continue as Guest for now
                     </button>
                   </div>
-                ) : (
-                  <>
+                </div>
+              ) : authModalMode === 'forgot_password' ? (
+                /* Forgot Password Screen */
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {resetSent ? (
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-center space-y-2">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto" />
+                      <div className="text-xs font-semibold">Password reset link dispatched!</div>
+                      <p className="text-xs text-[var(--text-secondary)]">
+                        Check your email for instructions to reset your password.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => switchMode('signin')}
+                        className="mt-3 text-xs text-[var(--accent-primary)] hover:underline font-semibold cursor-pointer block mx-auto"
+                      >
+                        Return to Sign In
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                          <span>Email Address</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="you@example.com"
+                          required
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-glow)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-xs sm:text-sm outline-none transition-all"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isActionLoading}
+                        className="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-[var(--accent-primary)] hover:opacity-95 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-[var(--accent-glow)] min-h-[44px]"
+                      >
+                        {isActionLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                            <span>Sending recovery email...</span>
+                          </>
+                        ) : (
+                          <span>Send Password Reset Link</span>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => switchMode('signin')}
+                        className="w-full text-center text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors pt-1 cursor-pointer min-h-[36px] flex items-center justify-center"
+                      >
+                        Back to Sign In
+                      </button>
+                    </>
+                  )}
+                </form>
+              ) : (
+                /* Sign In / Sign Up Form View */
+                <>
+                  {/* 1. Google One-Click OAuth Button */}
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    disabled={isActionLoading || !isConfigured}
+                    className="w-full py-2.5 px-4 rounded-xl bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] text-[var(--text-primary)] text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-sm min-h-[44px] active:scale-[0.99]"
+                  >
+                    {isActionLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-[var(--accent-primary)]" />
+                        <span>Connecting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <GoogleIcon className="w-4 h-4 flex-shrink-0" />
+                        <span>Continue with Google</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* 2. Visual Divider */}
+                  <div className="flex items-center gap-3 my-3">
+                    <div className="flex-1 h-[1px] bg-[var(--border-subtle)]" />
+                    <span className="text-[10px] sm:text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">
+                      or continue with email
+                    </span>
+                    <div className="flex-1 h-[1px] bg-[var(--border-subtle)]" />
+                  </div>
+
+                  {/* 3. Credentials Form */}
+                  <form onSubmit={handleSubmit} className="space-y-3.5">
+                    {authModalMode === 'signup' && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                          <UserIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                          <span>Full Name</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="Alex Rivera"
+                          autoComplete="name"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-glow)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-xs sm:text-sm outline-none transition-all"
+                        />
+                      </div>
+                    )}
+
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-[var(--text-muted)]" />
                         <span>Email Address</span>
                       </label>
                       <input
@@ -337,194 +442,111 @@ export const AuthModal: React.FC = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
+                        autoComplete="email"
                         required
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-indigo-500 text-slate-100 placeholder:text-slate-500 text-xs outline-none transition-all"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-glow)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-xs sm:text-sm outline-none transition-all"
                       />
                     </div>
 
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                          <span>Password</span>
+                        </label>
+                        {authModalMode === 'signin' && (
+                          <button
+                            type="button"
+                            onClick={() => switchMode('forgot_password')}
+                            className="text-xs text-[var(--accent-primary)] hover:underline cursor-pointer transition-colors font-medium"
+                          >
+                            Forgot?
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          autoComplete={authModalMode === 'signup' ? 'new-password' : 'current-password'}
+                          required
+                          className="w-full px-3.5 py-2.5 pr-11 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-glow)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-xs sm:text-sm outline-none transition-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] transition-colors p-1"
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {authModalMode === 'signup' && (
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                          <span>Confirm Password</span>
+                        </label>
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          autoComplete="new-password"
+                          required
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-glow)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] text-xs sm:text-sm outline-none transition-all"
+                        />
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
                     <button
                       type="submit"
-                      disabled={isActionLoading}
-                      className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md"
+                      disabled={isActionLoading || !isConfigured}
+                      className="w-full mt-2 py-2.5 sm:py-3 px-4 rounded-xl bg-[var(--accent-primary)] hover:opacity-95 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md shadow-[var(--accent-glow)] active:scale-[0.99] min-h-[44px]"
                     >
                       {isActionLoading ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Sending recovery email...</span>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>
+                            {authModalMode === 'signup' ? 'Creating account...' : 'Signing in...'}
+                          </span>
                         </>
                       ) : (
-                        <span>Send Password Reset Link</span>
+                        <>
+                          <span>{authModalMode === 'signup' ? 'Create Account' : 'Sign In'}</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
                       )}
                     </button>
+                  </form>
+                </>
+              )}
 
-                    <button
-                      type="button"
-                      onClick={() => switchMode('signin')}
-                      className="w-full text-center text-xs text-slate-400 hover:text-slate-200 transition-colors pt-1 cursor-pointer"
-                    >
-                      Back to Sign In
-                    </button>
-                  </>
-                )}
-              </form>
-            ) : (
-              /* Sign In / Sign Up Form View */
-              <>
-                {/* 1. Google One-Click OAuth Button */}
+              {/* Guest Mode Notice & Action */}
+              <div className="pt-3 border-t border-[var(--border-subtle)] text-center space-y-1.5">
                 <button
                   type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={isActionLoading || !isConfigured}
-                  className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 shadow-sm"
+                  onClick={continueAsGuest}
+                  className="w-full py-2 px-3 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-hover)] border border-transparent hover:border-[var(--border-subtle)] text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 min-h-[40px]"
                 >
-                  <GoogleIcon className="w-4 h-4 flex-shrink-0" />
-                  <span>Continue with Google</span>
+                  <span>Continue as Guest</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">(Offline &amp; Local Storage)</span>
                 </button>
-
-                {/* 2. Visual Divider */}
-                <div className="flex items-center gap-3 my-3">
-                  <div className="flex-1 h-[1px] bg-slate-800" />
-                  <span className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
-                    or continue with email
-                  </span>
-                  <div className="flex-1 h-[1px] bg-slate-800" />
+                
+                <div className="text-[11px] text-[var(--text-muted)] flex items-center justify-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-[var(--accent-primary)]/70 flex-shrink-0" />
+                  <span>Your local habits, ratings, and streaks are fully protected</span>
                 </div>
-
-                {/* 3. Credentials Form */}
-                <form onSubmit={handleSubmit} className="space-y-3.5">
-                  {authModalMode === 'signup' && (
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                        <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Full Name</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Alex Rivera"
-                        autoComplete="name"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-indigo-500 text-slate-100 placeholder:text-slate-500 text-xs outline-none transition-all"
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Email Address</span>
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      required
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-indigo-500 text-slate-100 placeholder:text-slate-500 text-xs outline-none transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                        <Lock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Password</span>
-                      </label>
-                      {authModalMode === 'signin' && (
-                        <button
-                          type="button"
-                          onClick={() => switchMode('forgot_password')}
-                          className="text-xs text-indigo-400 hover:text-indigo-300 cursor-pointer transition-colors"
-                        >
-                          Forgot?
-                        </button>
-                      )}
-                    </div>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        autoComplete={authModalMode === 'signup' ? 'new-password' : 'current-password'}
-                        required
-                        className="w-full px-3.5 py-2.5 pr-10 rounded-xl bg-slate-900 border border-slate-700 focus:border-indigo-500 text-slate-100 placeholder:text-slate-500 text-xs outline-none transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      >
-                        {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {authModalMode === 'signup' && (
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-                        <span>Confirm Password</span>
-                      </label>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        autoComplete="new-password"
-                        required
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 focus:border-indigo-500 text-slate-100 placeholder:text-slate-500 text-xs outline-none transition-all"
-                      />
-                    </div>
-                  )}
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={isActionLoading || !isConfigured}
-                    className="w-full mt-2 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md active:scale-98"
-                  >
-                    {isActionLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>
-                          {authModalMode === 'signup' ? 'Creating account...' : 'Signing in...'}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span>{authModalMode === 'signup' ? 'Create Account' : 'Sign In'}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </>
-                    )}
-                  </button>
-                </form>
-              </>
-            )}
-
-            {/* Strict Guest Mode Notice & Action */}
-            <div className="pt-3 border-t border-slate-800 text-center space-y-2">
-              <button
-                type="button"
-                onClick={continueAsGuest}
-                className="w-full py-2 px-3 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 text-xs font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <span>Continue as Guest</span>
-                <span className="text-xs text-slate-500">(Offline &amp; Local Storage)</span>
-              </button>
-              
-              <div className="text-xs text-slate-500 flex items-center justify-center gap-1">
-                <Sparkles className="w-3 h-3 text-indigo-400/70" />
-                <span>Your local habits and streaks remain safe without an account</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
       )}
     </AnimatePresence>
   );
 };
-

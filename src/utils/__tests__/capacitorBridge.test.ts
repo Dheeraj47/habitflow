@@ -30,6 +30,21 @@ describe('Capacitor Bridge & Android Native Integration', () => {
       assert.strictEqual(result.refreshToken, 'xyz987');
     });
 
+    it('extracts PKCE authorization code from query params', () => {
+      const url = 'com.habitflow.app://auth/callback?code=pkce-auth-code-12345';
+      const result = parseAuthUrl(url);
+      assert.ok(result);
+      assert.strictEqual(result.code, 'pkce-auth-code-12345');
+    });
+
+    it('extracts OAuth error and decodes error description', () => {
+      const url = 'com.habitflow.app://auth/callback?error=access_denied&error_description=The+user+denied+the+request';
+      const result = parseAuthUrl(url);
+      assert.ok(result);
+      assert.strictEqual(result.error, 'access_denied');
+      assert.strictEqual(result.errorDescription, 'The user denied the request');
+    });
+
     it('returns null when URL has no auth tokens', () => {
       const url = 'com.habitflow.app://dashboard';
       assert.strictEqual(parseAuthUrl(url), null);
