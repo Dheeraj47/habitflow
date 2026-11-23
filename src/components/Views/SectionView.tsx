@@ -9,7 +9,6 @@ import {
   ShieldCheck, 
   Award, 
   Bell, 
-  Palette,
   Volume2,
   HardDrive,
   LogIn,
@@ -29,6 +28,7 @@ import { motion } from 'motion/react';
 import { RitualCalendar } from '../Calendar/RitualCalendar';
 import { DailyBudgetTracker } from '../Budget/DailyBudgetTracker';
 import { ChallengesDashboard } from '../Challenges/ChallengesDashboard';
+import { AppearanceSection } from '../Settings/AppearanceSection';
 import { soundFx } from '../../utils/sound';
 import { useAuth } from '../../context/AuthContext';
 
@@ -436,41 +436,44 @@ export const SectionView: React.FC<SectionViewProps> = ({
         transition={{ duration: 0.2 }}
         className="space-y-6 max-w-2xl"
       >
+        {/* Appearance & Theme System */}
+        <AppearanceSection />
+
         {/* Account & Security Section */}
-        <div className="p-6 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm">
-          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-800/80">
-            <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+        <div className="p-6 rounded-xl bg-[var(--surface-base)] border border-[var(--border-subtle)] shadow-sm transition-colors">
+          <div className="flex items-center gap-3 mb-5 pb-4 border-b border-[var(--border-subtle)]">
+            <div className="p-2.5 rounded-lg bg-[var(--accent-subtle)] text-[var(--accent-primary)] border border-[var(--accent-border)]">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">Account &amp; Security</h3>
-              <p className="text-xs text-slate-400">Manage identity, cloud synchronization, and credentials</p>
+              <h3 className="text-base sm:text-lg font-semibold text-[var(--text-primary)] tracking-tight">Account &amp; Security</h3>
+              <p className="text-xs text-[var(--text-secondary)]">Manage identity, cloud synchronization, and credentials</p>
             </div>
           </div>
 
           {isAuthenticated && authUser ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-slate-900/60 border border-slate-800">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)]">
                 <div className="flex items-center gap-3.5 min-w-0">
                   {authUser.avatarUrl ? (
                     <img
                       src={authUser.avatarUrl}
                       alt={authUser.fullName}
-                      className="w-10 h-10 rounded-lg object-cover border border-slate-700 flex-shrink-0"
+                      className="w-10 h-10 rounded-lg object-cover border border-[var(--border-subtle)] flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center font-bold text-xs text-indigo-300 flex-shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center font-bold text-xs text-[var(--accent-primary)] flex-shrink-0">
                       {authUser.fullName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-white truncate flex items-center gap-2">
+                    <div className="text-sm font-semibold text-[var(--text-primary)] truncate flex items-center gap-2">
                       <span>{authUser.fullName}</span>
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 capitalize">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-[var(--surface-base)] text-[var(--text-secondary)] border border-[var(--border-subtle)] capitalize">
                         {authUser.provider === 'google' ? 'Google' : 'Email'}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-400 truncate">{authUser.email}</div>
+                    <div className="text-xs text-[var(--text-secondary)] truncate">{authUser.email}</div>
                   </div>
                 </div>
 
@@ -499,7 +502,7 @@ export const SectionView: React.FC<SectionViewProps> = ({
 
               {/* Status footer with Sign Out */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                <div className="text-xs text-slate-400 flex items-center gap-2">
+                <div className="text-xs text-[var(--text-secondary)] flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span>Authenticated Session Active • Supabase Connected</span>
                 </div>
@@ -528,16 +531,16 @@ export const SectionView: React.FC<SectionViewProps> = ({
               </div>
             </div>
           ) : (
-            <div className="p-4 rounded-lg bg-slate-900/60 border border-slate-800 space-y-3">
+            <div className="p-4 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)] space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-bold text-white flex items-center gap-2">
+                  <div className="text-xs font-bold text-[var(--text-primary)] flex items-center gap-2">
                     <span>Guest Mode (Local Browser Storage)</span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--surface-base)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
                       Guest
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1 max-w-md leading-relaxed">
+                  <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-md leading-relaxed">
                     You are exploring HabitFlow in offline guest mode. Habits, XP, budget records, and streak analytics are stored securely on this device.
                   </p>
                 </div>
@@ -555,38 +558,25 @@ export const SectionView: React.FC<SectionViewProps> = ({
           )}
         </div>
 
-        {/* Existing Preferences Card */}
-        <div className="p-6 rounded-xl bg-[#11141f] border border-slate-800/90 shadow-sm">
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-800/80">
-            <div className="p-2.5 rounded-lg bg-slate-900 text-slate-300 border border-slate-800">
+        {/* Preferences Card */}
+        <div className="p-6 rounded-xl bg-[var(--surface-base)] border border-[var(--border-subtle)] shadow-sm transition-colors">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[var(--border-subtle)]">
+            <div className="p-2.5 rounded-lg bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
               <Settings className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight">Preferences</h3>
-              <p className="text-xs text-slate-400">Configure theme, audio, and device storage</p>
+              <h3 className="text-base sm:text-lg font-semibold text-[var(--text-primary)] tracking-tight">Audio &amp; Notifications</h3>
+              <p className="text-xs text-[var(--text-secondary)]">Configure sound effects, reminders, and data persistence</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
-              <div className="flex items-center gap-3">
-                <Palette className="w-4 h-4 text-indigo-400" />
-                <div>
-                  <div className="text-xs font-semibold text-slate-200">Theme Profile</div>
-                  <div className="text-xs text-slate-400">Dark Mode (Executive Slate)</div>
-                </div>
-              </div>
-              <span className="text-xs font-medium text-slate-300 bg-slate-800 px-2.5 py-1 rounded border border-slate-700">
-                Active
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-3">
                 <Volume2 className="w-4 h-4 text-emerald-400" />
                 <div>
-                  <div className="text-xs font-semibold text-slate-200">Audio Feedback</div>
-                  <div className="text-xs text-slate-400">Subtle sound cue on habit check &amp; navigation</div>
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">Audio Feedback</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Subtle crystal chime on habit completion &amp; navigation</div>
                 </div>
               </div>
               <input 
@@ -597,23 +587,23 @@ export const SectionView: React.FC<SectionViewProps> = ({
               />
             </div>
 
-            <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-3">
                 <Bell className="w-4 h-4 text-amber-400" />
                 <div>
-                  <div className="text-xs font-semibold text-slate-200">Daily Reminders</div>
-                  <div className="text-xs text-slate-400">Browser check-in notifications</div>
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">Daily Reminders</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Browser check-in notifications</div>
                 </div>
               </div>
               <input type="checkbox" defaultChecked className="accent-indigo-500 w-4 h-4 cursor-pointer" />
             </div>
 
-            <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-3">
                 <HardDrive className="w-4 h-4 text-indigo-400" />
                 <div>
-                  <div className="text-xs font-semibold text-slate-200">Data Persistence</div>
-                  <div className="text-xs text-slate-400">Local browser storage (Offline ready)</div>
+                  <div className="text-xs font-semibold text-[var(--text-primary)]">Data Persistence</div>
+                  <div className="text-xs text-[var(--text-secondary)]">Local browser storage (Offline ready)</div>
                 </div>
               </div>
               <span className="text-xs font-semibold text-emerald-400">Synced</span>

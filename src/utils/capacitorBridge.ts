@@ -71,6 +71,25 @@ export function parseAuthUrl(url: string): { accessToken?: string; refreshToken?
 }
 
 /**
+ * Synchronize the native Android status bar with the active theme mode.
+ */
+export async function updateNativeStatusBar(resolvedTheme: 'dark' | 'light'): Promise<void> {
+  if (!isNative()) return;
+
+  try {
+    if (resolvedTheme === 'light') {
+      await StatusBar.setStyle({ style: Style.Light });
+      await StatusBar.setBackgroundColor({ color: '#f8fafc' });
+    } else {
+      await StatusBar.setStyle({ style: Style.Dark });
+      await StatusBar.setBackgroundColor({ color: '#0b0d14' });
+    }
+  } catch (err) {
+    console.warn('[HabitFlow Native] Failed to update StatusBar theme:', err);
+  }
+}
+
+/**
  * Initialize native device integrations when running inside Android APK
  */
 export async function initNativeIntegrations(options?: {

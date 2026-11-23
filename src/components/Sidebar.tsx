@@ -103,28 +103,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Drawer */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 max-w-[85vw] bg-[#0e111a] border-r border-slate-800/80 flex flex-col shadow-2xl transition-transform duration-200 ease-out ${
+        className={`fixed top-0 bottom-0 left-0 z-50 w-72 max-w-[85vw] bg-[var(--surface-base)] border-r border-[var(--border-subtle)] flex flex-col shadow-2xl transition-transform duration-200 ease-out ${
           isVisible ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Brand Header */}
-        <div className="pt-[max(0.85rem,env(safe-area-inset-top,0px))] pb-3 min-h-[4.25rem] flex items-center justify-between px-5 border-b border-slate-800/80 flex-shrink-0">
+        <div className="pt-[max(0.85rem,env(safe-area-inset-top,0px))] pb-3 min-h-[4.25rem] flex items-center justify-between px-5 border-b border-[var(--border-subtle)] flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-              <Compass className="w-4 h-4 text-indigo-400" />
+            <div className="w-8 h-8 rounded-lg bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center">
+              <Compass className="w-4 h-4 text-[var(--accent-primary)]" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold tracking-tight text-white">
+              <h2 className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">
                 HabitFlow
               </h2>
-              <p className="text-xs text-slate-400">Personal Productivity OS</p>
+              <p className="text-xs text-[var(--text-secondary)]">Personal Productivity OS</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-850 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-colors cursor-pointer"
             aria-label="Close navigation sidebar"
             title="Close menu (Esc)"
           >
@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Items */}
         <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto no-scrollbar">
-          <div className="px-3 pb-1.5 text-xs font-semibold tracking-wider text-slate-500 uppercase">
+          <div className="px-3 pb-1.5 text-xs font-semibold tracking-wider text-[var(--text-muted)] uppercase">
             Platform
           </div>
           {navItems.map((item) => {
@@ -150,12 +150,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                   isActive
-                    ? 'bg-indigo-600 text-white font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-[var(--accent-primary)] text-white font-semibold shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[var(--text-secondary)]'}`} />
                   <span>{item.label}</span>
                 </div>
 
@@ -163,8 +163,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span
                     className={`text-xs px-2 py-0.5 rounded font-semibold tabular-nums ${
                       isActive
-                        ? 'bg-indigo-700 text-white'
-                        : 'bg-slate-800 text-slate-400'
+                        ? 'bg-purple-800 text-white'
+                        : 'bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border-subtle)]'
                     }`}
                   >
                     {item.badge}
@@ -176,17 +176,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* User Profile Card & Streak Banner */}
-        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-slate-800/80 bg-[#0b0d14]">
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] border-t border-[var(--border-subtle)] bg-[var(--surface-base)]">
           {/* Streak indicator badge */}
-          <div className="mb-3 px-3 py-2 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div className="mb-3 px-3 py-2 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-subtle)] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Flame className="w-4 h-4 text-amber-400 fill-amber-400/80" />
               <div>
-                <div className="text-xs font-semibold text-slate-200">{topStreak} Day Streak</div>
-                <div className="text-xs text-slate-400">Consistency chain</div>
+                <div className="text-xs font-semibold text-[var(--text-primary)]">{topStreak} Day Streak</div>
+                <div className="text-xs text-[var(--text-secondary)]">Consistency chain</div>
               </div>
             </div>
-            <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+            <span className="text-xs font-medium px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 dark:text-amber-300 border border-amber-500/20">
               Active
             </span>
           </div>
@@ -199,20 +199,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <img
                     src={authUser.avatarUrl}
                     alt={authUser.fullName}
-                    className="w-8 h-8 rounded-lg object-cover border border-slate-700 flex-shrink-0"
+                    className="w-8 h-8 rounded-lg object-cover border border-[var(--border-subtle)] flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center font-bold text-xs text-indigo-300 flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center font-bold text-xs text-[var(--accent-primary)] flex-shrink-0">
                     {isAuthenticated && authUser
                       ? authUser.fullName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
                       : 'GA'}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold text-slate-200 truncate">
+                  <div className="text-xs font-semibold text-[var(--text-primary)] truncate">
                     {isAuthenticated && authUser ? authUser.fullName : 'Guest Explorer'}
                   </div>
-                  <div className="text-xs text-slate-400 truncate">
+                  <div className="text-xs text-[var(--text-secondary)] truncate">
                     {progression.isMaxLevel
                       ? `MAX LEVEL • ${progression.totalXP.toLocaleString()} XP`
                       : `Lvl ${progression.level} • ${progression.currentLevelProgress.toLocaleString()} / ${progression.xpNeeded.toLocaleString()} XP`}{' '}
@@ -228,7 +228,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     soundFx.playCrystalChime(650);
                     signOut();
                   }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer flex-shrink-0"
+                  className="p-1.5 rounded-lg text-[var(--text-secondary)] hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer flex-shrink-0"
                   title="Sign out of account"
                   aria-label="Sign out"
                 >
@@ -241,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     handleClose();
                     openAuthModal('signin');
                   }}
-                  className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors cursor-pointer flex-shrink-0 flex items-center gap-1"
+                  className="px-2.5 py-1 rounded-md bg-[var(--accent-primary)] hover:bg-[var(--accent-hover)] text-white text-xs font-medium transition-colors cursor-pointer flex-shrink-0 flex items-center gap-1 shadow-sm"
                   title="Sign in to your account"
                 >
                   <LogIn className="w-3.5 h-3.5" />
@@ -252,9 +252,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Level XP Progress Bar */}
             <div className="pt-0.5">
-              <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-[var(--surface-secondary)] border border-[var(--border-subtle)] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                  className="h-full bg-[var(--accent-primary)] rounded-full transition-all duration-300"
                   style={{ width: `${progression.progressPercentage}%` }}
                   title={
                     progression.isMaxLevel

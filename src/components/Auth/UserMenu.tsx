@@ -79,7 +79,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
       <button
         id="header-user-menu-btn"
         onClick={handleToggleMenu}
-        className="flex items-center gap-1.5 sm:gap-2 h-8 sm:h-8.5 px-1.5 sm:px-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700/80 transition-all cursor-pointer text-xs"
+        className="flex items-center gap-1.5 sm:gap-2 h-8 sm:h-8.5 px-1.5 sm:px-2 rounded-lg bg-[var(--surface-secondary)] hover:bg-[var(--surface-hover)] border border-[var(--border-subtle)] text-[var(--text-primary)] transition-all cursor-pointer text-xs"
         aria-label="User account menu"
         aria-expanded={isOpen}
       >
@@ -87,54 +87,54 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
           <img
             src={authUser.avatarUrl}
             alt={authUser.fullName}
-            className="w-5.5 h-5.5 rounded-full object-cover border border-indigo-500/40"
+            className="w-5.5 h-5.5 rounded-full object-cover border border-[var(--accent-primary)]/40"
           />
         ) : (
-          <div className="w-5.5 h-5.5 rounded-full bg-indigo-600/25 border border-indigo-500/40 flex items-center justify-center font-bold text-xs text-indigo-300">
+          <div className="w-5.5 h-5.5 rounded-full bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center font-bold text-xs text-[var(--accent-primary)]">
             {initials}
           </div>
         )}
 
-        <span className="hidden sm:inline font-semibold text-slate-200 max-w-[90px] truncate">
+        <span className="hidden sm:inline font-semibold text-[var(--text-primary)] max-w-[90px] truncate">
           {authUser.fullName.split(' ')[0]}
         </span>
 
-        <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-[var(--text-secondary)] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-[#11141f] border border-slate-800 rounded-xl shadow-2xl py-2 z-50 text-slate-200 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-64 bg-[var(--surface-elevated)] border border-[var(--border-subtle)] rounded-xl shadow-2xl py-2 z-50 text-[var(--text-primary)] backdrop-blur-xl animate-in fade-in zoom-in-95 duration-150">
           {/* Identity header */}
-          <div className="px-3.5 py-2.5 border-b border-slate-800">
+          <div className="px-3.5 py-2.5 border-b border-[var(--border-subtle)]">
             <div className="flex items-center gap-2.5">
               {authUser.avatarUrl ? (
                 <img
                   src={authUser.avatarUrl}
                   alt={authUser.fullName}
-                  className="w-8 h-8 rounded-lg object-cover border border-indigo-500/40"
+                  className="w-8 h-8 rounded-lg object-cover border border-[var(--accent-primary)]/40"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-lg bg-indigo-600/25 border border-indigo-500/40 flex items-center justify-center font-bold text-xs text-indigo-300">
+                <div className="w-8 h-8 rounded-lg bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center font-bold text-xs text-[var(--accent-primary)]">
                   {initials}
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-bold text-white truncate">{authUser.fullName}</div>
-                <div className="text-xs text-slate-400 truncate">{authUser.email}</div>
+                <div className="text-xs font-bold text-[var(--text-primary)] truncate">{authUser.fullName}</div>
+                <div className="text-xs text-[var(--text-secondary)] truncate">{authUser.email}</div>
               </div>
             </div>
 
             {/* Verification and Provider Badges */}
             <div className="flex items-center gap-1.5 mt-2.5">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 capitalize">
+              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--accent-subtle)] text-[var(--accent-primary)] border border-[var(--accent-border)] capitalize">
                 {authUser.provider === 'google' ? 'Google' : 'Email'}
               </span>
               <span
                 className={`text-xs font-semibold px-2 py-0.5 rounded border ${
                   authUser.isConfirmed
-                    ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                    : 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                    ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-300 border-emerald-500/20'
+                    : 'bg-amber-500/10 text-amber-500 dark:text-amber-300 border-amber-500/20'
                 }`}
               >
                 {authUser.isConfirmed ? 'Verified' : 'Unconfirmed'}
@@ -148,9 +148,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
               <button
                 type="button"
                 onClick={handleGoToSettings}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-colors cursor-pointer text-left"
               >
-                <Settings className="w-3.5 h-3.5 text-slate-400" />
+                <Settings className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
                 <span>Account Preferences</span>
               </button>
             )}
@@ -160,7 +160,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onNavigateToSettings }) => {
               type="button"
               onClick={handleSignOut}
               disabled={isActionLoading}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer text-left disabled:opacity-50"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 hover:bg-rose-500/10 transition-colors cursor-pointer text-left disabled:opacity-50"
             >
               {isActionLoading ? (
                 <>

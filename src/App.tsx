@@ -199,11 +199,11 @@ export function App() {
     };
   }, []);
 
-  // Toast Helper
+  // Toast Helper with bounded queue buffer to prevent mobile notification stacking
   const addToast = (toast: Omit<ToastItem, 'id'>) => {
     toastCounterRef.current += 1;
     const id = `toast-${toastCounterRef.current}`;
-    setToasts((prev) => [...prev, { ...toast, id }]);
+    setToasts((prev) => [...prev.slice(-3), { ...toast, id }]);
   };
 
   const dismissToast = (id: string) => {
@@ -576,13 +576,13 @@ export function App() {
 
   if (activeTab === 'workspace') {
     return (
-      <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans selection:bg-indigo-500/25 selection:text-indigo-200">
+      <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] flex flex-col font-sans selection:bg-[var(--accent-primary)]/25 selection:text-[var(--accent-text)] transition-colors duration-200">
         <Suspense
           fallback={
-            <div className="min-h-screen bg-[#090d16] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--app-bg)] flex items-center justify-center">
               <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-                <span className="text-xs text-slate-400 font-medium tracking-wide">Loading Workspace...</span>
+                <div className="w-8 h-8 rounded-full border-2 border-[var(--accent-primary)] border-t-transparent animate-spin" />
+                <span className="text-xs text-[var(--text-secondary)] font-medium tracking-wide">Loading Workspace...</span>
               </div>
             </div>
           }
@@ -603,10 +603,10 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0d14] text-slate-100 flex flex-col relative overflow-x-clip selection:bg-indigo-500/25 selection:text-indigo-200">
+    <div className="min-h-screen bg-[var(--app-bg)] text-[var(--text-primary)] flex flex-col relative overflow-x-clip selection:bg-[var(--accent-primary)]/25 selection:text-[var(--accent-text)] transition-colors duration-200">
       {/* 1. Global Scroll Progress Indicator */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-[2px] bg-indigo-500 origin-left z-50"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-[var(--accent-primary)] origin-left z-50"
         style={{ scaleX }}
       />
 
